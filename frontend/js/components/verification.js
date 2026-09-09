@@ -65,39 +65,44 @@ export class VerificationWorkspace {
   }
 
   async _checkMicPermission() {
-    this._setMicStatus('Checking microphone...', 'status-prompt');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this._setMicStatus('Microphone Unavailable', 'status-denied');
+      return;
+    }
 
-    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
+    try {
+      if (navigator.mediaDevices.enumerateDevices) {
+        const devices = await Promise.race([
+          navigator.mediaDevices.enumerateDevices(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+        ]);
         const hasAudioInput = devices.some(d => d.kind === 'audioinput');
-        if (!hasAudioInput) {
-          this._setMicStatus('No microphone detected', 'status-denied');
+        if (!hasAudioInput && devices.length > 0) {
+          this._setMicStatus('Microphone Unavailable', 'status-denied');
           return;
         }
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
 
     if (navigator.permissions && navigator.permissions.query) {
       try {
         const result = await navigator.permissions.query({ name: 'microphone' });
         this._mapPermissionStateToStatus(result.state);
         result.onchange = () => this._mapPermissionStateToStatus(result.state);
-      } catch (e) {
-        this._setMicStatus('Permission required', 'status-prompt');
-      }
-    } else {
-      this._setMicStatus('Permission required', 'status-prompt');
+        return;
+      } catch (e) {}
     }
+
+    this._setMicStatus('Permission Required', 'status-prompt');
   }
 
   _mapPermissionStateToStatus(state) {
     if (state === 'granted') {
-      this._setMicStatus('Microphone ready', 'status-ready');
+      this._setMicStatus('Microphone Ready', 'status-ready');
     } else if (state === 'denied') {
-      this._setMicStatus('Permission denied', 'status-denied');
+      this._setMicStatus('Permission Denied', 'status-denied');
     } else {
-      this._setMicStatus('Permission required', 'status-prompt');
+      this._setMicStatus('Permission Required', 'status-prompt');
     }
   }
 
@@ -329,13 +334,13 @@ export class VerificationWorkspace {
     if (state === 'recording') {
       const idleContainer = document.getElementById('recordingIdleState');
       if (idleContainer) idleContainer.style.display = 'none';
-      this._setMicStatus('Recording', 'status-recording');
+      this._setMicStatus('Recording in Progress', 'status-recording');
     } else if (state === 'paused') {
-      this._setMicStatus('Recording paused', 'status-prompt');
+      this._setMicStatus('Recording Paused', 'status-prompt');
     } else if (state === 'resumed') {
-      this._setMicStatus('Recording', 'status-recording');
+      this._setMicStatus('Recording in Progress', 'status-recording');
     } else if (state === 'stopped') {
-      this._setMicStatus('Recording stopped', 'status-ready');
+      this._setMicStatus('Microphone Ready', 'status-ready');
       if (this.liveVisualizer) {
         this.liveVisualizer.stop();
       }
@@ -480,12 +485,38 @@ export class VerificationWorkspace {
       this.currentDuration = tempAudio.duration || 0;
       const metaDuration = document.getElementById('uploadMetaDuration');
       if (metaDuration) metaDuration.textContent = `${this.currentDuration.toFixed(1)}s`;
-      if (sizeEl) sizeEl.textContent = `${ext.toUpperCase()} • ${(file.size / (1024 * 1024)).toFixed(2)} MB • ${this.currentDuration.toFixed(1)}s`;
+      const chanStr = this.currentChannels ? (this.currentChannels === 1 ? ' • Mono' : ' • Stereo') : '';
+      const rateStr = this.currentSampleRate ? ` • ${this.currentSampleRate}Hz` : '';
+      if (sizeEl) sizeEl.textContent = `${ext.toUpperCase()} • ${(file.size / (1024 * 1024)).toFixed(2)} MB • ${this.currentDuration.toFixed(1)}s${rateStr}${chanStr}`;
     };
     tempAudio.onerror = () => {
       toast.show('Unable to decode this audio file.', 'error');
       this._resetUploadUI();
     };
+
+    // Extract detailed audio metadata (duration, sample rate, channels) via Web Audio API
+    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtxClass) {
+      try {
+        const tempCtx = new AudioCtxClass();
+        file.arrayBuffer().then(buf => tempCtx.decodeAudioData(buf))
+          .then(decoded => {
+            this.currentSampleRate = decoded.sampleRate || 16000;
+            this.currentChannels = decoded.numberOfChannels || 1;
+            if (decoded.duration && !this.currentDuration) {
+              this.currentDuration = decoded.duration;
+            }
+            const chanStr = decoded.numberOfChannels === 1 ? 'Mono' : (decoded.numberOfChannels === 2 ? 'Stereo' : `${decoded.numberOfChannels} ch`);
+            if (sizeEl) {
+              sizeEl.textContent = `${ext.toUpperCase()} • ${(file.size / (1024 * 1024)).toFixed(2)} MB • ${this.currentDuration.toFixed(1)}s • ${decoded.sampleRate}Hz • ${chanStr}`;
+            }
+            tempCtx.close().catch(() => {});
+          })
+          .catch(() => {
+            tempCtx.close().catch(() => {});
+          });
+      } catch (e) {}
+    }
 
     // Update Upload UI
     const dropzone = document.getElementById('uploadDropzone');
@@ -638,10 +669,12 @@ export class VerificationWorkspace {
       const result = await VoiceShieldAPI.analyzeDemo(sampleId, (stageIdx) => {
         this._updateAnalysisStage(stageIdx);
       });
+      result.is_benchmark = true;
+      result.filename = `test_benchmark_${sampleId}.wav`;
       this._completeAllAnalysisStages();
       await new Promise(r => setTimeout(r, 120));
       this._hideAnalysisOverlay();
-      this.onAnalysisComplete(result, `example-${sampleId}.wav`);
+      this.onAnalysisComplete(result, result.filename, true);
     } catch (err) {
       this._hideAnalysisOverlay();
       toast.show(`Analysis failed: ${err.message}`, 'error');

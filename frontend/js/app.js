@@ -43,9 +43,10 @@ class VoiceShieldApp {
 
     // 3. Verification Workspace Component (Mic recording, upload, pre-analysis quality, analysis)
     this.verificationWorkspace = new VerificationWorkspace({
-      onAnalysisComplete: (result, filename) => {
+      onAnalysisComplete: (result, filename, isBenchmark = false) => {
         this.resultView.render(result, filename);
-        if (this.dashboardManager && result.status === 'success') {
+        // Do NOT contaminate dashboard statistics or user audit history with test benchmark controls
+        if (this.dashboardManager && result.status === 'success' && !isBenchmark && !result.is_benchmark) {
           result.filename = result.filename || filename;
           result.id = result.id || result.analysis_id;
           result.analysis_id = result.analysis_id || result.id;

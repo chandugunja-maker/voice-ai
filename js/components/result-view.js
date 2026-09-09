@@ -149,7 +149,10 @@ export class ResultView {
     // 2. Summary Message
     const summaryEl = document.getElementById('resultSummaryText');
     if (summaryEl) {
-      summaryEl.textContent = result.message || 'Voice sample analyzed using multi-signal acoustic biometrics.';
+      const benchmarkNotice = result.is_benchmark
+        ? `<span style="display: inline-block; padding: 2px 8px; border-radius: 4px; background: rgba(37, 99, 235, 0.1); color: var(--accent-primary); font-size: 0.76rem; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.04em;">[TEST BENCHMARK CONTROL — EXCLUDED FROM USER AUDIT HISTORY]</span><br>`
+        : '';
+      summaryEl.innerHTML = `${benchmarkNotice}${result.message || 'Voice sample analyzed using multi-signal acoustic biometrics.'}`;
     }
 
     // 3. Triad Architecture
