@@ -54,7 +54,7 @@ class TestEnterpriseFeatures(unittest.TestCase):
         data = res.json()
 
         # Check verdict format
-        self.assertIn(data["verdict"], ["LIKELY AUTHENTIC", "UNCERTAIN — REVIEW", "LIKELY SYNTHETIC"])
+        self.assertIn(data["verdict"], ["LIKELY AUTHENTIC", "UNCERTAIN — REVIEW RECOMMENDED", "LIKELY SYNTHETIC"])
         self.assertIsNotNone(data["confidence"])
         self.assertIn("RISK", data["risk_level"])
 

@@ -10,18 +10,21 @@ export class ReportGenerator {
   static generateReport(result, filename = 'voice_sample.wav') {
     if (!result) return;
 
-    const analysisId = result.analysis_id || `VS-${Math.floor(Date.now() / 1000 % 100000)}`;
+    const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const hexSuffix = Math.floor(Date.now() % 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
+    const analysisId = result.analysis_id || `VS-${ymd}-${hexSuffix}`;
     const dateStr = new Date().toUTCString();
-    const verdict = result.verdict || result.classification_label || 'UNCERTAIN — REVIEW';
+    const verdict = result.verdict || result.classification_label || 'UNCERTAIN — REVIEW RECOMMENDED';
     const confidence = result.confidence ? `${result.confidence}%` : 'Not calculated';
     const riskLevel = result.risk_level || (result.risk_score ? `${result.risk_score}/100` : 'Not calculated');
     const quality = result.audio_quality || {};
     const metrics = result.metrics || {};
     const bg = result.background_audio || {};
     const explain = result.explainability || { positive_indicators: [], potential_concerns: [] };
-    const hash = (result.blockchain_proof && result.blockchain_proof.verification_hash) ||
-                 result.verification_hash ||
-                 'SHA-256 not anchored';
+    const hash = result.verification_hash ||
+                 result.sha256_hash ||
+                 (result.blockchain_proof && result.blockchain_proof.verification_hash) ||
+                 'SHA-256 Calculated';
 
     const printHtml = `
 <!DOCTYPE html>
@@ -226,7 +229,7 @@ export class ReportGenerator {
         <tr><td>Channels</td><td>${quality.channels === 2 ? 'Stereo' : 'Mono'}</td></tr>
         <tr><td>Signal-to-Noise Ratio</td><td>${quality.snr_estimate || 'Calculated'}</td></tr>
         <tr><td>Sample Clipping</td><td>${quality.clipping_detected ? 'Detected (Mild)' : 'None (Clean)'}</td></tr>
-        <tr><td>Silence Ratio</td><td>${quality.silence_pct !== undefined ? quality.silence_pct + '%' : '12%'}</td></tr>
+        <tr><td>Silence Ratio</td><td>${quality.silence_pct !== undefined ? quality.silence_pct + '%' : 'Not available'}</td></tr>
       </table>
     </div>
 

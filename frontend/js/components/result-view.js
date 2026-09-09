@@ -53,8 +53,11 @@ export class ResultView {
     this.currentFilename = filename;
     if (!this.container) return;
 
+    const waitingPanel = document.getElementById('resultWaitingPanel');
     const noVoicePanel = document.getElementById('resultNoVoicePanel');
     const validVoicePanel = document.getElementById('resultValidVoicePanel');
+
+    if (waitingPanel) waitingPanel.style.display = 'none';
 
     // Case A: Insufficient Speech / Audio Quality Issues / Too Short
     if (result.status !== 'success' || !result.metrics) {
@@ -144,8 +147,8 @@ export class ResultView {
     const riskValEl = document.getElementById('resultRiskValue');
     const riskBadgeEl = document.getElementById('resultRiskBadge');
 
-    if (confValEl) confValEl.textContent = confidence ? `${confidence}%` : 'Calculated';
-    if (confBarEl) confBarEl.style.width = `${confidence || 85}%`;
+    if (confValEl) confValEl.textContent = (confidence !== undefined && confidence !== null) ? `${confidence}%` : 'Calculated';
+    if (confBarEl) confBarEl.style.width = `${confidence || 0}%`;
 
     if (riskValEl) riskValEl.textContent = riskLevel;
     if (riskBadgeEl) {
@@ -222,7 +225,7 @@ export class ResultView {
     const metaHashEl = document.getElementById('resultMetaHash');
     if (metaIdEl) metaIdEl.textContent = result.analysis_id || '—';
     if (metaHashEl) {
-      const hash = (result.blockchain_proof && result.blockchain_proof.verification_hash) || result.verification_hash || 'SHA-256 Ledger Verified';
+      const hash = result.verification_hash || result.sha256_hash || (result.blockchain_proof && result.blockchain_proof.verification_hash) || 'SHA-256 Ledger Verified';
       metaHashEl.textContent = hash;
     }
 
@@ -230,8 +233,10 @@ export class ResultView {
   }
 
   hide() {
+    const waitingPanel = document.getElementById('resultWaitingPanel');
     const noVoicePanel = document.getElementById('resultNoVoicePanel');
     const validVoicePanel = document.getElementById('resultValidVoicePanel');
+    if (waitingPanel) waitingPanel.style.display = 'block';
     if (noVoicePanel) noVoicePanel.style.display = 'none';
     if (validVoicePanel) validVoicePanel.style.display = 'none';
   }

@@ -121,7 +121,7 @@
                   <span>🎙️</span>
                   <span>Microphone Status:</span>
                 </div>
-                <span id="micPermissionStatus" class="mic-status-pill status-ready">● Ready</span>
+                <span id="micPermissionStatus" class="mic-status-pill status-prompt">Checking microphone...</span>
               </div>
 
               <!-- Sentence Prompt -->
@@ -357,6 +357,15 @@
              SECTION 3: RESULT DASHBOARD CONTAINER
              ===================================================================== -->
         <div id="resultContainer" class="result-container">
+
+          <!-- State 0: Initial State — Waiting for Audio Analysis -->
+          <div id="resultWaitingPanel" class="card" style="text-align: center; border: 1px dashed var(--border-accent); padding: 3rem 2rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.8;">🛡️</div>
+            <h3 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">Waiting for Audio Analysis</h3>
+            <p style="font-size: 0.92rem; color: var(--text-secondary); max-width: 520px; margin: 0 auto; line-height: 1.6;">
+              No voice verification performed yet. Record your voice using the microphone studio above or upload an audio file to evaluate speech characteristics and inspect explainable acoustic signals.
+            </p>
+          </div>
           
           <!-- State A: Insufficient Speech / Severe Noise / Quality Failure -->
           <div id="resultNoVoicePanel" class="card" style="display: none; text-align: center; border: 1px solid var(--border-accent); padding: 2.5rem 2rem;">
@@ -386,9 +395,9 @@
             <!-- Large Verdict Card -->
             <div id="resultVerdictBox" class="verdict-display-card">
               <div class="verdict-tag">Voice Authenticity Result</div>
-              <h2 id="resultVerdictText" class="verdict-title">LIKELY AUTHENTIC</h2>
+              <h2 id="resultVerdictText" class="verdict-title">--</h2>
               <p id="resultSummaryText" class="verdict-desc">
-                Speech exhibits natural human prosodic inflections and biological vocal micro-tremor.
+                Waiting for audio analysis.
               </p>
             </div>
 
@@ -397,9 +406,9 @@
               <!-- Confidence Panel -->
               <div class="metric-panel">
                 <div class="metric-panel-header">Overall Confidence</div>
-                <div id="resultConfidenceValue" class="metric-panel-val">92%</div>
+                <div id="resultConfidenceValue" class="metric-panel-val">--</div>
                 <div class="confidence-bar-track">
-                  <div id="resultConfidenceBar" class="confidence-bar-fill" style="width: 92%;"></div>
+                  <div id="resultConfidenceBar" class="confidence-bar-fill" style="width: 0%;"></div>
                 </div>
                 <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">
                   Confidence directly computed from acoustic signal distance to decision boundary.
@@ -410,7 +419,7 @@
               <div class="metric-panel">
                 <div class="metric-panel-header">Risk Assessment</div>
                 <div style="margin-bottom: 0.75rem;">
-                  <span id="resultRiskBadge" class="risk-pill risk-low">LOW RISK</span>
+                  <span id="resultRiskBadge" class="risk-pill">--</span>
                 </div>
                 <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
                   Risk assessment is based on the available audio-analysis signals and should not be treated as definitive proof.
@@ -426,35 +435,35 @@
               <div class="breakdown-grid">
                 <div class="breakdown-card">
                   <div class="breakdown-card-name">Authenticity</div>
-                  <div id="metricAuthenticity" class="breakdown-card-score">92%</div>
+                  <div id="metricAuthenticity" class="breakdown-card-score">--</div>
                 </div>
                 <div class="breakdown-card">
                   <div class="breakdown-card-name">Liveness</div>
-                  <div id="metricLiveness" class="breakdown-card-score" style="color: #10b981;">PASS</div>
+                  <div id="metricLiveness" class="breakdown-card-score">--</div>
                 </div>
                 <div class="breakdown-card">
                   <div class="breakdown-card-name">Naturalness</div>
-                  <div id="metricNaturalness" class="breakdown-card-score">94%</div>
+                  <div id="metricNaturalness" class="breakdown-card-score">--</div>
                 </div>
                 <div class="breakdown-card">
                   <div class="breakdown-card-name">Spectral Consistency</div>
-                  <div id="metricSpectral" class="breakdown-card-score">89%</div>
+                  <div id="metricSpectral" class="breakdown-card-score">--</div>
                 </div>
                 <div class="breakdown-card">
                   <div class="breakdown-card-name">Temporal Consistency</div>
-                  <div id="metricTemporal" class="breakdown-card-score">91%</div>
+                  <div id="metricTemporal" class="breakdown-card-score">--</div>
                 </div>
                 <div class="breakdown-card">
                   <div class="breakdown-card-name">Audio Quality</div>
-                  <div id="metricQuality" class="breakdown-card-score">88%</div>
+                  <div id="metricQuality" class="breakdown-card-score">--</div>
                 </div>
                 <div class="breakdown-card">
                   <div class="breakdown-card-name">Replay Risk</div>
-                  <div id="metricReplay" class="breakdown-card-score" style="color: #10b981;">LOW</div>
+                  <div id="metricReplay" class="breakdown-card-score">--</div>
                 </div>
                 <div class="breakdown-card">
                   <div class="breakdown-card-name">Background Noise</div>
-                  <div id="metricBackground" class="breakdown-card-score" style="font-size: 1rem;">Low (Clean)</div>
+                  <div id="metricBackground" class="breakdown-card-score" style="font-size: 1rem;">--</div>
                 </div>
               </div>
             </div>
@@ -468,7 +477,7 @@
                     Positive Authentic Indicators:
                   </div>
                   <ul id="explainPositiveList" class="evidence-list">
-                    <li><span class="bullet-pos">✓</span> Natural prosodic pitch variation detected.</li>
+                    <li><span class="bullet-pos">✓</span> Waiting for audio analysis...</li>
                   </ul>
                 </div>
                 <div>
@@ -476,7 +485,7 @@
                     Potential Anomalies & Concerns:
                   </div>
                   <ul id="explainConcernList" class="evidence-list">
-                    <li><span class="bullet-pos">✓</span> No synthetic anomalies or replay artifacts observed.</li>
+                    <li><span class="bullet-pos">✓</span> Waiting for audio analysis...</li>
                   </ul>
                 </div>
               </div>
@@ -488,24 +497,24 @@
                 Background Audio Analysis
               </div>
               <p id="bgAudioSummary" style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
-                Acoustic background isolated from vocal tract.
+                --
               </p>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
                 <div class="metadata-card">
                   <div class="metadata-label">Primary Voice</div>
-                  <div id="bgAudioPrimary" class="metadata-val" style="font-size: 0.9rem;">Dominant speaker</div>
+                  <div id="bgAudioPrimary" class="metadata-val" style="font-size: 0.9rem;">--</div>
                 </div>
                 <div class="metadata-card">
                   <div class="metadata-label">Background Speech</div>
-                  <div id="bgAudioSpeech" class="metadata-val" style="font-size: 0.9rem;">None detected</div>
+                  <div id="bgAudioSpeech" class="metadata-val" style="font-size: 0.9rem;">--</div>
                 </div>
                 <div class="metadata-card">
                   <div class="metadata-label">Environmental Noise</div>
-                  <div id="bgAudioEnv" class="metadata-val" style="font-size: 0.9rem;">Low</div>
+                  <div id="bgAudioEnv" class="metadata-val" style="font-size: 0.9rem;">--</div>
                 </div>
                 <div class="metadata-card">
                   <div class="metadata-label">Silence Ratio</div>
-                  <div id="bgAudioSilence" class="metadata-val" style="font-size: 0.9rem;">12% (Natural pauses)</div>
+                  <div id="bgAudioSilence" class="metadata-val" style="font-size: 0.9rem;">--</div>
                 </div>
               </div>
             </div>

@@ -203,10 +203,13 @@ export class DashboardManager {
     });
 
     if (filtered.length === 0) {
+      const msg = this.historyRecords.length === 0
+        ? 'No analyses yet — record or upload an audio sample to create your first verification audit record.'
+        : 'No verification records found matching the current search criteria.';
       tableBody.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8;">
-            No verification records found matching the current criteria.
+          <td colspan="7" style="text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 0.9rem;">
+            ${msg}
           </td>
         </tr>
       `;

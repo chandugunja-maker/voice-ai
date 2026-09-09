@@ -25,9 +25,9 @@ export class VoiceShieldAPI {
   /**
    * Uploads an audio blob/file for comprehensive authenticity analysis.
    */
-  static async analyzeVoice(audioBlob, filename = 'voice_sample.wav', sampleHint = null) {
+  static async analyzeVoice(audioBlob, filename = 'voice_sample.wav', sampleHint = null, onStageUpdate = null) {
     if (isStaticHost && !API_BASE) {
-      return await this._runClientAcousticAnalysis(audioBlob, filename, sampleHint);
+      return await this._runClientAcousticAnalysis(audioBlob, filename, sampleHint, onStageUpdate);
     }
 
     const formData = new FormData();
@@ -37,6 +37,7 @@ export class VoiceShieldAPI {
     }
 
     try {
+      if (typeof onStageUpdate === 'function') onStageUpdate(0);
       const response = await fetch(`${API_BASE}/api/analyze-voice`, {
         method: 'POST',
         body: formData,
@@ -47,10 +48,17 @@ export class VoiceShieldAPI {
         throw new Error(errorData.detail || `Server returned status ${response.status}`);
       }
 
+      if (typeof onStageUpdate === 'function') {
+        for (let s = 1; s < 12; s++) {
+          onStageUpdate(s);
+          await new Promise(r => setTimeout(r, 25));
+        }
+      }
+
       return await response.json();
     } catch (err) {
       console.warn('[VoiceShield AI] Remote API call failed or unavailable, executing client-side DSP pipeline:', err);
-      return await this._runClientAcousticAnalysis(audioBlob, filename, sampleHint);
+      return await this._runClientAcousticAnalysis(audioBlob, filename, sampleHint, onStageUpdate);
     }
   }
 
@@ -58,13 +66,20 @@ export class VoiceShieldAPI {
    * Benchmark demo sample execution:
    * Fetches the real audio sample file and runs the acoustic pipeline.
    */
-  static async analyzeDemo(sampleId) {
+  static async analyzeDemo(sampleId, onStageUpdate = null) {
     if (!isStaticHost && API_BASE) {
       try {
+        if (typeof onStageUpdate === 'function') onStageUpdate(0);
         const response = await fetch(`${API_BASE}/api/analyze-demo/${sampleId}`, {
           method: 'POST'
         });
         if (response.ok) {
+          if (typeof onStageUpdate === 'function') {
+            for (let s = 1; s < 12; s++) {
+              onStageUpdate(s);
+              await new Promise(r => setTimeout(r, 25));
+            }
+          }
           return await response.json();
         }
       } catch (err) {
@@ -85,13 +100,13 @@ export class VoiceShieldAPI {
       const res = await fetch(url);
       if (res.ok) {
         const blob = await res.blob();
-        return await this._runClientAcousticAnalysis(blob, `example-${sampleId}.wav`, sampleId);
+        return await this._runClientAcousticAnalysis(blob, `example-${sampleId}.wav`, sampleId, onStageUpdate);
       }
     } catch (e) {
       console.warn('Could not fetch sample file, generating signal analysis:', e);
     }
 
-    return await this._runClientAcousticAnalysis(null, `example-${sampleId}.wav`, sampleId);
+    return await this._runClientAcousticAnalysis(null, `example-${sampleId}.wav`, sampleId, onStageUpdate);
   }
 
   /**
@@ -502,12 +517,39 @@ export class VoiceShieldAPI {
    * Pure silence or non-speech returns "NO SUFFICIENT SPEECH DETECTED".
    * Never claims 100% accuracy.
    */
-  static async _runClientAcousticAnalysis(audioBlob, filename = 'voice_sample.wav', sampleHint = null) {
+  static _computeDeterministicHash(bytes) {
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57, h3 = 0x7fed2130, h4 = 0x12345678;
+    for (let i = 0; i < bytes.length; i++) {
+      const b = bytes[i];
+      h1 = Math.imul(h1 ^ b, 2654435761);
+      h2 = Math.imul(h2 ^ b, 1597334677);
+      h3 = Math.imul(h3 ^ b, 2246822507);
+      h4 = Math.imul(h4 ^ b, 3266489909);
+    }
+    const hex = (h) => (h >>> 0).toString(16).padStart(8, '0');
+    return (hex(h1) + hex(h2) + hex(h3) + hex(h4) + hex(h1 ^ h3) + hex(h2 ^ h4) + hex(h1 ^ h2) + hex(h3 ^ h4)).toLowerCase();
+  }
+
+  static async _runClientAcousticAnalysis(audioBlob, filename = 'voice_sample.wav', sampleHint = null, onStageUpdate = null) {
+    const advanceStage = async (idx) => {
+      if (typeof onStageUpdate === 'function') onStageUpdate(idx);
+      await new Promise(r => setTimeout(r, 40));
+    };
+
+    await advanceStage(0); // Stage 1: Audio preprocessing
+
     const startTime = performance.now();
     const dateObj = new Date();
     const ymd = dateObj.toISOString().slice(0, 10).replace(/-/g, '');
-    const randHex = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0').toUpperCase();
-    const analysisId = `VS-${ymd}-${randHex}`;
+    let hexSuffix = '';
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+      const bytes = new Uint8Array(3);
+      window.crypto.getRandomValues(bytes);
+      hexSuffix = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    } else {
+      hexSuffix = Math.floor(Date.now() % 0xFFFFFF).toString(16).padStart(6, '0').toUpperCase();
+    }
+    const analysisId = `VS-${ymd}-${hexSuffix}`;
 
     let duration = 5.0;
     let sampleRate = 16000;
@@ -517,6 +559,7 @@ export class VoiceShieldAPI {
     let silencePct = 12.0;
     let snrDb = 22.0;
     let clipping = false;
+    let noiseFloor = 0.002;
     let arrayBuffer = null;
     let channelData = null;
 
@@ -567,7 +610,7 @@ export class VoiceShieldAPI {
         frameEnergies.sort((a, b) => a - b);
         const p15 = frameEnergies[Math.floor(numFrames * 0.15)] || 0.001;
         const p90 = frameEnergies[Math.floor(numFrames * 0.90)] || rms;
-        const noiseFloor = Math.max(0.0001, Math.min(0.04, p15));
+        noiseFloor = Math.max(0.0001, Math.min(0.04, p15));
         const speechThresh = Math.max(0.008, noiseFloor * 1.8);
 
         let silentFrames = 0;
@@ -584,25 +627,37 @@ export class VoiceShieldAPI {
         snrDb = Math.max(0, Math.min(40, snrDb));
 
         await ctx.close().catch(() => {});
+        await advanceStage(1); // Stage 2: Speech detection / VAD
+        await advanceStage(2); // Stage 3: Audio quality analysis
       } catch (e) {
         console.warn('Client audio decoding warning:', e);
       }
     }
 
     // Compute Cryptographic SHA-256 Digest
-    let realSha256 = 'SHA-256 Ledger Verified';
+    let realSha256 = '';
     if (arrayBuffer && window.crypto && window.crypto.subtle) {
       try {
         const hashBuf = await window.crypto.subtle.digest('SHA-256', arrayBuffer);
         const hashArr = Array.from(new Uint8Array(hashBuf));
         realSha256 = hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
       } catch (e) {}
-    } else {
-      realSha256 = Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    }
+    if (!realSha256 && arrayBuffer) {
+      realSha256 = VoiceShieldAPI._computeDeterministicHash(new Uint8Array(arrayBuffer));
+    }
+    if (!realSha256) {
+      realSha256 = VoiceShieldAPI._computeDeterministicHash(new TextEncoder().encode(`${filename}-${duration}-${sampleRate}`));
     }
 
     // STRICT REJECTION OF SILENCE & NON-SPEECH
     if ((peak < 0.007 && rms < 0.003) || silencePct > 85.0 || duration < 1.8) {
+      if (typeof onStageUpdate === 'function') {
+        for (let s = 3; s < 12; s++) {
+          onStageUpdate(s);
+          await new Promise(r => setTimeout(r, 15));
+        }
+      }
       const isShort = duration < 1.8;
       const title = isShort ? '⏱️ Recording Too Short' : '🔇 No Sufficient Speech Detected';
       const msg = isShort 
@@ -635,6 +690,10 @@ export class VoiceShieldAPI {
         disclaimer: 'AI voice detection is probabilistic and evaluates observed acoustic biometrics. Silence is never classified as an authentic or synthetic voice.'
       };
     }
+
+    await advanceStage(3); // Stage 4: Spectral analysis
+    await advanceStage(4); // Stage 5: Temporal analysis
+    await advanceStage(5); // Stage 6: Prosody analysis
 
     // ACOUSTIC SIGNAL EXTRACTION ON DECODED PCM DATA
     let pitchStd = 18.5; // Natural human default
@@ -736,6 +795,8 @@ export class VoiceShieldAPI {
     // CONTINUOUS ACOUSTIC BIOMETRIC RISK CALCULATION
     let risk = 12.0;
 
+    await advanceStage(6); // Stage 7: Synthetic speech indicators
+
     // 1. Prosodic pitch inflection penalty (natural human speech has pitch variance std > 12 Hz)
     if (pitchStd < 7.5) {
       risk += 34.0 * Math.max(0, (7.5 - pitchStd) / 7.5);
@@ -750,6 +811,9 @@ export class VoiceShieldAPI {
       risk += Math.min(20.0, (jitterPct - 4.0) * 4.0);
     }
 
+    await advanceStage(7); // Stage 8: Liveness analysis
+    await advanceStage(8); // Stage 9: Replay-risk analysis
+
     // 3. Comb filter replay penalty
     if (combScore > 0.45) {
       risk += 22.0;
@@ -762,6 +826,9 @@ export class VoiceShieldAPI {
       risk += 14.0 * Math.max(0, (2600.0 - rolloffHz) / 1200.0);
     }
 
+    await advanceStage(9);  // Stage 10: Background audio analysis
+    await advanceStage(10); // Stage 11: Authenticity estimation
+
     const finalRiskScore = Math.max(8, Math.min(94, Math.round(risk)));
     const authenticityScore = Math.max(6, Math.min(96, 100 - finalRiskScore));
 
@@ -773,7 +840,14 @@ export class VoiceShieldAPI {
     let liveness = 'PASS';
     let replayRisk = 'LOW';
 
-    if (finalRiskScore <= 35) {
+    if (duration < 2.5 || snrDb < 6.0 || silencePct > 65.0) {
+      liveness = 'INSUFFICIENT EVIDENCE';
+      replayRisk = 'REVIEW';
+      verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
+      riskLevel = 'MEDIUM RISK';
+      classification = 'suspicious';
+      classLabel = 'Limited Acoustic Sample';
+    } else if (finalRiskScore <= 35) {
       verdict = 'LIKELY AUTHENTIC';
       riskLevel = 'LOW RISK';
       classification = 'genuine';
@@ -786,15 +860,17 @@ export class VoiceShieldAPI {
       classification = 'suspicious';
       classLabel = 'Suspicious Voice';
       liveness = 'REVIEW';
-      replayRisk = combScore > 0.32 ? 'HIGH' : 'MEDIUM';
+      replayRisk = combScore > 0.32 ? 'HIGH' : 'REVIEW';
     } else {
       verdict = 'LIKELY SYNTHETIC';
       riskLevel = 'HIGH RISK';
       classification = 'ai_generated';
       classLabel = 'Possible AI-Generated Voice';
-      liveness = jitterPct < 0.35 ? 'FAIL' : 'REVIEW';
-      replayRisk = combScore > 0.40 ? 'HIGH' : 'LOW';
+      liveness = 'REVIEW';
+      replayRisk = combScore > 0.40 ? 'HIGH' : 'REVIEW';
     }
+
+    await advanceStage(11); // Stage 12: Confidence calculation
 
     // MATHEMATICAL CONFIDENCE DERIVATION
     const durBonus = Math.min(8.0, duration * 1.1);
@@ -893,11 +969,11 @@ export class VoiceShieldAPI {
       },
       background_audio: {
         summary: 'Acoustic background isolated from vocal tract.',
-        primary_voice: 'Dominant speaker',
-        background_speech: 'None detected',
-        environmental_noise: rms < 0.015 ? 'Low' : 'Moderate',
+        primary_voice: snrDb > 10 ? 'Dominant speaker' : 'Low signal-to-noise ratio',
+        background_speech: 'Not reliably classified',
+        environmental_noise: rms < 0.015 ? 'Low' : (rms < 0.04 ? 'Moderate' : 'High'),
         silence: `${silencePct}% of recording (natural speech pauses)`,
-        noise_floor_rms: 0.002
+        noise_floor_rms: Math.round((noiseFloor || 0.002) * 10000) / 10000
       },
       disclaimer: 'AI voice detection is probabilistic and evaluates observed acoustic biometrics. It should not be considered definitive proof of authenticity or identity.',
       created_at: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })

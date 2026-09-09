@@ -35,8 +35,13 @@ export class AudioRecorder {
   }
 
   async start() {
-    if (!AudioRecorder.isSupported()) {
-      this.onError('Your browser does not support audio recording. Please use modern Chrome, Edge, or Firefox.');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.onError('Microphone access (getUserMedia) is unavailable or not supported in this browser environment. Ensure HTTPS is active.');
+      return false;
+    }
+
+    if (!window.MediaRecorder) {
+      this.onError('Browser does not support MediaRecorder audio capture. Please use a modern browser (Chrome, Edge, Firefox, Safari).');
       return false;
     }
 
@@ -119,25 +124,34 @@ export class AudioRecorder {
         }
       }, 100);
 
-      // Real-time audio level meter
-      const dataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+      // Real-time audio input level and peak meter using getByteTimeDomainData()
+      const timeData = new Uint8Array(this.analyserNode.fftSize);
       this.meterInterval = setInterval(() => {
         if (this.isRecording && !this.isPaused && this.analyserNode) {
-          this.analyserNode.getByteFrequencyData(dataArray);
-          let sum = 0;
-          let peak = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            sum += dataArray[i];
-            if (dataArray[i] > peak) peak = dataArray[i];
+          this.analyserNode.getByteTimeDomainData(timeData);
+          let sumSquares = 0;
+          let peakSample = 0;
+          for (let i = 0; i < timeData.length; i++) {
+            // Convert byte data (centered at 128) to normalized amplitude [-1.0, 1.0]
+            const normalized = (timeData[i] - 128) / 128.0;
+            const absVal = Math.abs(normalized);
+            if (absVal > peakSample) peakSample = absVal;
+            sumSquares += normalized * normalized;
           }
-          const avg = sum / dataArray.length;
-          const levelPct = Math.min(100, Math.round((avg / 128) * 100));
-          const peakPct = Math.min(100, Math.round((peak / 255) * 100));
+          const rms = Math.sqrt(sumSquares / timeData.length);
+          // Scale RMS to percentage (0..100) with dynamic response for speech
+          const levelPct = Math.min(100, Math.max(0, Math.round(rms * 280)));
+          const peakPct = Math.min(100, Math.max(0, Math.round(peakSample * 100)));
           this.onLevelUpdate(levelPct, peakPct);
         } else {
           this.onLevelUpdate(0, 0);
         }
-      }, 50);
+      }, 40);
+
+      this.mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event.error);
+        this.onError(`Recording failed: ${event.error ? event.error.name : 'Unknown capture error'}`);
+      };
 
       this.onStateChange('recording', {
         analyser: this.analyserNode,
@@ -148,11 +162,17 @@ export class AudioRecorder {
     } catch (err) {
       console.error('Microphone error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        this.onError('Microphone access was denied. Please allow microphone access in your browser settings and try again.');
+        this.onError('Microphone permission denied. Please allow microphone access in your browser settings and try again.');
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        this.onError('No microphone device found. Please connect a microphone and try again.');
+        this.onError('No microphone detected. Please connect an audio input device and try again.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        this.onError('Microphone is unavailable or already in use by another application.');
+      } else if (err.name === 'OverconstrainedError') {
+        this.onError('No compatible microphone matching requested audio constraints was found.');
+      } else if (err.name === 'SecurityError') {
+        this.onError('Microphone access is blocked by security policy (HTTPS is required).');
       } else {
-        this.onError(`Microphone initialization error: ${err.message || 'Unknown error'}`);
+        this.onError(`Recording failed: ${err.message || 'Could not start audio recording'}`);
       }
       return false;
     }

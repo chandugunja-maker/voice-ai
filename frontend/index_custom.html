@@ -323,7 +323,7 @@
         <!-- =====================================================================
              Verification Result Section
              ===================================================================== -->
-        <div id="resultContainer" class="result-container" style="margin-top: 3.5rem;">
+        <div id="resultContainer" class="result-container" style="display: none; margin-top: 3.5rem;">
           <div class="result-hero-card">
             <h2 style="font-size: 1.75rem; margin-bottom: 1.25rem;">Voice Verification Result</h2>
 
@@ -332,7 +332,7 @@
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
-              <span>LIKELY GENUINE</span>
+              <span>--</span>
             </div>
 
             <!-- Dual Metrics Row: Risk Score + Confidence -->
@@ -345,11 +345,11 @@
                     <circle id="gaugeArc" class="gauge-value-arc" cx="85" cy="85" r="70" stroke-dasharray="440" stroke-dashoffset="440" />
                   </svg>
                   <div class="gauge-center-text">
-                    <div id="gaugeScoreNum" class="gauge-score-number">18</div>
+                    <div id="gaugeScoreNum" class="gauge-score-number">--</div>
                     <div class="gauge-score-total">/ 100</div>
                   </div>
                 </div>
-                <div id="gaugeRiskLabel" class="gauge-label">Low Risk</div>
+                <div id="gaugeRiskLabel" class="gauge-label">--</div>
                 <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Biometric Risk Index</div>
               </div>
 
@@ -358,9 +358,9 @@
                 <div class="confidence-header">
                   <span>Detection Confidence</span>
                 </div>
-                <div id="confidenceValue" class="confidence-val">94%</div>
+                <div id="confidenceValue" class="confidence-val">--</div>
                 <div class="confidence-bar-bg">
-                  <div id="confidenceBarFill" class="confidence-bar-fill" style="width: 94%;"></div>
+                  <div id="confidenceBarFill" class="confidence-bar-fill" style="width: 0%;"></div>
                 </div>
                 <p class="distinction-note">
                   <strong>Risk Score ≠ Confidence:</strong> Risk measures probability of synthetic cloning anomalies; Confidence indicates acoustic feature certainty.
@@ -411,8 +411,8 @@
                   </svg>
                   <span>Tamper-Evident Ledger Digest</span>
                 </div>
-                <div id="blockchainBlockIndex" style="font-size: 0.8rem; color: var(--text-muted);">Block #42 • Cryptographic Proof</div>
-                <div id="blockchainProofHash" class="proof-hash-code">2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae</div>
+                <div id="blockchainBlockIndex" style="font-size: 0.8rem; color: var(--text-muted);">Cryptographic Integrity Proof</div>
+                <div id="blockchainProofHash" class="proof-hash-code">--</div>
               </div>
               <button id="btnCopyProofHash" class="btn btn-secondary btn-sm" type="button">
                 Copy Hash

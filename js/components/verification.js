@@ -46,6 +46,14 @@ export class VerificationWorkspace {
         this._handleRecorderState(state, data);
       },
       onError: (errorMsg) => {
+        const lower = (errorMsg || '').toLowerCase();
+        if (lower.includes('denied')) {
+          this._setMicStatus('Permission denied', 'status-denied');
+        } else if (lower.includes('no microphone')) {
+          this._setMicStatus('No microphone detected', 'status-denied');
+        } else {
+          this._setMicStatus('Recording failed', 'status-denied');
+        }
         toast.show(errorMsg, 'error', 6000);
         this._resetRecordingUI();
       }
@@ -56,36 +64,47 @@ export class VerificationWorkspace {
   }
 
   async _checkMicPermission() {
-    const statusEl = document.getElementById('micPermissionStatus');
-    if (!statusEl) return;
+    this._setMicStatus('Checking microphone...', 'status-prompt');
+
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasAudioInput = devices.some(d => d.kind === 'audioinput');
+        if (!hasAudioInput) {
+          this._setMicStatus('No microphone detected', 'status-denied');
+          return;
+        }
+      } catch (e) {}
+    }
 
     if (navigator.permissions && navigator.permissions.query) {
       try {
         const result = await navigator.permissions.query({ name: 'microphone' });
-        this._updateMicPermissionUI(result.state);
-        result.onchange = () => this._updateMicPermissionUI(result.state);
+        this._mapPermissionStateToStatus(result.state);
+        result.onchange = () => this._mapPermissionStateToStatus(result.state);
       } catch (e) {
-        this._updateMicPermissionUI('prompt');
+        this._setMicStatus('Permission required', 'status-prompt');
       }
     } else {
-      this._updateMicPermissionUI('prompt');
+      this._setMicStatus('Permission required', 'status-prompt');
     }
   }
 
-  _updateMicPermissionUI(state) {
+  _mapPermissionStateToStatus(state) {
+    if (state === 'granted') {
+      this._setMicStatus('Microphone ready', 'status-ready');
+    } else if (state === 'denied') {
+      this._setMicStatus('Permission denied', 'status-denied');
+    } else {
+      this._setMicStatus('Permission required', 'status-prompt');
+    }
+  }
+
+  _setMicStatus(text, className) {
     const statusEl = document.getElementById('micPermissionStatus');
     if (!statusEl) return;
-
-    if (state === 'granted') {
-      statusEl.className = 'mic-status-pill status-ready';
-      statusEl.textContent = '● Granted';
-    } else if (state === 'denied') {
-      statusEl.className = 'mic-status-pill status-denied';
-      statusEl.textContent = '✕ Denied';
-    } else {
-      statusEl.className = 'mic-status-pill status-ready';
-      statusEl.textContent = '● Ready';
-    }
+    statusEl.className = `mic-status-pill ${className}`;
+    statusEl.textContent = text;
   }
 
   _bindElements() {
@@ -115,6 +134,7 @@ export class VerificationWorkspace {
         pauseBtn.style.display = 'none';
         if (resumeBtn) resumeBtn.style.display = 'inline-flex';
         if (statusLabel) statusLabel.textContent = 'Recording Paused';
+        this._setMicStatus('Recording paused', 'status-prompt');
       });
     }
 
@@ -124,6 +144,7 @@ export class VerificationWorkspace {
         resumeBtn.style.display = 'none';
         if (pauseBtn) pauseBtn.style.display = 'inline-flex';
         if (statusLabel) statusLabel.textContent = 'Recording in Progress';
+        this._setMicStatus('Recording', 'status-recording');
       });
     }
 
@@ -131,6 +152,7 @@ export class VerificationWorkspace {
     if (stopRecordBtn) {
       stopRecordBtn.addEventListener('click', () => {
         this.recorder.stop();
+        this._setMicStatus('Recording stopped', 'status-ready');
       });
     }
 
@@ -270,12 +292,13 @@ export class VerificationWorkspace {
     this.currentBlob = null;
     this.currentFilename = `rec_${Date.now()}.wav`;
 
+    this._setMicStatus('Requesting microphone permission...', 'status-prompt');
+
     const started = await this.recorder.start();
     if (!started) {
-      this._updateMicPermissionUI('denied');
       return;
     }
-    this._updateMicPermissionUI('granted');
+    this._setMicStatus('Recording', 'status-recording');
 
     // Switch UI to active recording state
     const startBtn = document.getElementById('btnStartVoiceCheck');
@@ -302,7 +325,14 @@ export class VerificationWorkspace {
   }
 
   async _handleRecorderState(state, data) {
-    if (state === 'stopped') {
+    if (state === 'recording') {
+      this._setMicStatus('Recording', 'status-recording');
+    } else if (state === 'paused') {
+      this._setMicStatus('Recording paused', 'status-prompt');
+    } else if (state === 'resumed') {
+      this._setMicStatus('Recording', 'status-recording');
+    } else if (state === 'stopped') {
+      this._setMicStatus('Recording stopped', 'status-ready');
       if (this.liveVisualizer) {
         this.liveVisualizer.stop();
       }
@@ -370,6 +400,8 @@ export class VerificationWorkspace {
     this.audioPlayer.pause();
     this.currentBlob = null;
     this.currentDuration = 0;
+
+    this._checkMicPermission();
 
     const startBtn = document.getElementById('btnStartVoiceCheck');
     const activePanel = document.getElementById('recordingActivePanel');
@@ -521,18 +553,51 @@ export class VerificationWorkspace {
     };
   }
 
-  async _analyzeExample(sampleId) {
-    this._showAnalysisOverlay();
-    this._animateAnalysisStages(async () => {
-      try {
-        const result = await VoiceShieldAPI.analyzeDemo(sampleId);
-        this._hideAnalysisOverlay();
-        this.onAnalysisComplete(result, `example-${sampleId}.wav`);
-      } catch (err) {
-        this._hideAnalysisOverlay();
-        toast.show(`Analysis failed: ${err.message}`, 'error');
+  _updateAnalysisStage(stageIdx) {
+    const stageItems = document.querySelectorAll('#analysisStagesList li');
+    if (!stageItems || stageItems.length === 0) return;
+
+    stageItems.forEach((item, idx) => {
+      const icon = item.querySelector('.stage-icon');
+      if (idx < stageIdx) {
+        item.className = 'stage-item completed';
+        if (icon) icon.innerHTML = '✓';
+      } else if (idx === stageIdx) {
+        item.className = 'stage-item in-progress';
+        if (icon) icon.innerHTML = '<div class="stage-spinner"></div>';
+      } else {
+        item.className = 'stage-item';
+        if (icon) icon.innerHTML = '○';
       }
     });
+  }
+
+  _completeAllAnalysisStages() {
+    const stageItems = document.querySelectorAll('#analysisStagesList li');
+    if (!stageItems) return;
+    stageItems.forEach(item => {
+      item.className = 'stage-item completed';
+      const icon = item.querySelector('.stage-icon');
+      if (icon) icon.innerHTML = '✓';
+    });
+  }
+
+  async _analyzeExample(sampleId) {
+    this._showAnalysisOverlay();
+    this._updateAnalysisStage(0);
+
+    try {
+      const result = await VoiceShieldAPI.analyzeDemo(sampleId, (stageIdx) => {
+        this._updateAnalysisStage(stageIdx);
+      });
+      this._completeAllAnalysisStages();
+      await new Promise(r => setTimeout(r, 120));
+      this._hideAnalysisOverlay();
+      this.onAnalysisComplete(result, `example-${sampleId}.wav`);
+    } catch (err) {
+      this._hideAnalysisOverlay();
+      toast.show(`Analysis failed: ${err.message}`, 'error');
+    }
   }
 
   async startAnalysis() {
@@ -542,21 +607,25 @@ export class VerificationWorkspace {
     }
 
     this._showAnalysisOverlay();
+    this._updateAnalysisStage(0);
 
-    this._animateAnalysisStages(async () => {
-      try {
-        const result = await VoiceShieldAPI.analyzeVoice(
-          this.currentBlob,
-          this.currentFilename,
-          this.sampleHint
-        );
-        this._hideAnalysisOverlay();
-        this.onAnalysisComplete(result, this.currentFilename);
-      } catch (err) {
-        this._hideAnalysisOverlay();
-        toast.show(`Analysis error: ${err.message || 'Verification failed'}`, 'error');
-      }
-    });
+    try {
+      const result = await VoiceShieldAPI.analyzeVoice(
+        this.currentBlob,
+        this.currentFilename,
+        this.sampleHint,
+        (stageIdx) => {
+          this._updateAnalysisStage(stageIdx);
+        }
+      );
+      this._completeAllAnalysisStages();
+      await new Promise(r => setTimeout(r, 120));
+      this._hideAnalysisOverlay();
+      this.onAnalysisComplete(result, this.currentFilename);
+    } catch (err) {
+      this._hideAnalysisOverlay();
+      toast.show(`Analysis error: ${err.message || 'Verification failed'}`, 'error');
+    }
   }
 
   _showAnalysisOverlay() {
@@ -581,41 +650,6 @@ export class VerificationWorkspace {
     if (this.scanVisualizer) {
       this.scanVisualizer.stop();
     }
-  }
-
-  _animateAnalysisStages(onComplete) {
-    const stageItems = document.querySelectorAll('#analysisStagesList li');
-    if (!stageItems || stageItems.length === 0) {
-      setTimeout(onComplete, 600);
-      return;
-    }
-
-    stageItems.forEach(item => {
-      item.className = 'stage-item';
-      const icon = item.querySelector('.stage-icon');
-      if (icon) icon.innerHTML = '○';
-    });
-
-    let currentStage = 0;
-    const interval = setInterval(() => {
-      if (currentStage < stageItems.length) {
-        const item = stageItems[currentStage];
-        item.classList.add('completed');
-        const icon = item.querySelector('.stage-icon');
-        if (icon) icon.innerHTML = '✓';
-
-        if (currentStage + 1 < stageItems.length) {
-          const next = stageItems[currentStage + 1];
-          next.classList.add('in-progress');
-          const nextIcon = next.querySelector('.stage-icon');
-          if (nextIcon) nextIcon.innerHTML = '<div class="stage-spinner"></div>';
-        }
-        currentStage++;
-      } else {
-        clearInterval(interval);
-        setTimeout(onComplete, 200);
-      }
-    }, 180);
   }
 
   async _runMicrophoneTest() {
