@@ -307,6 +307,7 @@ export class VerificationWorkspace {
 
     const started = await this.recorder.start();
     if (!started) {
+      await this._checkMicPermission();
       return;
     }
     this._setMicStatus('Recording', 'status-recording');
@@ -344,6 +345,15 @@ export class VerificationWorkspace {
       this._setMicStatus('Recording Paused', 'status-prompt');
     } else if (state === 'resumed') {
       this._setMicStatus('Recording in Progress', 'status-recording');
+    } else if (state === 'error') {
+      const err = data;
+      if (err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+        this._setMicStatus('Permission Denied', 'status-denied');
+      } else if (err && (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError')) {
+        this._setMicStatus('Microphone Unavailable', 'status-denied');
+      } else {
+        await this._checkMicPermission();
+      }
     } else if (state === 'stopped') {
       this._setMicStatus('Microphone Ready', 'status-ready');
       if (this.liveVisualizer) {
