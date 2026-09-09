@@ -426,6 +426,27 @@ class VoiceDetectionService:
             background_level=quality_info["background_noise_level"],
             audio_duration=quality_info["duration"],
             processing_time=processing_time,
+            acoustic_features={
+                "zero_crossing_rate": raw.get("zero_crossing_rate", 0.045),
+                "spectral_centroid": raw.get("spectral_centroid", 1800.0),
+                "spectral_bandwidth": raw.get("spectral_bandwidth", 1200.0),
+                "spectral_rolloff": raw.get("spectral_rolloff", 3500.0),
+                "spectral_flatness": raw.get("spectral_flatness", 0.15),
+                "mean_pitch_f0": raw.get("mean_pitch", 142.0),
+                "pitch_variance": raw.get("pitch_variance", 14.0),
+                "jitter_pct": raw.get("jitter_pct", 1.0),
+                "voiced_frames": raw.get("voiced_frames", 0),
+                "unvoiced_frames": raw.get("unvoiced_frames", 0),
+                "voiced_unvoiced_ratio": raw.get("voiced_unvoiced_ratio", 0.8),
+                "energy_variance": raw.get("energy_variance", 0.01)
+            },
+            sih_metadata={
+                "problem_statement": "AI-Powered Real-Time Detection and Prevention of Voice Cloning Impersonation Attacks",
+                "theme": "Blockchain & Cybersecurity (SIH 2026)",
+                "architecture_layer": "Python FastAPI + DSP Acoustic Anomaly Engine",
+                "ml_framework_status": f"Modular ML Layer ({self.framework.upper()})",
+                "blockchain_ledger_status": "Anchored to SHA-256 Tamper-Evident Ledger"
+            },
             blockchain_proof=proof,
             verification_hash=proof.verification_hash,
             sha256_hash=proof.audio_sha256,

@@ -441,6 +441,7 @@ class AcousticAnalyzer:
         sum_mag = float(np.sum(fft_mag))
         if sum_mag > 1e-6:
             spectral_centroid = float(np.sum(freqs * fft_mag) / sum_mag)
+            spectral_bandwidth = float(np.sqrt(np.sum(((freqs - spectral_centroid) ** 2) * fft_mag) / sum_mag))
             cum_mag = np.cumsum(fft_mag)
             roll_idx = np.where(cum_mag >= 0.85 * sum_mag)[0]
             spectral_rolloff = float(freqs[roll_idx[0]]) if len(roll_idx) > 0 else float(sr / 2)
@@ -456,9 +457,21 @@ class AcousticAnalyzer:
             hf_ratio = float(hf_energy / mf_energy)
         else:
             spectral_centroid = 1500.0
+            spectral_bandwidth = 1200.0
             spectral_rolloff = 3500.0
             spectral_flatness = 0.15
             hf_ratio = 0.10
+
+        # Zero-crossing rate (ZCR)
+        if len(samples) > 1:
+            zcr = float(np.mean(np.abs(np.diff(np.signbit(samples).astype(np.int32)))))
+        else:
+            zcr = 0.05
+
+        # Voiced-to-Unvoiced Frame Ratio & Energy Dynamics
+        unvoiced_frames = max(0, num_frames - len(pitches))
+        vu_ratio = round(len(pitches) / max(1, unvoiced_frames), 2)
+        energy_variance = float(np.std(frame_energies)) if frame_energies else 0.01
 
         # 5. Acoustic Liveness & Replay Analysis (Speaker-through-mic acoustic transfer)
         # Replay characteristics:
@@ -509,7 +522,9 @@ class AcousticAnalyzer:
             "rms_energy": round(rms, 4),
             "peak_amplitude": round(peak, 4),
             "noise_floor_rms": round(noise_floor_rms, 5),
+            "zero_crossing_rate": round(zcr, 4),
             "spectral_centroid": round(spectral_centroid, 1),
+            "spectral_bandwidth": round(spectral_bandwidth, 1),
             "spectral_rolloff": round(spectral_rolloff, 1),
             "spectral_flatness": round(spectral_flatness, 3),
             "hf_ratio": round(hf_ratio, 4),
@@ -519,6 +534,9 @@ class AcousticAnalyzer:
             "harmonicity": round(avg_harmonicity, 3),
             "dig_silence_ratio": round(dig_silence_ratio, 3),
             "voiced_frames": len(pitches),
+            "unvoiced_frames": unvoiced_frames,
+            "voiced_unvoiced_ratio": vu_ratio,
+            "energy_variance": round(energy_variance, 4),
             "background_level": background_level,
             "background_type": background_type,
             "multiple_voices": multiple_voices,

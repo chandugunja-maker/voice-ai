@@ -110,6 +110,8 @@ class VoiceAnalysisResponse(BaseModel):
     # Metadata
     audio_duration: float = 0.0
     processing_time: float = 0.0
+    acoustic_features: Optional[Dict[str, Any]] = None
+    sih_metadata: Optional[Dict[str, Any]] = None
     blockchain_proof: Optional[BlockchainProof] = None
     demo_mode: bool = False
     notice: str = "VoiceShield AI Decision Support"

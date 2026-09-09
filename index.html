@@ -39,6 +39,7 @@
         <a href="#analyze" id="navLinkLiveGuard" class="nav-link">🛡️ Live Call Guard</a>
         <a href="#dashboard" class="nav-link">Dashboard</a>
         <a href="#history" class="nav-link">History</a>
+        <a href="#architecture" class="nav-link">Architecture</a>
         <a href="#about" class="nav-link">About</a>
         <a href="#privacy" class="nav-link">Privacy</a>
       </nav>
@@ -925,6 +926,241 @@
             AI voice detection is probabilistic. Quality degradations (such as extreme cellular compression or heavy stadium noise) reduce acoustic boundary certainty. VoiceShield AI acts as an enterprise decision-support tool and never claims 100% detection accuracy.
           </p>
         </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECTION 7: SYSTEM ARCHITECTURE & SIH 2026 TECHNICAL OVERVIEW
+         ======================================================================= -->
+    <section id="architecture" class="section" style="border-top: 1px solid var(--border-subtle);">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">SIH 2026 Technical Architecture</div>
+          <h2 class="section-title">System Architecture & Pipeline</h2>
+          <p class="section-subtitle">Comprehensive design mapping for real-time voice cloning detection, biometric verification, and cybersecurity auditing.</p>
+        </div>
+
+        <!-- SIH Problem Statement & Theme Hero Banner -->
+        <div class="arch-hero-box">
+          <div class="arch-tag-sih">Smart India Hackathon 2026 • Theme: Blockchain & Cybersecurity</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
+            Problem: AI-Powered Real-Time Detection and Prevention of Voice Cloning Impersonation Attacks
+          </h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+            VoiceShield AI combines client-side Digital Signal Processing (DSP), multi-dimensional acoustic prosody modeling, independent biometric speaker verification, and deterministic SHA-256 cryptographic audit anchoring to detect and mitigate synthetic voice fraud in real-time.
+          </p>
+        </div>
+
+        <!-- 9-Stage Audio Verification Pipeline -->
+        <h3 style="font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1.25rem;">
+          End-to-End Processing Pipeline (9 Stages)
+        </h3>
+        
+        <div class="arch-pipeline-grid">
+          <!-- Stage 1 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 01</span>
+                <span class="arch-status-pill arch-status-active">IMPLEMENTED</span>
+              </div>
+              <h4 class="arch-step-title">Audio Capture & Ingestion</h4>
+              <p class="arch-step-desc">
+                Captures high-fidelity Float32 PCM audio streams via microphone recording, multi-format file uploads (WAV, MP3, M4A, FLAC, OGG), or live rolling conversational buffers.
+              </p>
+            </div>
+            <div class="arch-step-tech">Web Audio API • MediaStream • AudioContext</div>
+          </div>
+
+          <!-- Stage 2 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 02</span>
+                <span class="arch-status-pill arch-status-active">IMPLEMENTED</span>
+              </div>
+              <h4 class="arch-step-title">Signal Pre-processing & VAD</h4>
+              <p class="arch-step-desc">
+                Frame-by-frame energy evaluation (30ms frames), noise floor estimation, SNR calculation, and Voice Activity Detection (VAD). Enforces silence rejection: silence is never classified as AI.
+              </p>
+            </div>
+            <div class="arch-step-tech">16kHz Normalization • SNR dB • VAD Engine</div>
+          </div>
+
+          <!-- Stage 3 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 03</span>
+                <span class="arch-status-pill arch-status-active">IMPLEMENTED</span>
+              </div>
+              <h4 class="arch-step-title">Acoustic Feature Extraction</h4>
+              <p class="arch-step-desc">
+                Mathematical extraction of zero-crossing rate (ZCR), spectral centroid, bandwidth, rolloff (85%), spectral flatness, and 18ms–45ms autocorrelation delay correlation.
+              </p>
+            </div>
+            <div class="arch-step-tech">Autocorrelation • FFT Spectrum • ZCR • Rolloff</div>
+          </div>
+
+          <!-- Stage 4 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 04</span>
+                <span class="arch-status-pill arch-status-active">IMPLEMENTED</span>
+              </div>
+              <h4 class="arch-step-title">Prosody & Behavioral Dynamics</h4>
+              <p class="arch-step-desc">
+                Analyzes fundamental frequency (F0) modulation across voiced frames, period perturbation micro-jitter, voiced/unvoiced transitions, and digital zero silence in pauses.
+              </p>
+            </div>
+            <div class="arch-step-tech">F0 Pitch Variance • Micro-Jitter % • Pause Acoustics</div>
+          </div>
+
+          <!-- Stage 5 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 05</span>
+                <span class="arch-status-pill arch-status-modular">DSP + ML INTERFACE</span>
+              </div>
+              <h4 class="arch-step-title">Deepfake & Replay Screening</h4>
+              <p class="arch-step-desc">
+                Client-side DSP anomaly screening evaluates monotonic pitch flatness and vocoder artifacts. Modular Python FastAPI architecture allows plugging cloud TensorFlow/PyTorch deep learning models.
+              </p>
+            </div>
+            <div class="arch-step-tech">DSP Anomaly Engine • Modular TensorFlow Schema</div>
+          </div>
+
+          <!-- Stage 6 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 06</span>
+                <span class="arch-status-pill arch-status-active">IMPLEMENTED</span>
+              </div>
+              <h4 class="arch-step-title">Speaker Identity Verification</h4>
+              <p class="arch-step-desc">
+                Decoupled identity layer compares observed pitch profile and spectral footprint against locally enrolled reference voices. Unknown speaker ≠ synthetic voice.
+              </p>
+            </div>
+            <div class="arch-step-tech">Euclidean Biometric Match • LocalStorage RAM</div>
+          </div>
+
+          <!-- Stage 7 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 07</span>
+                <span class="arch-status-pill arch-status-active">IMPLEMENTED</span>
+              </div>
+              <h4 class="arch-step-title">Dynamic Risk Scoring Engine</h4>
+              <p class="arch-step-desc">
+                Multi-evidence weighted fusion across synthetic markers, replay risk, audio quality, noise penalties, and duration. Maps to LOW, MEDIUM, or HIGH risk with full explainability.
+              </p>
+            </div>
+            <div class="arch-step-tech">Multi-Evidence Fusion • Decision Boundary Margin</div>
+          </div>
+
+          <!-- Stage 8 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 08</span>
+                <span class="arch-status-pill arch-status-active">IMPLEMENTED</span>
+              </div>
+              <h4 class="arch-step-title">Real-Time Alerts & Response</h4>
+              <p class="arch-step-desc">
+                Live Call Guard uses 2.5s rolling window temporal smoothing. Triggers non-intrusive 🚨 SUSPICIOUS VOICE DETECTED alerts on persistent anomalies without interrupting calls.
+              </p>
+            </div>
+            <div class="arch-step-tech">FIFO Smoothing • Event Timeline • Incident Reports</div>
+          </div>
+
+          <!-- Stage 9 -->
+          <div class="arch-step-card">
+            <div>
+              <div class="arch-step-header">
+                <span class="arch-step-num">STAGE 09</span>
+                <span class="arch-status-pill arch-status-modular">LEDGER + BLOCKCHAIN</span>
+              </div>
+              <h4 class="arch-step-title">Tamper-Evident Audit Ledger</h4>
+              <p class="arch-step-desc">
+                Calculates deterministic SHA-256 digests over verification records and anchors them to an immutable audit chain. Structured for enterprise blockchain network integration.
+              </p>
+            </div>
+            <div class="arch-step-tech">Web Crypto SHA-256 • Cryptographic Hash Chain</div>
+          </div>
+        </div>
+
+        <!-- Enterprise Integration Layers Matrix -->
+        <h3 style="font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); margin-bottom: 1rem;">
+          Enterprise System Integration Architecture
+        </h3>
+        
+        <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 2.5rem;">
+          <div style="overflow-x: auto;">
+            <table class="arch-layers-table">
+              <thead>
+                <tr>
+                  <th>Architecture Layer</th>
+                  <th>Implementation Mode</th>
+                  <th>Current Prototype Status</th>
+                  <th>Enterprise Production Scope</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1. Client-Side Browser DSP</strong></td>
+                  <td>Web Audio API & WebAssembly</td>
+                  <td><span class="arch-status-pill arch-status-active">Working & Active</span></td>
+                  <td>Zero-latency in-browser screening without transmitting raw audio to cloud servers.</td>
+                </tr>
+                <tr>
+                  <td><strong>2. Deep Learning Layer</strong></td>
+                  <td>Python FastAPI + TensorFlow</td>
+                  <td><span class="arch-status-pill arch-status-modular">Modular Interface</span></td>
+                  <td>High-throughput cloud GPU inference for complex neural vocoder artifact detection.</td>
+                </tr>
+                <tr>
+                  <td><strong>3. WebRTC & VoIP SDK</strong></td>
+                  <td>SIP / RTP Stream Hook</td>
+                  <td><span class="arch-status-pill arch-status-prod">Integration Spec</span></td>
+                  <td>In-line audio tap for enterprise contact centers, VoIP PBX, and customer support lines.</td>
+                </tr>
+                <tr>
+                  <td><strong>4. Telecom / Carrier Layer</strong></td>
+                  <td>SS7 / IMS Network Hook</td>
+                  <td><span class="arch-status-pill arch-status-prod">Production Layer</span></td>
+                  <td>Telecom carrier-level deepfake filtering before call delivery to mobile devices.</td>
+                </tr>
+                <tr>
+                  <td><strong>5. Collaboration Connectors</strong></td>
+                  <td>Browser Extension / Bot API</td>
+                  <td><span class="arch-status-pill arch-status-prod">Integration Spec</span></td>
+                  <td>Plug-in connectors for Microsoft Teams, Zoom, Slack, and WhatsApp Web meetings.</td>
+                </tr>
+                <tr>
+                  <td><strong>6. Blockchain Audit Ledger</strong></td>
+                  <td>Smart Contract / Hash Chain</td>
+                  <td><span class="arch-status-pill arch-status-modular">SHA-256 Anchored</span></td>
+                  <td>Tamper-evident distributed ledger for enterprise compliance, forensics, and audit trails.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Triad Security Principle Disclosure -->
+        <div class="card" style="border-left: 4px solid var(--accent-primary); padding: 1.25rem 1.5rem;">
+          <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">
+            🛡️ Core Design Principle: Triad Architecture Decoupling
+          </h4>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+            VoiceShield AI rigorously maintains <strong>Voice Authenticity ≠ Speaker Identity ≠ Security Threat Risk</strong>. An unknown speaker or an identity mismatch is never treated as a synthetic voice. Security risk escalates strictly when persistent mathematical evidence of voice cloning or acoustic replay is present.
+          </p>
+        </div>
+
       </div>
     </section>
 
