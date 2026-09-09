@@ -215,7 +215,15 @@ class VoiceShieldApp {
   }
 }
 
-// Initialize on DOM load
-document.addEventListener('DOMContentLoaded', () => {
-  window.app = new VoiceShieldApp();
-});
+// Initialize on DOM load or immediately if already loaded
+function startApp() {
+  if (!window.app) {
+    window.app = new VoiceShieldApp();
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
+}

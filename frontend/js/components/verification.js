@@ -47,12 +47,12 @@ export class VerificationWorkspace {
       },
       onError: (errorMsg) => {
         const lower = (errorMsg || '').toLowerCase();
-        if (lower.includes('denied')) {
-          this._setMicStatus('Permission denied', 'status-denied');
-        } else if (lower.includes('no microphone')) {
-          this._setMicStatus('No microphone detected', 'status-denied');
+        if (lower.includes('denied') || lower.includes('notallowed') || lower.includes('permission')) {
+          this._setMicStatus('Permission Denied', 'status-denied');
+        } else if (lower.includes('no microphone') || lower.includes('notfound') || lower.includes('devicesnotfound') || lower.includes('unavailable')) {
+          this._setMicStatus('Microphone Unavailable', 'status-denied');
         } else {
-          this._setMicStatus('Recording failed', 'status-denied');
+          this._setMicStatus('Microphone Unavailable', 'status-denied');
         }
         toast.show(errorMsg, 'error', 6000);
         this._resetRecordingUI();
@@ -60,6 +60,9 @@ export class VerificationWorkspace {
     });
 
     this._checkMicPermission();
+    if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+      navigator.mediaDevices.addEventListener('devicechange', () => this._checkMicPermission());
+    }
     this._bindElements();
     this._resetUploadUI();
   }
