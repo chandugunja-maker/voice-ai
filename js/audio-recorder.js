@@ -1,11 +1,13 @@
 /**
  * VoiceShield AI - Web Audio & MediaRecorder Pipeline
- * Real-time microphone capture with live frequency analysis and audio playback
+ * Real-time microphone capture with live frequency analysis, pause/resume,
+ * and audio level metering.
  */
 
 export class AudioRecorder {
   constructor(options = {}) {
     this.onTimerUpdate = options.onTimerUpdate || (() => {});
+    this.onLevelUpdate = options.onLevelUpdate || (() => {});
     this.onStateChange = options.onStateChange || (() => {});
     this.onError = options.onError || (() => {});
 
@@ -18,21 +20,20 @@ export class AudioRecorder {
     this.recordedUrl = null;
 
     this.isRecording = false;
+    this.isPaused = false;
     this.startTime = 0;
+    this.pausedDuration = 0;
+    this.pauseStartTime = 0;
     this.timerInterval = null;
+    this.meterInterval = null;
     this.elapsedSeconds = 0;
+    this.sampleRate = 16000;
   }
 
-  /**
-   * Checks browser support for MediaRecorder and getUserMedia
-   */
   static isSupported() {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
   }
 
-  /**
-   * Requests mic permission and initializes recording stream
-   */
   async start() {
     if (!AudioRecorder.isSupported()) {
       this.onError('Your browser does not support audio recording. Please use modern Chrome, Edge, or Firefox.');
@@ -43,17 +44,20 @@ export class AudioRecorder {
       this.audioStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
-          noiseSuppression: false, // Keep raw acoustics for synthetic artifact detection
+          noiseSuppression: false, // Keep raw acoustic features for synthetic artifact detection
           autoGainControl: true,
         },
       });
 
-      // Initialize Web Audio API for live frequency analysis
+      // Initialize Web Audio API for live frequency & level analysis
       const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
       this.audioContext = new AudioCtxClass();
+      this.sampleRate = this.audioContext.sampleRate || 16000;
+
       const source = this.audioContext.createMediaStreamSource(this.audioStream);
       this.analyserNode = this.audioContext.createAnalyser();
       this.analyserNode.fftSize = 256;
+      this.analyserNode.smoothingTimeConstant = 0.3;
       source.connect(this.analyserNode);
 
       // Select supported mime type
@@ -92,30 +96,59 @@ export class AudioRecorder {
           blob: this.recordedBlob,
           url: this.recordedUrl,
           duration: this.elapsedSeconds,
+          sizeBytes: this.recordedBlob.size,
+          sampleRate: this.sampleRate,
         });
       };
 
-      this.mediaRecorder.start(100); // 100ms timeslices
+      this.mediaRecorder.start(100);
       this.isRecording = true;
+      this.isPaused = false;
       this.startTime = Date.now();
+      this.pausedDuration = 0;
       this.elapsedSeconds = 0;
 
-      // Start timer tick
+      // Timer tick
       this.timerInterval = setInterval(() => {
-        this.elapsedSeconds = (Date.now() - this.startTime) / 1000;
-        const mins = Math.floor(this.elapsedSeconds / 60);
-        const secs = Math.floor(this.elapsedSeconds % 60);
-        const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        this.onTimerUpdate(formatted, this.elapsedSeconds);
+        if (!this.isPaused) {
+          this.elapsedSeconds = (Date.now() - this.startTime - this.pausedDuration) / 1000;
+          const mins = Math.floor(this.elapsedSeconds / 60);
+          const secs = Math.floor(this.elapsedSeconds % 60);
+          const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+          this.onTimerUpdate(formatted, this.elapsedSeconds);
+        }
       }, 100);
 
-      this.onStateChange('recording', { analyser: this.analyserNode });
+      // Real-time audio level meter
+      const dataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+      this.meterInterval = setInterval(() => {
+        if (this.isRecording && !this.isPaused && this.analyserNode) {
+          this.analyserNode.getByteFrequencyData(dataArray);
+          let sum = 0;
+          let peak = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+            if (dataArray[i] > peak) peak = dataArray[i];
+          }
+          const avg = sum / dataArray.length;
+          const levelPct = Math.min(100, Math.round((avg / 128) * 100));
+          const peakPct = Math.min(100, Math.round((peak / 255) * 100));
+          this.onLevelUpdate(levelPct, peakPct);
+        } else {
+          this.onLevelUpdate(0, 0);
+        }
+      }, 50);
+
+      this.onStateChange('recording', {
+        analyser: this.analyserNode,
+        sampleRate: this.sampleRate
+      });
       return true;
 
     } catch (err) {
       console.error('Microphone error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        this.onError('Microphone access denied. Please click the camera/mic icon in your address bar to allow microphone access.');
+        this.onError('Microphone access was denied. Please allow microphone access in your browser settings and try again.');
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         this.onError('No microphone device found. Please connect a microphone and try again.');
       } else {
@@ -125,20 +158,38 @@ export class AudioRecorder {
     }
   }
 
-  /**
-   * Stops recording and releases media hardware
-   */
+  pause() {
+    if (!this.isRecording || this.isPaused) return;
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      this.mediaRecorder.pause();
+      this.isPaused = true;
+      this.pauseStartTime = Date.now();
+      this.onStateChange('paused', { duration: this.elapsedSeconds });
+    }
+  }
+
+  resume() {
+    if (!this.isRecording || !this.isPaused) return;
+    if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
+      this.mediaRecorder.resume();
+      this.isPaused = false;
+      this.pausedDuration += (Date.now() - this.pauseStartTime);
+      this.onStateChange('resumed', { duration: this.elapsedSeconds });
+    }
+  }
+
   stop() {
     if (!this.isRecording) return;
 
     this.isRecording = false;
+    this.isPaused = false;
     clearInterval(this.timerInterval);
+    clearInterval(this.meterInterval);
 
     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
       this.mediaRecorder.stop();
     }
 
-    // Stop all audio tracks
     if (this.audioStream) {
       this.audioStream.getTracks().forEach((track) => track.stop());
     }

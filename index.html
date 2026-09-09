@@ -3,52 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VoiceShield AI — Live Voice Verification & AI Detection</title>
-  <meta name="description" content="AI-powered real-time voice verification and deepfake voice detection designed to protect users from voice-cloning impersonation attacks." />
+  <title>VoiceShield AI — Detect AI Voices. Verify Authenticity.</title>
+  <meta name="description" content="Enterprise AI voice security platform. Analyze voice recordings using multiple audio and authenticity signals to identify potentially synthetic or manipulated speech." />
   <link rel="icon" type="image/svg+xml" href="./vite.svg" />
   <link rel="stylesheet" href="./css/main.css" />
   <link rel="stylesheet" href="./css/components.css" />
-  <!-- API URL config: set VOICESHIELD_API_URL to your deployed backend URL on Vercel -->
   <script>
-    // When deploying: replace the empty string below with your backend URL, e.g.:
-    // window.VOICESHIELD_API_URL = "https://voiceshield-backend.onrender.com";
-    window.VOICESHIELD_API_URL = "";
+    window.VOICESHIELD_API_URL = window.VOICESHIELD_API_URL || "";
   </script>
 </head>
 <body>
 
   <!-- =========================================================================
-       Navigation Bar
+       1. Top Navigation Bar
        ========================================================================= -->
   <header class="navbar" role="banner">
     <div class="container nav-container">
       <a href="#home" class="nav-brand" aria-label="VoiceShield AI Home">
         <div class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             <path d="M9 12l2 2 4-4"/>
           </svg>
         </div>
         <span>VoiceShield AI</span>
-        <span class="brand-badge">SIH 2026</span>
+        <span class="brand-badge">SECURITY</span>
       </a>
 
       <nav id="navMenu" class="nav-menu" role="navigation" aria-label="Primary Navigation">
         <a href="#home" class="nav-link active">Home</a>
-        <a href="#verify" class="nav-link">Verify Voice</a>
-        <a href="#historySection" class="nav-link">History</a>
-        <a href="#examples" class="nav-link">Try an Example</a>
-        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#analyze" class="nav-link">Analyze Voice</a>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#history" class="nav-link">History</a>
         <a href="#about" class="nav-link">About</a>
+        <a href="#privacy" class="nav-link">Privacy</a>
       </nav>
 
       <div class="nav-actions">
-        <div class="demo-pill" title="Decision-Support Mode for SIH 2026 Demonstration">
-          <span class="demo-pill-dot"></span>
-          <span>Demo Mode</span>
-        </div>
         <button id="btnNavStartVerify" class="btn btn-primary btn-sm">
-          Start Voice Check
+          Analyze Voice
         </button>
         <button id="navToggleBtn" class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
           ☰
@@ -58,179 +51,162 @@
   </header>
 
   <!-- =========================================================================
-       Main Content
+       Main Content Area
        ========================================================================= -->
   <main class="main-content" role="main">
 
     <!-- =======================================================================
-         HERO & LIVE VOICE VERIFICATION
+         SECTION 1: HERO
          ======================================================================= -->
-    <section id="home" class="section hero" style="padding-bottom: 2rem;">
+    <section id="home" class="section hero">
       <div class="container">
-        <div class="section-header" style="max-width: 800px; margin-bottom: 2rem;">
-          <div class="section-tag">AI-Powered Voice Security</div>
-          <h1 style="margin-bottom: 1rem;">Can You Trust <br /><span class="gradient-text">The Voice?</span></h1>
-          <p class="section-subtitle" style="font-size: 1.15rem; color: var(--text-secondary);">
-            Detect suspicious and AI-generated voices before they become successful impersonation attacks.
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <div class="section-tag">AI Voice Security Platform</div>
+          <h1>Is This Voice Real <br />or AI-Generated?</h1>
+          <p class="hero-subtitle">
+            Analyze voice recordings using multiple audio and authenticity signals to identify potentially synthetic or manipulated speech.
           </p>
-          <p style="font-size: 0.95rem; color: var(--text-muted); margin-top: 0.5rem;">
-            Speak for a few seconds and VoiceShield AI will check the audio for possible voice-cloning or synthetic-voice signs.
-          </p>
-        </div>
 
-        <!-- PROBLEM & SOLUTION & HOW TO USE -->
-        <div id="problem-solution" style="max-width: 820px; margin: 0 auto 2.5rem auto;">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
-            <!-- CARD 1: THE PROBLEM -->
-            <div class="card" style="background: var(--bg-card); border: 1px solid rgba(220, 38, 38, 0.25); border-left: 4px solid #dc2626; padding: 1.25rem 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <span style="font-size: 1.25rem;">⚠️</span>
-                <h3 style="font-size: 1.05rem; font-weight: 700; color: #dc2626; margin: 0;">1. The Problem</h3>
-              </div>
-              <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
-                AI voice cloning allows fraudsters to duplicate any voice using just 3 seconds of audio, creating realistic fake distress calls and impersonation scams.
-              </p>
-            </div>
+          <div class="hero-actions">
+            <button id="btnHeroStartRecord" class="btn btn-primary btn-lg" type="button">
+              🎙️ Start Recording
+            </button>
+            <button id="btnHeroUploadAudio" class="btn btn-secondary btn-lg" type="button">
+              📁 Upload Audio
+            </button>
+          </div>
 
-            <!-- CARD 2: THE SOLUTION -->
-            <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-accent); border-left: 4px solid var(--accent-primary); padding: 1.25rem 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <span style="font-size: 1.25rem;">🛡️</span>
-                <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--accent-primary); margin: 0;">2. The Solution</h3>
-              </div>
-              <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
-                VoiceShield AI checks acoustic speech features, robotic artifacts, and synthetic voice traits to detect cloning attacks in real time.
-              </p>
-            </div>
-
-            <!-- CARD 3: HOW TO USE -->
-            <div class="card" style="background: var(--bg-card); border: 1px solid rgba(5, 150, 105, 0.25); border-left: 4px solid #059669; padding: 1.25rem 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <span style="font-size: 1.25rem;">🎙️</span>
-                <h3 style="font-size: 1.05rem; font-weight: 700; color: #059669; margin: 0;">3. How To Use</h3>
-              </div>
-              <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
-                Speak into your mic or upload an audio file below. VoiceShield AI instantly verifies authenticity and shows risk indicators.
-              </p>
-            </div>
+          <div class="trust-indicators">
+            <div class="trust-item"><span class="trust-check">✓</span> AI-powered analysis</div>
+            <div class="trust-item"><span class="trust-check">✓</span> Audio security</div>
+            <div class="trust-item"><span class="trust-check">✓</span> Confidence-based results</div>
+            <div class="trust-item"><span class="trust-check">✓</span> Privacy focused</div>
           </div>
         </div>
+      </div>
+    </section>
 
-        <div id="verify" class="verification-box">
-
-          
-          <!-- TAB SWITCHER -->
+    <!-- =======================================================================
+         SECTION 2: ANALYZE VOICE (RECORD / UPLOAD WORKSPACE)
+         ======================================================================= -->
+    <section id="analyze" class="section" style="padding-top: 1rem;">
+      <div class="container">
+        
+        <div class="verification-box">
+          <!-- Workspace Tab Navigation -->
           <div class="tab-header" role="tablist">
             <button class="tab-btn active" data-tab="live" role="tab" aria-selected="true" aria-controls="tabPaneLive">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
               </svg>
-              <span>Live Voice Verification</span>
+              <span>Record Voice</span>
             </button>
             <button class="tab-btn" data-tab="upload" role="tab" aria-selected="false" aria-controls="tabPaneUpload">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
-              <span>Upload Audio File</span>
+              <span>Upload Audio</span>
             </button>
           </div>
 
-          <div class="tab-content" style="padding: 2.25rem 1.75rem;">
+          <div class="tab-content">
 
-            <!-- ===============================================================
-                 TAB PANE 1: LIVE VOICE VERIFICATION
-                 =============================================================== -->
+            <!-- TAB 1: RECORD VOICE STUDIO -->
             <div id="tabPaneLive" class="tab-pane active" role="tabpanel">
               
-              <!-- Suggested Sentence Prompt Box -->
+              <!-- Sentence Prompt -->
               <div class="sentence-prompt-card">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
-                  <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
-                    Please say this sentence:
+                  <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;">
+                    Suggested Verification Phrase:
                   </span>
-                  <div style="display: flex; gap: 0.5rem;">
-                    <button id="btnCopySentence" class="btn btn-sm btn-tertiary" type="button" title="Copy sentence to clipboard">
-                      📋 Copy Sentence
-                    </button>
-                    <button id="btnToggleCustomSentence" class="btn btn-sm btn-tertiary" type="button">
-                      Use My Own Sentence
-                    </button>
-                  </div>
+                  <button id="btnCopySentence" class="btn btn-sm btn-tertiary" type="button">
+                    📋 Copy Phrase
+                  </button>
                 </div>
-
                 <div id="sentencePromptBox" class="sentence-text">
-                  “Hello, I am testing VoiceShield AI to verify this voice.”
+                  “Hello, I am verifying this voice recording through VoiceShield AI.”
                 </div>
-
-                <div id="customSentenceBox" style="display: none; margin-top: 0.75rem;">
-                  <input type="text" placeholder="Type or say any sentence you want to test..." class="form-control" style="width: 100%; padding: 0.65rem 1rem; border-radius: var(--radius-sm); background: var(--bg-secondary); border: 1px solid var(--border-accent); color: var(--text-primary); font-size: 0.95rem;" />
-                  <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">Speak naturally for 5–10 seconds.</p>
-                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Speak naturally for 3 to 10 seconds for reliable acoustic signal processing.</p>
               </div>
 
-              <!-- MICROPHONE RECORDING CONTROLS -->
+              <!-- Center Recording Stage -->
               <div style="text-align: center;">
 
-                <!-- Initial Idle State: Large Mic Button -->
-                <button id="btnStartVoiceCheck" class="btn-large-mic" type="button" aria-label="Start Voice Check">
-                  <span style="font-size: 1.5rem; line-height: 1;">🎙️</span>
-                  <span>Start Voice Check</span>
+                <!-- 1. Idle State: Large Start Recording Button -->
+                <button id="btnStartVoiceCheck" class="btn-large-mic" type="button" aria-label="Start Recording">
+                  <span>🎙️</span>
+                  <span>Start Recording</span>
                 </button>
 
-                <!-- Active Recording State Panel -->
+                <!-- 2. Active Recording State Panel -->
                 <div id="recordingActivePanel" style="display: none; margin-bottom: 1.5rem;">
-                  <div class="live-status-pill recording">
-                    <span class="live-record-dot"></span>
-                    <span>Listening... Please speak normally</span>
+                  <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.35rem 0.95rem; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; color: #ef4444; margin-bottom: 1rem;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+                    <span>Recording in Progress</span>
                   </div>
 
-                  <!-- Animated Sound Equalizer + Timer -->
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.5rem;">
-                    <div class="sound-equalizer">
-                      <span class="sound-bar"></span>
-                      <span class="sound-bar"></span>
-                      <span class="sound-bar"></span>
-                      <span class="sound-bar"></span>
-                      <span class="sound-bar"></span>
-                    </div>
-                    <div style="font-family: monospace; font-size: 2.25rem; font-weight: 800; color: var(--accent-primary);">
-                      <span id="recordTimerText">00:00</span>
-                    </div>
-                    <div class="sound-equalizer">
-                      <span class="sound-bar"></span>
-                      <span class="sound-bar"></span>
-                      <span class="sound-bar"></span>
-                      <span class="sound-bar"></span>
-                      <span class="sound-bar"></span>
-                    </div>
+                  <!-- Timer -->
+                  <div style="font-family: monospace; font-size: 2.75rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    <span id="recordTimerText">00:00</span>
                   </div>
 
-                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                    Recording audio... (Target: 5–10 seconds)
-                  </p>
-
-                  <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.75rem; margin-bottom: 1.25rem;">
+                  <!-- Live Waveform Canvas -->
+                  <div style="background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.75rem; margin-bottom: 1rem;">
                     <canvas id="liveWaveformCanvas" style="width: 100%; height: 80px; display: block;"></canvas>
                   </div>
 
-                  <button id="btnStopRecording" class="btn btn-danger btn-lg" type="button" style="width: 100%; max-width: 240px;">
-                    ■ Stop Recording
-                  </button>
-                </div>
-
-                <!-- Recording Complete State Panel -->
-                <div id="recordingCompletePanel" style="display: none; margin-bottom: 1.5rem;">
-                  <div class="live-status-pill complete" style="margin-bottom: 1rem;">
-                    <span>✓</span>
-                    <span>Voice captured successfully (<span id="recordedDurationBadge">00:06</span>)</span>
+                  <!-- Real-Time Audio Level Meter -->
+                  <div class="audio-meter-wrapper">
+                    <div class="audio-meter-label">
+                      <span>Audio Input Level</span>
+                      <span><span id="recordPeakIndicator" class="audio-peak-dot"></span> Peak</span>
+                    </div>
+                    <div class="audio-meter-track">
+                      <div id="recordLevelBar" class="audio-meter-bar"></div>
+                    </div>
                   </div>
 
-                  <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
-                    Your voice recording is ready for authenticity verification.
-                  </p>
+                  <!-- Active Recording Controls: Pause / Resume / Stop -->
+                  <div style="display: flex; justify-content: center; gap: 0.75rem; margin-top: 1.25rem;">
+                    <button id="btnPauseRecording" class="btn btn-secondary btn-md" type="button">
+                      ❚❚ Pause
+                    </button>
+                    <button id="btnStopRecording" class="btn btn-danger btn-md" type="button">
+                      ■ Stop Recording
+                    </button>
+                  </div>
+                </div>
 
-                  <!-- 3 Clear Action Buttons -->
+                <!-- 3. Recording Complete State Panel -->
+                <div id="recordingCompletePanel" style="display: none; margin-bottom: 1.5rem;">
+                  <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.95rem; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; color: #10b981; margin-bottom: 1rem;">
+                    <span>✓</span>
+                    <span>Voice Captured (<span id="recordedDurationBadge">00:05</span>)</span>
+                  </div>
+
+                  <!-- Post-Recording Metadata Card -->
+                  <div class="metadata-grid">
+                    <div class="metadata-card">
+                      <div class="metadata-label">Duration</div>
+                      <div id="recordedMetaDuration" class="metadata-val">5.0s</div>
+                    </div>
+                    <div class="metadata-card">
+                      <div class="metadata-label">Sample Rate</div>
+                      <div id="recordedMetaRate" class="metadata-val">16000 Hz</div>
+                    </div>
+                    <div class="metadata-card">
+                      <div class="metadata-label">File Size</div>
+                      <div id="recordedMetaSize" class="metadata-val">160 KB</div>
+                    </div>
+                    <div class="metadata-card">
+                      <div class="metadata-label">Audio Quality</div>
+                      <div class="metadata-val" style="color: #10b981;">Ready for Scan</div>
+                    </div>
+                  </div>
+
+                  <!-- Controls: Play / Record Again / Analyze Voice -->
                   <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
                     <button id="btnPlayVoicePreview" class="btn btn-secondary" type="button">
                       ▶ Play Voice
@@ -238,464 +214,430 @@
                     <button id="btnRecordAgain" class="btn btn-tertiary" type="button">
                       🔄 Record Again
                     </button>
-                    <button id="btnCheckThisVoice" class="btn btn-primary btn-lg" type="button" style="font-size: 1.1rem; padding: 0.75rem 1.75rem;">
-                      🔍 Check This Voice
+                    <button id="btnCheckThisVoice" class="btn btn-primary btn-lg" type="button">
+                      🔍 Analyze Voice
                     </button>
                   </div>
                 </div>
 
                 <!-- Test Microphone Diagnostic Button -->
-                <div style="margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; align-items: center;">
+                <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; align-items: center;">
                   <button id="btnTestMicrophone" class="btn btn-sm btn-tertiary" type="button">
-                    🎙️ Test My Microphone
+                    🎙️ Test Microphone Connection
                   </button>
-                  <div id="micTestResultBox" class="status-box" style="display: none; width: 100%; max-width: 440px;"></div>
+                  <div id="micTestResultBox" class="status-box" style="display: none; width: 100%; max-width: 440px; margin-top: 0.75rem;"></div>
                 </div>
 
               </div>
             </div>
 
-            <!-- ===============================================================
-                 TAB PANE 2: UPLOAD AUDIO
-                 =============================================================== -->
+            <!-- TAB 2: AUDIO UPLOAD -->
             <div id="tabPaneUpload" class="tab-pane" role="tabpanel">
-              <div id="uploadDropzone" class="dropzone" tabindex="0" role="button" aria-label="Audio upload area">
+              <div id="uploadDropzone" class="dropzone" tabindex="0" role="button" aria-label="Audio upload dropzone">
                 <div class="dropzone-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                   </svg>
                 </div>
-                <h3>Drop your audio file here</h3>
-                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">or</p>
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Drop audio file here or browse</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                  Supports: <strong>WAV, MP3, M4A, FLAC, OGG</strong> (Max 25 MB)
+                </p>
                 <button id="btnBrowseUpload" class="btn btn-secondary btn-sm" type="button">
-                  Browse Files
+                  Browse Audio Files
                 </button>
-                <input type="file" id="fileUploadInput" accept=".wav,.mp3,.m4a,.webm,.ogg,audio/*" style="display: none;" />
-                <div class="accepted-formats" style="margin-top: 1.25rem;">
-                  Accepts: WAV, MP3, M4A, WebM, OGG (Max 25 MB)
-                </div>
+                <input type="file" id="fileUploadInput" accept=".wav,.mp3,.m4a,.flac,.ogg,.webm,audio/*" style="display: none;" />
               </div>
 
-              <!-- Upload File Ready Bar -->
+              <!-- Upload File Ready Preview -->
               <div id="uploadFilePreview" class="audio-preview-bar">
-                <div class="preview-info">
-                  <div class="preview-icon">🎙️</div>
-                  <div class="preview-text">
-                    <h4 id="uploadedFileName">audio.wav</h4>
-                    <p id="uploadedFileSize">WAV • 1.2 MB</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                  <div>
+                    <h4 id="uploadedFileName" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.2rem;">sample.wav</h4>
+                    <p id="uploadedFileSize" style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">WAV • 1.2 MB</p>
                   </div>
-                </div>
-                <div class="playback-controls" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                  <button id="btnUploadPlayPause" class="btn-play-pause" type="button" aria-label="Play audio preview">
-                    ▶
-                  </button>
-                  <button id="btnChangeUpload" class="btn btn-secondary btn-sm" type="button">
-                    📁 Change File
-                  </button>
-                  <button id="btnCheckUploadedVoice" class="btn btn-primary btn-sm" type="button">
-                    🔍 Check This Voice
-                  </button>
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button id="btnUploadPlayPause" class="btn btn-secondary btn-sm" type="button">▶ Play</button>
+                    <button id="btnRemoveUpload" class="btn btn-tertiary btn-sm" type="button">Remove</button>
+                    <button id="btnCheckUploadedVoice" class="btn btn-primary btn-sm" type="button">🔍 Analyze Voice</button>
+                  </div>
                 </div>
               </div>
             </div>
 
           </div>
 
-          <!-- Real-Time Privacy & Security Guarantee Banner -->
-          <div style="padding: 0.85rem 1.5rem; background: rgba(0, 102, 255, 0.04); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-muted); text-align: center;">
-            <svg style="width: 15px; height: 15px; flex-shrink: 0; color: #059669;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              <path d="M9 12l2 2 4-4"/>
-            </svg>
-            <span>Audio processed securely. Never permanently stored or shared with 3rd parties.</span>
+          <!-- Security Statement Footer -->
+          <div style="padding: 0.85rem 1.5rem; background: var(--bg-primary); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; gap: 0.6rem; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+            <span style="color: #10b981; font-weight: 700;">🛡️</span>
+            <span>Audio processed in memory. Cryptographic hash recorded to tamper-evident audit ledger.</span>
           </div>
         </div>
 
         <!-- =====================================================================
-             VERIFICATION RESULT CONTAINER
+             SECTION 3: RESULT DASHBOARD CONTAINER
              ===================================================================== -->
-        <div id="resultContainer" class="result-container" style="margin-top: 3rem;">
+        <div id="resultContainer" class="result-container">
           
-          <!-- SUB-PANEL A: NO VOICE / BACKGROUND NOISE / TOO SHORT -->
-          <div id="resultNoVoicePanel" class="no-voice-card" style="display: none;">
-            <div id="noVoiceIcon" class="no-voice-icon-wrap">🔇</div>
-            <h2 id="noVoiceTitle" class="no-voice-title">No Voice Detected</h2>
-            <p id="noVoiceMessage" class="no-voice-msg">
-              We couldn't hear a clear voice in this recording.
+          <!-- State A: Insufficient Speech / Severe Noise / Quality Failure -->
+          <div id="resultNoVoicePanel" class="card" style="display: none; text-align: center; border: 1px solid var(--border-accent); padding: 2.5rem 2rem;">
+            <div id="noVoiceIcon" style="font-size: 2.5rem; margin-bottom: 0.75rem;">🔇</div>
+            <h2 id="noVoiceTitle" style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem;">No Sufficient Speech Detected</h2>
+            <p id="noVoiceMessage" style="font-size: 1rem; color: var(--text-secondary); max-width: 580px; margin: 0 auto 1.5rem auto; line-height: 1.5;">
+              The recording does not contain enough usable speech for reliable voice-authenticity analysis.
             </p>
 
-            <div id="noVoiceHints" class="no-voice-hints-box">
-              <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; font-size: 0.95rem;">Simple Tips:</div>
-              <ul id="noVoiceHintsList">
-                <li>• Please move closer to the microphone and speak clearly.</li>
-                <li>• Make sure your microphone volume is turned up.</li>
-                <li>• Speak for at least 5–10 seconds.</li>
+            <div id="noVoiceHints" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; max-width: 540px; margin: 0 auto 1.75rem auto; text-align: left;">
+              <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Guidelines:</div>
+              <ul id="noVoiceHintsList" style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.88rem; color: var(--text-secondary);">
+                <li>• Speak closer to the microphone with clear conversational volume.</li>
+                <li>• Silence is never classified as an AI voice.</li>
               </ul>
             </div>
 
             <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
-              <button class="btn btn-primary btn-action-reset" type="button">
-                Try Again
-              </button>
-              <button id="btnResultTestMic" class="btn btn-secondary" type="button">
-                Test Microphone
-              </button>
+              <button class="btn btn-primary btn-action-reset" type="button">Try Again</button>
+              <button id="btnResultTestMic" class="btn btn-secondary" type="button">Test Microphone</button>
             </div>
           </div>
 
-          <!-- SUB-PANEL B: VALID VOICE ANALYZED (Voice Verification Result) -->
-          <div id="resultValidVoicePanel" class="result-hero-card" style="display: none;">
-            <!-- Live Model / Demo Mode Banner -->
-            <div id="modelStatusBanner" style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0, 102, 255, 0.08); border: 1px solid var(--border-subtle); padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; color: var(--accent-primary); margin-bottom: 1rem;">
-              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span>
-              <span id="modelStatusText">Acoustic Biometric Detection Active</span>
-            </div>
-
-            <h2 style="font-size: 1.75rem; margin-bottom: 1.25rem;">Voice Verification Result</h2>
-
-            <!-- Verdict Badge: Likely Real / Suspicious / Possible AI-Generated -->
-            <div id="resultVerdictBadge" class="verdict-badge genuine">
-              <span>✓</span>
-              <span>Likely Real Voice</span>
-            </div>
-
-            <!-- Analysis Message (Specific Audio Explanation) -->
-            <div class="result-summary-box" style="margin-bottom: 1.5rem; background: var(--bg-secondary); border: 1px solid var(--border-subtle);">
-              <p id="resultSummaryText" style="font-size: 1.05rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.5rem;">
-                Speech was detected. The main voice was analyzed separately from the background sound.
-              </p>
-              <p id="resultSubExplanation" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
-                The main voice was analyzed separately from the background noise.
+          <!-- State B: Full Enterprise Result Dashboard -->
+          <div id="resultValidVoicePanel" style="display: none;">
+            
+            <!-- Large Verdict Card -->
+            <div id="resultVerdictBox" class="verdict-display-card">
+              <div class="verdict-tag">Voice Authenticity Result</div>
+              <h2 id="resultVerdictText" class="verdict-title">LIKELY AUTHENTIC</h2>
+              <p id="resultSummaryText" class="verdict-desc">
+                Speech exhibits natural human prosodic inflections and biological vocal micro-tremor.
               </p>
             </div>
 
-            <!-- SPECIFIC VOICE PARAMETERS GRID -->
-            <div class="card" style="background: var(--bg-primary); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.75rem; text-align: left;">
-              <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Audio Analysis Breakdown</h3>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Speech Detected</div>
-                  <div id="cardSpeechDetected" style="font-size: 1.15rem; font-weight: 700; color: #059669; margin-top: 0.2rem;">Yes</div>
+            <!-- Dual Metrics: Confidence & Risk Level -->
+            <div class="metrics-row">
+              <!-- Confidence Panel -->
+              <div class="metric-panel">
+                <div class="metric-panel-header">Overall Confidence</div>
+                <div id="resultConfidenceValue" class="metric-panel-val">92%</div>
+                <div class="confidence-bar-track">
+                  <div id="resultConfidenceBar" class="confidence-bar-fill" style="width: 92%;"></div>
                 </div>
-                <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">AI Voice Probability</div>
-                  <div id="cardAiProbability" style="font-size: 1.15rem; font-weight: 700; color: var(--accent-primary); margin-top: 0.2rem;">16%</div>
-                </div>
-                <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Model Confidence</div>
-                  <div id="cardConfidence" style="font-size: 1.15rem; font-weight: 700; color: var(--accent-primary); margin-top: 0.2rem;">92%</div>
-                </div>
-                <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Detected Background</div>
-                  <div id="cardBackgroundType" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-top: 0.2rem;">Clean / No Background</div>
-                </div>
-                <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Background Sound Level</div>
-                  <div id="cardBackgroundLevel" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-top: 0.2rem;">Low</div>
-                </div>
-                <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Voices Detected</div>
-                  <div id="cardVoicesDetected" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-top: 0.2rem;">1 Voice</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Warning Callout for Suspicious / AI Voice -->
-            <div id="resultWarningCallout" class="security-warning-box" style="display: none; margin-bottom: 1.5rem; border: 1px solid var(--color-suspicious-border); background: var(--color-suspicious-bg);">
-              <div class="security-warning-header" style="color: var(--color-suspicious); font-weight: 700;">
-                <span>⚠️ Safety Notice</span>
-              </div>
-              <p id="resultWarningText" style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 1rem;">
-                Do not trust the voice alone. Confirm the person's identity using another method.
-              </p>
-              <button id="btnResultSafetyTips" class="btn btn-secondary btn-sm" type="button">
-                Safety Tips
-              </button>
-            </div>
-
-            <!-- Dual Metrics: Risk Level + Confidence -->
-            <div class="metrics-row" style="margin-bottom: 2rem;">
-              <!-- Circular Risk Gauge -->
-              <div class="gauge-box">
-                <div style="position: relative; width: 140px; height: 140px;">
-                  <svg class="gauge-svg" viewBox="0 0 170 170" style="width: 140px; height: 140px;">
-                    <circle class="gauge-track" cx="85" cy="85" r="70" stroke="rgba(0, 102, 255, 0.12)" />
-                    <circle id="gaugeArc" class="gauge-value-arc" cx="85" cy="85" r="70" stroke="#059669" stroke-dasharray="440" stroke-dashoffset="440" />
-                  </svg>
-                  <div class="gauge-center-text">
-                    <div id="gaugeScoreNum" class="gauge-score-number" style="font-size: 2rem; color: var(--text-primary);">18</div>
-                    <div class="gauge-score-total">/ 100</div>
-                  </div>
-                </div>
-                <div id="gaugeRiskLabel" class="gauge-label" style="font-size: 0.95rem; color: var(--text-primary);">Overall Risk: Low</div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">
+                  Confidence directly computed from acoustic signal distance to decision boundary.
+                </p>
               </div>
 
-              <!-- Confidence Metric Box -->
-              <div class="confidence-box" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle);">
-                <div class="confidence-header">
-                  <span style="color: var(--text-secondary);">AI Confidence</span>
+              <!-- Risk Level Panel -->
+              <div class="metric-panel">
+                <div class="metric-panel-header">Risk Assessment</div>
+                <div style="margin-bottom: 0.75rem;">
+                  <span id="resultRiskBadge" class="risk-pill risk-low">LOW RISK</span>
                 </div>
-                <div id="confidenceValue" class="confidence-val" style="color: var(--accent-primary); margin-bottom: 0.5rem;">92%</div>
-                <div class="confidence-bar-bg" style="background: rgba(0, 102, 255, 0.12);">
-                  <div id="confidenceBarFill" class="confidence-bar-fill" style="width: 92%; background: var(--accent-primary);"></div>
-                </div>
-                <p class="distinction-note" style="color: var(--text-muted);">
-                  Confidence score directly computed by acoustic biometric analysis.
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                  Risk assessment is based on the available audio-analysis signals and should not be treated as definitive proof.
                 </p>
               </div>
             </div>
 
-            <!-- Primary Action: Check Another Voice -->
-            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
-              <button class="btn btn-primary btn-lg btn-action-reset" type="button" style="padding: 0.85rem 2rem;">
+            <!-- Authenticity Score Breakdown Cards -->
+            <div style="margin-bottom: 1rem;">
+              <h3 style="font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 1rem;">
+                Authenticity Score Breakdown
+              </h3>
+              <div class="breakdown-grid">
+                <div class="breakdown-card">
+                  <div class="breakdown-card-name">Authenticity</div>
+                  <div id="metricAuthenticity" class="breakdown-card-score">92%</div>
+                </div>
+                <div class="breakdown-card">
+                  <div class="breakdown-card-name">Liveness</div>
+                  <div id="metricLiveness" class="breakdown-card-score" style="color: #10b981;">PASS</div>
+                </div>
+                <div class="breakdown-card">
+                  <div class="breakdown-card-name">Naturalness</div>
+                  <div id="metricNaturalness" class="breakdown-card-score">94%</div>
+                </div>
+                <div class="breakdown-card">
+                  <div class="breakdown-card-name">Spectral Consistency</div>
+                  <div id="metricSpectral" class="breakdown-card-score">89%</div>
+                </div>
+                <div class="breakdown-card">
+                  <div class="breakdown-card-name">Temporal Consistency</div>
+                  <div id="metricTemporal" class="breakdown-card-score">91%</div>
+                </div>
+                <div class="breakdown-card">
+                  <div class="breakdown-card-name">Audio Quality</div>
+                  <div id="metricQuality" class="breakdown-card-score">88%</div>
+                </div>
+                <div class="breakdown-card">
+                  <div class="breakdown-card-name">Replay Risk</div>
+                  <div id="metricReplay" class="breakdown-card-score" style="color: #10b981;">LOW</div>
+                </div>
+                <div class="breakdown-card">
+                  <div class="breakdown-card-name">Background Noise</div>
+                  <div id="metricBackground" class="breakdown-card-score" style="font-size: 1rem;">Low (Clean)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Explainability: Why This Result? -->
+            <div class="explain-card">
+              <div class="explain-title">Why This Result?</div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                <div>
+                  <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #10b981; margin-bottom: 0.75rem;">
+                    Positive Authentic Indicators:
+                  </div>
+                  <ul id="explainPositiveList" class="evidence-list">
+                    <li><span class="bullet-pos">✓</span> Natural prosodic pitch variation detected.</li>
+                  </ul>
+                </div>
+                <div>
+                  <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #ef4444; margin-bottom: 0.75rem;">
+                    Potential Anomalies & Concerns:
+                  </div>
+                  <ul id="explainConcernList" class="evidence-list">
+                    <li><span class="bullet-pos">✓</span> No synthetic anomalies or replay artifacts observed.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Background Audio Analysis -->
+            <div class="card" style="margin-bottom: 2rem; text-align: left;">
+              <div style="font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+                Background Audio Analysis
+              </div>
+              <p id="bgAudioSummary" style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+                Acoustic background isolated from vocal tract.
+              </p>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                <div class="metadata-card">
+                  <div class="metadata-label">Primary Voice</div>
+                  <div id="bgAudioPrimary" class="metadata-val" style="font-size: 0.9rem;">Dominant speaker</div>
+                </div>
+                <div class="metadata-card">
+                  <div class="metadata-label">Background Speech</div>
+                  <div id="bgAudioSpeech" class="metadata-val" style="font-size: 0.9rem;">None detected</div>
+                </div>
+                <div class="metadata-card">
+                  <div class="metadata-label">Environmental Noise</div>
+                  <div id="bgAudioEnv" class="metadata-val" style="font-size: 0.9rem;">Low</div>
+                </div>
+                <div class="metadata-card">
+                  <div class="metadata-label">Silence Ratio</div>
+                  <div id="bgAudioSilence" class="metadata-val" style="font-size: 0.9rem;">12% (Natural pauses)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Result Actions -->
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+              <button id="btnDownloadReport" class="btn btn-primary btn-lg" type="button">
+                📥 Download Security Report
+              </button>
+              <button class="btn btn-secondary btn-lg btn-action-reset" type="button">
                 Check Another Voice
               </button>
             </div>
 
-            <!-- Simplicity: Collapsible Technical Details Toggle -->
-            <div style="text-align: center; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
-              <button id="btnToggleDetails" class="btn btn-tertiary btn-sm" type="button" style="border-radius: var(--radius-full); padding: 0.4rem 1.25rem;">
-                <span id="toggleDetailsText">Show Voice Characteristics</span> <span id="toggleDetailsArrow" style="display: inline-block; transition: transform 0.2s;">▼</span>
-              </button>
-            </div>
-
-            <!-- Collapsible Technical Details Wrapper -->
-            <div id="technicalDetailsWrapper" style="display: none; margin-top: 1.5rem; text-align: left; animation: fadeInUp 0.3s ease;">
-              <div class="card" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1.25rem 1.5rem; margin-bottom: 1.75rem;">
-                <h4 style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.35rem;">What does this mean?</h4>
-                <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
-                  VoiceShield AI separates the speaker's vocal frequencies from environmental background noise and evaluates prosodic inflection against known synthetic speech signatures.
-                </p>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
-                  <em>This result is an AI-based assessment, not a guarantee. We never claim 100% accuracy.</em>
-                </p>
-              </div>
-
-              <!-- Simple Features Checked -->
-              <div class="features-section">
-                <div class="features-section-title">
-                  <h3 style="font-size: 1.05rem;">Voice Characteristics Analyzed</h3>
-                  <span style="font-size: 0.8rem; color: var(--text-muted);">Acoustic breakdown</span>
-                </div>
-                <div id="simpleFeaturesGrid" class="features-grid">
-                  <!-- Dynamically rendered simple feature cards -->
-                </div>
-              </div>
+            <!-- Cryptographic Ledger Footer -->
+            <div style="text-align: center; font-size: 0.8rem; color: var(--text-muted); padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+              Analysis ID: <span id="resultMetaId" style="font-family: monospace; color: #38bdf8; font-weight: 700;">VS-1024</span> • 
+              Ledger Hash: <span id="resultMetaHash" style="font-family: monospace;">e3b0c44298fc1c149afbf4c8...</span>
             </div>
 
           </div>
-
-          <!-- VERIFICATION HISTORY (COMPARE MULTIPLE RECORDINGS) -->
-          <div id="historySection" class="card" style="margin-top: 2.5rem; padding: 1.75rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); background: var(--bg-card); display: none;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-              <div>
-                <h3 style="font-size: 1.25rem; color: var(--text-primary); margin-bottom: 0.25rem;">Verification History</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Compare each verified voice individually. Previous results are preserved.</p>
-              </div>
-              <button id="btnClearHistoryBtn" class="btn btn-sm btn-tertiary" type="button">Clear History</button>
-            </div>
-
-            <div style="overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;">
-                <thead>
-                  <tr style="border-bottom: 2px solid var(--border-subtle); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
-                    <th style="padding: 0.65rem 0.75rem;">Recording</th>
-                    <th style="padding: 0.65rem 0.75rem;">Status / Result</th>
-                    <th style="padding: 0.65rem 0.75rem;">AI Probability</th>
-                    <th style="padding: 0.65rem 0.75rem;">Confidence</th>
-                    <th style="padding: 0.65rem 0.75rem;">Background</th>
-                    <th style="padding: 0.65rem 0.75rem;">Voices</th>
-                    <th style="padding: 0.65rem 0.75rem;">Time</th>
-                  </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                  <!-- Dynamically populated rows -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
         </div>
 
       </div>
     </section>
 
     <!-- =======================================================================
-         TRY AN EXAMPLE (SECTION 8)
+         SECTION 4: DASHBOARD
          ======================================================================= -->
-    <section id="examples" class="section" style="padding-top: 2rem; border-top: 1px solid var(--border-subtle);">
+    <section id="dashboard" class="section" style="border-top: 1px solid var(--border-subtle);">
       <div class="container">
         <div class="section-header">
-          <div class="section-tag">Quick Testing</div>
-          <h2 class="section-title">Try an Example</h2>
-          <p class="section-subtitle">
-            Understand how VoiceShield AI works without recording yourself.
-          </p>
+          <div class="section-tag">Cybersecurity Analytics</div>
+          <h2 class="section-title">Platform Dashboard</h2>
+          <p class="section-subtitle">Real-time telemetry and distribution metrics from verified audio streams.</p>
         </div>
 
-        <div class="example-cards-grid">
-          
-          <!-- EXAMPLE 1: NATURAL VOICE -->
-          <div class="example-card">
-            <div>
-              <span class="example-demo-badge">Demo Example</span>
-              <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">🎙️ Natural Voice Example</h3>
-              <p style="font-size: 0.8rem; color: var(--text-muted);">Real-sounding speech with natural inflections</p>
-              
-              <div class="example-sentence">
-                “Hello, my name is Rahul. I am calling to confirm our meeting today.”
-              </div>
+        <!-- 5 Key Stats Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
+          <div class="card">
+            <div class="metadata-label">Total Analyses</div>
+            <div id="statTotalAnalyses" style="font-size: 2rem; font-weight: 800; color: #f8fafc;">1,248</div>
+          </div>
+          <div class="card">
+            <div class="metadata-label">Likely Authentic</div>
+            <div id="statLikelyAuthentic" style="font-size: 2rem; font-weight: 800; color: #10b981;">982</div>
+          </div>
+          <div class="card">
+            <div class="metadata-label">Likely Synthetic</div>
+            <div id="statLikelySynthetic" style="font-size: 2rem; font-weight: 800; color: #ef4444;">186</div>
+          </div>
+          <div class="card">
+            <div class="metadata-label">Uncertain</div>
+            <div id="statUncertain" style="font-size: 2rem; font-weight: 800; color: #f59e0b;">80</div>
+          </div>
+          <div class="card">
+            <div class="metadata-label">High Risk Prevented</div>
+            <div id="statHighRiskPrevented" style="font-size: 2rem; font-weight: 800; color: #38bdf8;">245</div>
+          </div>
+        </div>
 
-              <div>
-                <span class="example-expected-pill green">Result: Likely Real Voice</span>
-              </div>
-            </div>
-
-            <div class="example-card-actions">
-              <button class="btn btn-secondary btn-sm btn-play-example" data-sample="rahul" type="button" style="flex: 1;">
-                ▶ Play Example
-              </button>
-              <button class="btn btn-primary btn-sm btn-analyze-example" data-sample="rahul" type="button" style="flex: 1;">
-                Analyze Example
-              </button>
-            </div>
+        <!-- Responsive Charts Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+          <!-- Chart 1: Verdict Breakdown -->
+          <div class="card">
+            <h4 style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1.25rem;">
+              Analysis Verdicts
+            </h4>
+            <div id="chartVerdictDistribution"></div>
           </div>
 
-          <!-- EXAMPLE 2: SUSPICIOUS VOICE -->
-          <div class="example-card">
-            <div>
-              <span class="example-demo-badge">Demo Example</span>
-              <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">🎙️ Suspicious Voice Example</h3>
-              <p style="font-size: 0.8rem; color: var(--text-muted);">Urgent scam pattern with altered acoustics</p>
-              
-              <div class="example-sentence">
-                “Your account needs immediate verification. Please confirm your details.”
-              </div>
-
-              <div>
-                <span class="example-expected-pill amber">Result: Suspicious Voice</span>
-              </div>
-            </div>
-
-            <div class="example-card-actions">
-              <button class="btn btn-secondary btn-sm btn-play-example" data-sample="suspicious" type="button" style="flex: 1;">
-                ▶ Play Example
-              </button>
-              <button class="btn btn-primary btn-sm btn-analyze-example" data-sample="suspicious" type="button" style="flex: 1;">
-                Analyze Example
-              </button>
-            </div>
+          <!-- Chart 2: Risk Distribution -->
+          <div class="card">
+            <h4 style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1.25rem;">
+              Risk Distribution
+            </h4>
+            <div id="chartRiskDistribution" style="display: flex; gap: 1rem; align-items: flex-end; height: 140px; padding-top: 10px;"></div>
           </div>
 
-          <!-- EXAMPLE 3: AI VOICE -->
-          <div class="example-card">
-            <div>
-              <span class="example-demo-badge">Demo Example</span>
-              <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">🤖 AI Voice Example</h3>
-              <p style="font-size: 0.8rem; color: var(--text-muted);">Synthetic neural clone with flat pitch</p>
-              
-              <div class="example-sentence">
-                “Your verification request has been successfully processed.”
-              </div>
-
-              <div>
-                <span class="example-expected-pill red">Result: Possible AI Voice</span>
-              </div>
-            </div>
-
-            <div class="example-card-actions">
-              <button class="btn btn-secondary btn-sm btn-play-example" data-sample="processed" type="button" style="flex: 1;">
-                ▶ Play Example
-              </button>
-              <button class="btn btn-primary btn-sm btn-analyze-example" data-sample="processed" type="button" style="flex: 1;">
-                Analyze Example
-              </button>
-            </div>
+          <!-- Chart 3: Confidence Distribution -->
+          <div class="card">
+            <h4 style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1.25rem;">
+              Confidence Ranges
+            </h4>
+            <div id="chartConfidenceDistribution"></div>
           </div>
-
         </div>
       </div>
     </section>
 
     <!-- =======================================================================
-         HOW IT WORKS (SECTION 11)
+         SECTION 5: HISTORY
          ======================================================================= -->
-    <section id="how-it-works" class="section" style="border-top: 1px solid var(--border-subtle);">
+    <section id="history" class="section" style="border-top: 1px solid var(--border-subtle);">
       <div class="container">
         <div class="section-header">
-          <div class="section-tag">Simple Process</div>
-          <h2 class="section-title">Speak ➔ Check ➔ Stay Safe</h2>
-          <p class="section-subtitle">The entire verification process in four simple steps.</p>
+          <div class="section-tag">Audit Trail</div>
+          <h2 class="section-title">Verification History</h2>
+          <p class="section-subtitle">Search and inspect previous voice verification assessments.</p>
         </div>
 
-        <div class="process-grid">
-          <div class="process-card">
-            <div class="process-step-num">01</div>
-            <h3>Speak</h3>
-            <p>Click <strong>Start Voice Check</strong> and speak naturally for 5–10 seconds.</p>
+        <div class="card" style="padding: 1.75rem;">
+          <!-- Search & Filter Controls -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; gap: 0.75rem; flex: 1; max-width: 500px;">
+              <input id="historySearchInput" type="text" placeholder="Search by Analysis ID or filename..." style="flex: 1; padding: 0.55rem 1rem; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: #fff; font-size: 0.88rem;" />
+              <select id="historyVerdictFilter" style="padding: 0.55rem 0.85rem; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: #fff; font-size: 0.88rem;">
+                <option value="ALL">All Verdicts</option>
+                <option value="AUTHENTIC">Likely Authentic</option>
+                <option value="UNCERTAIN">Uncertain</option>
+                <option value="SYNTHETIC">Likely Synthetic</option>
+              </select>
+            </div>
+            <button id="btnClearHistory" class="btn btn-sm btn-tertiary" type="button" style="color: #ef4444;">
+              Clear History
+            </button>
           </div>
 
-          <div class="process-card">
-            <div class="process-step-num">02</div>
-            <h3>Listen</h3>
-            <p>VoiceShield AI records the voice and performs a Voice Activity Check to confirm speech is present.</p>
-          </div>
-
-          <div class="process-card">
-            <div class="process-step-num">03</div>
-            <h3>Check</h3>
-            <p>Acoustic classifiers evaluate speaking style, natural pauses, and AI-generation markers.</p>
-          </div>
-
-          <div class="process-card">
-            <div class="process-step-num">04</div>
-            <h3>Protect</h3>
-            <p>Immediately understand whether the voice is likely real, suspicious, or a possible AI-generated clone.</p>
+          <!-- History Table -->
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-subtle); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">
+                  <th style="padding: 10px 14px;">Analysis ID</th>
+                  <th style="padding: 10px 14px;">File / Sample</th>
+                  <th style="padding: 10px 14px;">Duration</th>
+                  <th style="padding: 10px 14px;">Verdict</th>
+                  <th style="padding: 10px 14px;">Confidence</th>
+                  <th style="padding: 10px 14px;">Risk Level</th>
+                  <th style="padding: 10px 14px; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </section>
 
     <!-- =======================================================================
-         ABOUT PAGE (SIH 2026)
+         SECTION 6: ABOUT
          ======================================================================= -->
     <section id="about" class="section" style="border-top: 1px solid var(--border-subtle);">
       <div class="container">
         <div class="section-header">
-          <div class="section-tag">Smart India Hackathon 2026</div>
+          <div class="section-tag">Cybersecurity Architecture</div>
           <h2 class="section-title">About VoiceShield AI</h2>
-          <p class="section-subtitle">AI-Powered Real-Time Detection and Prevention of Voice Cloning Impersonation Attacks</p>
+          <p class="section-subtitle">Real-Time Detection and Prevention of Voice Cloning Impersonation Attacks</p>
         </div>
 
-        <div class="card" style="max-width: 800px; margin: 0 auto; padding: 2.25rem;">
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle);">
+        <div class="card" style="max-width: 800px; margin: 0 auto; line-height: 1.7; font-size: 0.95rem;">
+          <h3 style="font-size: 1.15rem; color: #f8fafc; margin-bottom: 0.5rem;">How VoiceShield AI Works</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 1.25rem;">
+            Modern voice cloning architectures synthesize speech by generating acoustic spectral frames through neural vocoders. VoiceShield AI analyzes physical vocal tract bio-signals, prosodic inflection variability, neuromuscular micro-jitter, and pause room-tone physics to differentiate authentic human speech from synthetic artifacts.
+          </p>
+
+          <h3 style="font-size: 1.15rem; color: #f8fafc; margin-bottom: 0.5rem;">Acoustic Liveness & Replay Analysis</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 1.25rem;">
+            When an attacker plays pre-recorded audio through a secondary speaker into a microphone, acoustic comb filtering, double reverberation, and frequency attenuation occur. VoiceShield AI inspects these transfer functions to rate acoustic replay risk.
+          </p>
+
+          <h3 style="font-size: 1.15rem; color: #f8fafc; margin-bottom: 0.5rem;">Ethical Standards & System Limitations</h3>
+          <p style="color: var(--text-secondary); margin: 0;">
+            AI voice detection is probabilistic. Quality degradations (such as extreme cellular compression or heavy stadium noise) reduce acoustic boundary certainty. VoiceShield AI acts as an enterprise decision-support tool and never claims 100% detection accuracy.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECTION 7: PRIVACY
+         ======================================================================= -->
+    <section id="privacy" class="section" style="border-top: 1px solid var(--border-subtle);">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Data Transparency</div>
+          <h2 class="section-title">Privacy Policy & Security Controls</h2>
+          <p class="section-subtitle">Zero persistent raw audio storage and cryptographic ledger guarantees.</p>
+        </div>
+
+        <div class="card" style="max-width: 800px; margin: 0 auto; line-height: 1.7; font-size: 0.95rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle);">
             <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Theme</div>
-              <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">Blockchain & Cybersecurity</div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Audio Retention</div>
+              <div style="font-size: 1rem; font-weight: 700; color: #10b981;">Temporary in RAM only</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Category</div>
-              <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">Software</div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Third-Party Sharing</div>
+              <div style="font-size: 1rem; font-weight: 700; color: #f8fafc;">Zero external AI calls</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Team Name</div>
-              <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">Agents</div>
-            </div>
-            <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Team ID</div>
-              <div style="font-size: 1.05rem; font-weight: 700; color: var(--accent-primary);">TEAM-312</div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Cryptographic Audit</div>
+              <div style="font-size: 1rem; font-weight: 700; color: #38bdf8;">SHA-256 Tamper Evident</div>
             </div>
           </div>
 
-          <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Why VoiceShield AI?</h3>
-          <p style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.25rem;">
-            Modern voice cloning tools can copy a person's voice from just a few seconds of audio. Attackers use these synthetic voices to impersonate family members, executives, or banking agents.
+          <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+            Raw audio streams uploaded or recorded are processed exclusively in volatile memory for acoustic analysis and discarded immediately. Only the deterministic mathematical digest (SHA-256) and calculated biometric parameters are preserved for audit verification.
           </p>
 
-          <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">The Solution</h3>
-          <p style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;">
-            VoiceShield AI provides a simple, accessible decision-support layer. It listens for acoustic speech anomalies and flags suspicious audio before an impersonation attempt succeeds.
-          </p>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <div style="font-size: 0.9rem; font-weight: 700; color: #f8fafc;">Clear All Local & Remote Data</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Permanently deletes all audit history associated with this browser session.</div>
+            </div>
+            <button id="btnDeleteMyData" class="btn btn-sm btn-danger" type="button">
+              Delete My Data
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -703,94 +645,71 @@
   </main>
 
   <!-- =========================================================================
-       ANALYSIS LOADING OVERLAY
+       Multi-Stage Animated Analysis Overlay
        ========================================================================= -->
-  <div id="analysisOverlay" class="analysis-overlay" role="dialog" aria-modal="true" aria-label="Checking the Voice">
+  <div id="analysisOverlay" class="analysis-overlay" role="dialog" aria-modal="true" aria-label="Analyzing Voice">
     <div class="analysis-card">
-      <h3 style="font-size: 1.5rem; margin-bottom: 0.25rem;">Checking the Voice...</h3>
-      <p class="subtitle" style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
-        Listening for voice patterns and synthetic speech traits
+      <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.35rem; color: #f8fafc;">Analyzing Voice</h3>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Inspecting acoustic biometrics, spectral consistency, and liveness signals
       </p>
 
       <canvas id="analysisWaveformCanvas" class="analysis-waveform-canvas"></canvas>
 
-      <ul class="stage-checklist">
+      <ul id="analysisStagesList" class="stage-checklist">
         <li class="stage-item completed">
           <span class="stage-icon">✓</span>
-          <span>Audio received</span>
-        </li>
-        <li class="stage-item completed">
-          <span class="stage-icon">✓</span>
-          <span>Checking speech activity & quality</span>
+          <span>Audio preprocessing</span>
         </li>
         <li class="stage-item in-progress">
           <span class="stage-icon"><div class="stage-spinner"></div></span>
-          <span>Checking voice sound pattern</span>
+          <span>Speech detection & VAD</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Detecting synthetic speech traits</span>
+          <span>Audio quality analysis</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Generating risk assessment</span>
+          <span>Spectral analysis & rolloff</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>Temporal pattern & prosody analysis</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>Synthetic speech indicators</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>Liveness & replay analysis</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>Background audio isolation</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>Authenticity estimation</span>
         </li>
       </ul>
     </div>
   </div>
 
   <!-- =========================================================================
-       SAFETY TIPS MODAL (SECTION 9)
-       ========================================================================= -->
-  <div id="altMethodModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Safety Tips">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 style="font-size: 1.25rem; color: #f87171;">⚠️ Potential Voice Impersonation Safety Tips</h3>
-        <button class="modal-close" aria-label="Close modal">&times;</button>
-      </div>
-      <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
-        If a voice sounds suspicious or may be AI-generated, take these protective steps immediately:
-      </p>
-
-      <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
-        <li style="display: flex; gap: 0.75rem;">
-          <span style="color: #ef4444; font-weight: 700;">1.</span>
-          <span><strong>Do not send money:</strong> Never authorize wire transfers, UPI payments, or gift card purchases based on a voice request.</span>
-        </li>
-        <li style="display: flex; gap: 0.75rem;">
-          <span style="color: #ef4444; font-weight: 700;">2.</span>
-          <span><strong>Do not reveal OTPs or passwords:</strong> Legitimate organizations will never demand your security codes over the phone.</span>
-        </li>
-        <li style="display: flex; gap: 0.75rem;">
-          <span style="color: #ef4444; font-weight: 700;">3.</span>
-          <span><strong>Verify identity using another channel:</strong> Send a message through a separate app (WhatsApp, Slack, email) to confirm it is really them.</span>
-        </li>
-        <li style="display: flex; gap: 0.75rem;">
-          <span style="color: #ef4444; font-weight: 700;">4.</span>
-          <span><strong>Contact through a trusted number:</strong> Hang up and call the person back using a saved phone number from your contacts list.</span>
-        </li>
-        <li style="display: flex; gap: 0.75rem;">
-          <span style="color: #ef4444; font-weight: 700;">5.</span>
-          <span><strong>Report suspicious activity:</strong> Notify your bank or security team if you suspect an impersonation attempt.</span>
-        </li>
-      </ul>
-
-      <div style="text-align: right;">
-        <button class="btn btn-secondary modal-close" type="button">Close Safety Tips</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       FOOTER
+       Footer
        ========================================================================= -->
   <footer class="footer" role="contentinfo">
     <div class="container">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
         <div>
-          <h4 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.25rem;">VoiceShield AI</h4>
-          <p style="font-size: 0.85rem; color: var(--text-muted);">
-            “Verify the Voice. Stop the Impersonation.”
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+            <span style="font-weight: 800; color: #f8fafc; font-size: 1.1rem;">VoiceShield AI</span>
+            <span class="brand-badge">SIH 2026</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+            Detect AI Voices. Verify Authenticity.
           </p>
         </div>
         <div style="font-size: 0.85rem; color: var(--text-muted); text-align: right;">

@@ -99,14 +99,14 @@ class TestVoiceShieldBackend(unittest.TestCase):
         data = res.json()
         self.assertEqual(data["classification"], "genuine")
         self.assertEqual(data["classification_label"], "Likely Real Voice")
-        self.assertEqual(data["risk_level"], "Low")
+        self.assertIn("LOW", data["risk_level"].upper())
 
         res_ai = self.client.post("/api/analyze-demo/processed")
         self.assertEqual(res_ai.status_code, 200)
         data_ai = res_ai.json()
         self.assertEqual(data_ai["classification"], "ai_generated")
         self.assertEqual(data_ai["classification_label"], "Possible AI-Generated Voice")
-        self.assertEqual(data_ai["risk_level"], "High")
+        self.assertIn("HIGH", data_ai["risk_level"].upper())
 
     def test_microphone_test_endpoint(self):
         files = {"audio": ("mic_test.wav", self.dummy_wav_bytes, "audio/wav")}

@@ -1,48 +1,57 @@
 /**
  * VoiceShield AI - Single Page Application Orchestrator
+ * Enterprise AI Voice Security & Authenticity Verification Platform
  * Smart India Hackathon 2026 | Theme: Blockchain & Cybersecurity | Team: Agents (TEAM-312)
  */
 
 import { ResultView } from './components/result-view.js';
 import { VerificationWorkspace } from './components/verification.js';
+import { DashboardManager } from './components/dashboard.js';
 
 class VoiceShieldApp {
   constructor() {
     this.resultView = null;
     this.verificationWorkspace = null;
+    this.dashboardManager = null;
 
     this.init();
   }
 
   init() {
-    // 1. Result View Component
+    // 1. Dashboard & History Manager
+    this.dashboardManager = new DashboardManager();
+
+    // 2. Result View Component
     this.resultView = new ResultView({
       onReset: () => {
         if (this.verificationWorkspace) this.verificationWorkspace.reset();
-        const verifySection = document.getElementById('verify');
+        const verifySection = document.getElementById('analyze');
         if (verifySection) verifySection.scrollIntoView({ behavior: 'smooth' });
       },
       onTestMic: () => {
         if (this.verificationWorkspace) {
-          const verifySection = document.getElementById('verify');
+          const verifySection = document.getElementById('analyze');
           if (verifySection) verifySection.scrollIntoView({ behavior: 'smooth' });
           this.verificationWorkspace._runMicrophoneTest();
         }
       }
     });
 
-    // 2. Verification Workspace Component (Handles mic, recording, upload, examples)
+    // 3. Verification Workspace Component (Mic recording, upload, pre-analysis quality, analysis)
     this.verificationWorkspace = new VerificationWorkspace({
       onAnalysisComplete: (result, filename) => {
         this.resultView.render(result, filename);
+        if (this.dashboardManager && result.status === 'success') {
+          this.dashboardManager.addRecord(result);
+        }
       }
     });
 
-    // 3. Navigation & Modals
+    // 4. Navigation & Modals
     this._bindNavigation();
     this._bindModals();
 
-    console.log('VoiceShield AI application loaded successfully.');
+    console.log('[VoiceShield AI] Enterprise security platform initialized.');
   }
 
   _bindNavigation() {
@@ -77,16 +86,43 @@ class VoiceShieldApp {
       });
     }
 
-    // Top CTA: "Start Voice Check"
+    // Top CTA: "Analyze Voice"
     const startNavBtn = document.getElementById('btnNavStartVerify');
     if (startNavBtn) {
       startNavBtn.addEventListener('click', () => {
-        const verifySection = document.getElementById('verify');
+        const verifySection = document.getElementById('analyze');
         if (verifySection) {
           verifySection.scrollIntoView({ behavior: 'smooth' });
-          // Switch to live tab
           if (this.verificationWorkspace) {
             this.verificationWorkspace.switchTab('live');
+          }
+        }
+      });
+    }
+
+    // Hero buttons: "Start Recording" & "Upload Audio"
+    const heroRecordBtn = document.getElementById('btnHeroStartRecord');
+    if (heroRecordBtn) {
+      heroRecordBtn.addEventListener('click', () => {
+        const verifySection = document.getElementById('analyze');
+        if (verifySection) {
+          verifySection.scrollIntoView({ behavior: 'smooth' });
+          if (this.verificationWorkspace) {
+            this.verificationWorkspace.switchTab('live');
+            this.verificationWorkspace._startRecordingFlow();
+          }
+        }
+      });
+    }
+
+    const heroUploadBtn = document.getElementById('btnHeroUploadAudio');
+    if (heroUploadBtn) {
+      heroUploadBtn.addEventListener('click', () => {
+        const verifySection = document.getElementById('analyze');
+        if (verifySection) {
+          verifySection.scrollIntoView({ behavior: 'smooth' });
+          if (this.verificationWorkspace) {
+            this.verificationWorkspace.switchTab('upload');
           }
         }
       });
@@ -94,7 +130,6 @@ class VoiceShieldApp {
   }
 
   _bindModals() {
-    // Close modal handlers
     document.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
       el.addEventListener('click', (e) => {
         if (e.target === el || el.classList.contains('modal-close')) {
@@ -103,7 +138,6 @@ class VoiceShieldApp {
       });
     });
 
-    // Escape key closes modals
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('is-active'));

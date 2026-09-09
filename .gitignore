@@ -21,6 +21,8 @@ backend/models/*.onnx
 # Test artifacts
 .pytest_cache/
 *.log
+*.db
+backend/app/data/*.db
 
 # Node (if added later)
 node_modules/

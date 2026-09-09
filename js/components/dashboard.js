@@ -1,247 +1,274 @@
 /**
- * VoiceShield AI - Dashboard & Verification History Manager
- * Manages cybersecurity analytics cards, session storage, and audit logs.
+ * VoiceShield AI - Dashboard & Analysis History Manager
+ * Manages cybersecurity analytics cards, responsive SVG charts,
+ * verification history filtering, and privacy data deletion.
  */
 
 import { VoiceShieldAPI } from '../api.js';
+import { ReportGenerator } from './report-generator.js';
 import { toast } from './toast.js';
 
 export class DashboardManager {
   constructor(options = {}) {
     this.onViewDetails = options.onViewDetails || (() => {});
-    this.historyKey = 'voiceshield_verification_history';
-    this.historyRecords = this._loadHistory();
+    this.historyRecords = [];
+    this.dashboardStats = null;
 
     this._bindEvents();
-  }
-
-  _loadHistory() {
-    try {
-      const stored = localStorage.getItem(this.historyKey);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.warn('Failed to load local history:', e);
-    }
-
-    // Default realistic seed records for SIH evaluation
-    const seedRecords = [
-      {
-        id: 'VS-REC-00041-8912',
-        timestamp: 'Today, 10:45 AM',
-        filename: 'executive_voice_note.wav',
-        duration_str: '6s',
-        classification: 'genuine',
-        classification_label: 'LIKELY GENUINE',
-        risk_score: 18,
-        risk_level: 'Low Risk',
-        confidence_percentage: 94,
-        verification_hash: '3f786d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a1',
-        is_seed: true
-      },
-      {
-        id: 'VS-REC-00040-7714',
-        timestamp: 'Today, 09:15 AM',
-        filename: 'urgent_payment_request.mp3',
-        duration_str: '8s',
-        classification: 'ai_generated',
-        classification_label: 'POSSIBLE AI-GENERATED',
-        risk_score: 86,
-        risk_level: 'Critical Risk',
-        confidence_percentage: 93,
-        verification_hash: '9a86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00b2',
-        is_seed: true
-      },
-      {
-        id: 'VS-REC-00039-4401',
-        timestamp: 'Yesterday, 04:30 PM',
-        filename: 'support_callback.wav',
-        duration_str: '5s',
-        classification: 'suspicious',
-        classification_label: 'SUSPICIOUS',
-        risk_score: 52,
-        risk_level: 'Medium Risk',
-        confidence_percentage: 82,
-        verification_hash: '5d86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00c3',
-        is_seed: true
-      }
-    ];
-
-    this._saveHistory(seedRecords);
-    return seedRecords;
-  }
-
-  _saveHistory(records) {
-    try {
-      localStorage.setItem(this.historyKey, JSON.stringify(records));
-      this.historyRecords = records;
-    } catch (e) {
-      console.warn('Failed to save history to localStorage:', e);
-    }
+    this.refresh();
   }
 
   _bindEvents() {
-    // Clear History Button (Opens confirmation modal)
-    const clearBtn = document.getElementById('btnClearHistory');
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        const modal = document.getElementById('clearHistoryModal');
-        if (modal) modal.classList.add('is-active');
+    // History Search Input
+    const searchInput = document.getElementById('historySearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        this._filterAndRenderHistory();
       });
     }
 
-    // Confirm Clear Button
-    const confirmClearBtn = document.getElementById('btnConfirmClearHistory');
-    if (confirmClearBtn) {
-      confirmClearBtn.addEventListener('click', () => {
-        this.clearAll();
-        const modal = document.getElementById('clearHistoryModal');
-        if (modal) modal.classList.remove('is-active');
-        toast.show('Verification history cleared.', 'info');
+    // History Verdict Filter
+    const verdictFilter = document.getElementById('historyVerdictFilter');
+    if (verdictFilter) {
+      verdictFilter.addEventListener('change', () => {
+        this._filterAndRenderHistory();
       });
     }
 
-    // Cancel Clear Button
-    const cancelClearBtn = document.getElementById('btnCancelClearHistory');
-    if (cancelClearBtn) {
-      cancelClearBtn.addEventListener('click', () => {
-        const modal = document.getElementById('clearHistoryModal');
-        if (modal) modal.classList.remove('is-active');
-      });
-    }
-  }
+    // Clear History / Delete My Data
+    const clearHistoryBtn = document.getElementById('btnClearHistory');
+    const deleteDataBtn = document.getElementById('btnDeleteMyData');
 
-  async updateStats() {
-    const stats = await VoiceShieldAPI.getStats();
-    
-    // Supplement with local count
-    const localTotal = this.historyRecords.length;
-    const totalEl = document.getElementById('statTotalVerifications');
-    const genuineEl = document.getElementById('statGenuineVoices');
-    const suspiciousEl = document.getElementById('statSuspiciousVoices');
-    const aiEl = document.getElementById('statAIVoices');
-    const avgRiskEl = document.getElementById('statAvgRiskScore');
-
-    if (totalEl) totalEl.textContent = stats.total_verifications || localTotal;
-    if (genuineEl) genuineEl.textContent = stats.genuine_count || 88;
-    if (suspiciousEl) suspiciousEl.textContent = stats.suspicious_count || 32;
-    if (aiEl) aiEl.textContent = stats.ai_count || 22;
-    if (avgRiskEl) avgRiskEl.textContent = `${stats.avg_risk_score || 32}/100`;
-
-    this.renderHistoryTable();
-  }
-
-  addRecord(result, filename = 'voice_sample.wav') {
-    const now = new Date();
-    const timeStr = `Today, ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-
-    const newRecord = {
-      id: result.blockchain_proof ? result.blockchain_proof.record_id : `VS-REC-${Date.now().toString().slice(-6)}`,
-      timestamp: timeStr,
-      filename: filename,
-      duration_str: `${Math.round(result.audio_duration || 5)}s`,
-      classification: result.classification,
-      classification_label: result.classification_label,
-      risk_score: result.risk_score,
-      risk_level: result.risk_level,
-      confidence_percentage: result.confidence_percentage,
-      verification_hash: result.blockchain_proof ? result.blockchain_proof.verification_hash : 'verified_sha256',
-      full_result: result,
+    const handleClear = async () => {
+      if (confirm('Are you sure you want to permanently delete all analysis history and stored verification records?')) {
+        await VoiceShieldAPI.clearAllHistory();
+        localStorage.removeItem('voiceshield_verification_history');
+        this.historyRecords = [];
+        this._filterAndRenderHistory();
+        this.refresh();
+        toast.show('All verification records have been permanently cleared.', 'info');
+      }
     };
 
-    const updated = [newRecord, ...this.historyRecords];
-    this._saveHistory(updated);
-    this.updateStats();
+    if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', handleClear);
+    if (deleteDataBtn) deleteDataBtn.addEventListener('click', handleClear);
   }
 
-  renderHistoryTable() {
-    const historyTbody = document.getElementById('historyTableBody');
-    const recentTbody = document.getElementById('dashboardRecentTableBody');
+  async refresh() {
+    // 1. Fetch Stats & Chart Data
+    try {
+      this.dashboardStats = await VoiceShieldAPI.getDashboardStats();
+      this._renderStatsCards(this.dashboardStats);
+      this._renderCharts(this.dashboardStats.charts);
+    } catch (e) {
+      console.warn('Dashboard stats refresh error:', e);
+    }
 
-    const renderRows = (records, isDashboard = false) => {
-      if (records.length === 0) {
-        return `
-          <tr>
-            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-              No verifications recorded yet. Run a voice verification to see audit logs.
-            </td>
-          </tr>
-        `;
+    // 2. Fetch History Records
+    try {
+      const records = await VoiceShieldAPI.getHistory();
+      if (records && records.length > 0) {
+        this.historyRecords = records;
+      } else {
+        // Fallback to local storage
+        const local = localStorage.getItem('voiceshield_verification_history');
+        if (local) {
+          this.historyRecords = JSON.parse(local);
+        }
       }
+      this._filterAndRenderHistory();
+    } catch (e) {
+      console.warn('History refresh error:', e);
+    }
+  }
 
-      return records.map((item, index) => {
-        let badgeClass = 'status-normal';
-        if (item.classification === 'suspicious') badgeClass = 'status-variance';
-        else if (item.classification === 'ai_generated') badgeClass = 'status-anomaly';
+  _renderStatsCards(stats) {
+    if (!stats) return;
+
+    const totalEl = document.getElementById('statTotalAnalyses');
+    const authEl = document.getElementById('statLikelyAuthentic');
+    const synEl = document.getElementById('statLikelySynthetic');
+    const uncEl = document.getElementById('statUncertain');
+    const preventedEl = document.getElementById('statHighRiskPrevented');
+
+    if (totalEl) totalEl.textContent = Number(stats.total_analyses).toLocaleString();
+    if (authEl) authEl.textContent = Number(stats.likely_authentic).toLocaleString();
+    if (synEl) synEl.textContent = Number(stats.likely_synthetic).toLocaleString();
+    if (uncEl) uncEl.textContent = Number(stats.uncertain).toLocaleString();
+    if (preventedEl) preventedEl.textContent = Number(stats.high_risk_prevented).toLocaleString();
+  }
+
+  _renderCharts(charts) {
+    if (!charts) return;
+
+    // 1. Verdict Breakdown Chart (Horizontal Multi-Bar)
+    const verdictContainer = document.getElementById('chartVerdictDistribution');
+    if (verdictContainer && charts.verdict_distribution) {
+      const data = charts.verdict_distribution;
+      const total = Object.values(data).reduce((a, b) => a + b, 0) || 1;
+      const authPct = Math.round(((data['Likely Authentic'] || 0) / total) * 100);
+      const uncPct = Math.round(((data['Uncertain — Review'] || 0) / total) * 100);
+      const synPct = Math.round(((data['Likely Synthetic'] || 0) / total) * 100);
+
+      verdictContainer.innerHTML = `
+        <div style="margin-bottom: 12px; display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: #1f2937;">
+          <div style="width: ${authPct}%; background: #10b981;" title="Likely Authentic: ${authPct}%"></div>
+          <div style="width: ${uncPct}%; background: #f59e0b;" title="Uncertain: ${uncPct}%"></div>
+          <div style="width: ${synPct}%; background: #ef4444;" title="Likely Synthetic: ${synPct}%"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; flex-wrap: wrap; gap: 8px;">
+          <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:4px;"></span>Authentic (${authPct}%)</span>
+          <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b; margin-right:4px;"></span>Uncertain (${uncPct}%)</span>
+          <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444; margin-right:4px;"></span>Synthetic (${synPct}%)</span>
+        </div>
+      `;
+    }
+
+    // 2. Risk Distribution Chart
+    const riskContainer = document.getElementById('chartRiskDistribution');
+    if (riskContainer && charts.risk_distribution) {
+      const data = charts.risk_distribution;
+      const maxVal = Math.max(1, ...Object.values(data));
+
+      riskContainer.innerHTML = Object.entries(data).map(([label, val]) => {
+        const heightPct = Math.max(8, Math.round((val / maxVal) * 100));
+        let color = '#10b981';
+        if (label.includes('High')) color = '#ef4444';
+        else if (label.includes('Medium')) color = '#f59e0b';
 
         return `
-          <tr>
-            <td>
-              <div style="font-weight: 600; color: var(--text-primary);">${item.timestamp}</div>
-              <div style="font-size: 0.75rem; font-family: monospace; color: var(--text-muted);">${item.id}</div>
-            </td>
-            <td>
-              <span class="feature-status-badge ${badgeClass}">${item.classification_label}</span>
-            </td>
-            <td>
-              <span style="font-family: monospace; font-weight: 700;">${item.risk_score}</span> / 100
-              <span style="font-size: 0.75rem; color: var(--text-muted);">(${item.risk_level})</span>
-            </td>
-            <td>
-              <span style="font-family: monospace; color: var(--accent-primary); font-weight: 600;">${item.confidence_percentage}%</span>
-            </td>
-            <td>${item.duration_str}</td>
-            <td>
-              <div style="display: flex; gap: 0.5rem;">
-                <button class="btn btn-sm btn-secondary btn-view-item" data-index="${index}">View</button>
-                ${!isDashboard ? `<button class="btn btn-sm btn-tertiary btn-del-item" data-index="${index}" title="Delete record">✕</button>` : ''}
-              </div>
-            </td>
-          </tr>
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <span style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;">${val}</span>
+            <div style="width: 100%; max-width: 44px; height: 100px; display: flex; align-items: flex-end; background: #1e293b; border-radius: 4px;">
+              <div style="width: 100%; height: ${heightPct}%; background: ${color}; border-radius: 4px; transition: height 0.5s ease;"></div>
+            </div>
+            <span style="font-size: 0.75rem; color: #94a3b8; text-align: center;">${label.replace(' Risk', '')}</span>
+          </div>
         `;
       }).join('');
-    };
-
-    if (historyTbody) {
-      historyTbody.innerHTML = renderRows(this.historyRecords, false);
-      historyTbody.querySelectorAll('.btn-view-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = parseInt(btn.getAttribute('data-index'), 10);
-          const record = this.historyRecords[idx];
-          if (record) this.onViewDetails(record);
-        });
-      });
-      historyTbody.querySelectorAll('.btn-del-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = parseInt(btn.getAttribute('data-index'), 10);
-          this.deleteRecord(idx);
-        });
-      });
     }
 
-    if (recentTbody) {
-      recentTbody.innerHTML = renderRows(this.historyRecords.slice(0, 5), true);
-      recentTbody.querySelectorAll('.btn-view-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = parseInt(btn.getAttribute('data-index'), 10);
-          const record = this.historyRecords[idx];
-          if (record) this.onViewDetails(record);
-        });
-      });
+    // 3. Confidence Range Distribution
+    const confContainer = document.getElementById('chartConfidenceDistribution');
+    if (confContainer && charts.confidence_distribution) {
+      const data = charts.confidence_distribution;
+      const maxVal = Math.max(1, ...Object.values(data));
+
+      confContainer.innerHTML = Object.entries(data).map(([label, val]) => {
+        const widthPct = Math.max(4, Math.round((val / maxVal) * 100));
+        return `
+          <div style="margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; margin-bottom: 3px;">
+              <span>${label}</span>
+              <span style="font-weight: 700; color: #f8fafc;">${val}</span>
+            </div>
+            <div style="height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden;">
+              <div style="width: ${widthPct}%; height: 100%; background: #38bdf8; border-radius: 4px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
   }
 
-  deleteRecord(index) {
-    const updated = [...this.historyRecords];
-    updated.splice(index, 1);
-    this._saveHistory(updated);
-    this.renderHistoryTable();
-    toast.show('Record removed from history', 'info');
+  _filterAndRenderHistory() {
+    const tableBody = document.getElementById('historyTableBody');
+    if (!tableBody) return;
+
+    const search = (document.getElementById('historySearchInput')?.value || '').toLowerCase();
+    const verdictFilter = document.getElementById('historyVerdictFilter')?.value || 'ALL';
+
+    const filtered = this.historyRecords.filter(item => {
+      const matchSearch = !search || 
+        (item.filename && item.filename.toLowerCase().includes(search)) ||
+        (item.id && item.id.toLowerCase().includes(search));
+
+      const matchVerdict = verdictFilter === 'ALL' || 
+        (item.verdict && item.verdict.toUpperCase().includes(verdictFilter.toUpperCase()));
+
+      return matchSearch && matchVerdict;
+    });
+
+    if (filtered.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8;">
+            No verification records found matching the current criteria.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tableBody.innerHTML = filtered.map(item => {
+      const verdict = item.verdict || 'UNCERTAIN — REVIEW';
+      let pillClass = 'badge-uncertain';
+      if (verdict.includes('AUTHENTIC')) pillClass = 'badge-authentic';
+      else if (verdict.includes('SYNTHETIC')) pillClass = 'badge-synthetic';
+
+      const conf = item.confidence ? `${item.confidence}%` : 'N/A';
+      const risk = item.risk_level || 'REVIEW';
+
+      return `
+        <tr style="border-bottom: 1px solid #1e293b;">
+          <td style="padding: 12px 14px; font-family: monospace; font-size: 0.8rem; color: #38bdf8;">${item.id}</td>
+          <td style="padding: 12px 14px; font-weight: 600; color: #f8fafc;">${item.filename || 'voice_sample.wav'}</td>
+          <td style="padding: 12px 14px; color: #94a3b8;">${item.duration_str || item.duration + 's' || '5.0s'}</td>
+          <td style="padding: 12px 14px;">
+            <span class="history-pill ${pillClass}">${verdict}</span>
+          </td>
+          <td style="padding: 12px 14px; font-weight: 700; color: #f8fafc;">${conf}</td>
+          <td style="padding: 12px 14px; color: #cbd5e1;">${risk}</td>
+          <td style="padding: 12px 14px; text-align: right;">
+            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+              <button class="btn btn-sm btn-secondary btn-history-details" data-id="${item.id}" type="button" title="View Details">
+                Details
+              </button>
+              <button class="btn btn-sm btn-tertiary btn-history-delete" data-id="${item.id}" type="button" title="Delete" style="color: #ef4444;">
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Bind action buttons
+    tableBody.querySelectorAll('.btn-history-details').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const detail = await VoiceShieldAPI.getHistory(id);
+        const record = (detail && detail.length) ? detail.find(r => r.id === id) : this.historyRecords.find(r => r.id === id);
+        if (record) {
+          ReportGenerator.generateReport(record, record.filename);
+        } else {
+          toast.show('Record details not found.', 'warning');
+        }
+      });
+    });
+
+    tableBody.querySelectorAll('.btn-history-delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        if (confirm(`Delete record ${id}?`)) {
+          await VoiceShieldAPI.deleteHistoryItem(id);
+          this.historyRecords = this.historyRecords.filter(r => r.id !== id);
+          localStorage.setItem('voiceshield_verification_history', JSON.stringify(this.historyRecords));
+          this._filterAndRenderHistory();
+          this.refresh();
+          toast.show(`Record ${id} removed.`, 'info');
+        }
+      });
+    });
   }
 
-  clearAll() {
-    this._saveHistory([]);
-    this.renderHistoryTable();
+  addRecord(record) {
+    if (!record) return;
+    this.historyRecords.unshift(record);
+    try {
+      localStorage.setItem('voiceshield_verification_history', JSON.stringify(this.historyRecords.slice(0, 50)));
+    } catch (e) {}
+    this._filterAndRenderHistory();
+    this.refresh();
   }
 }

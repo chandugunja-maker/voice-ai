@@ -1,38 +1,32 @@
 """
 API Endpoints for VoiceShield AI
-Clean, robust, and accessible verification API.
+Enterprise AI Voice Security & Authenticity Platform
+Smart India Hackathon 2026 - Theme: Blockchain & Cybersecurity | Team: Agents (TEAM-312)
 """
 
 import os
 import numpy as np
-from typing import Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
+from typing import Optional, List
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status, Query
 from backend.app.config import settings
 from backend.app.models.schemas import (
     VoiceAnalysisResponse,
     MicrophoneTestResponse,
     StatsSummary,
+    DashboardStatsResponse,
     HealthResponse
 )
 from backend.app.services.acoustic_analyzer import AcousticAnalyzer
 from backend.app.services.voice_detection import voice_service
 from backend.app.services.blockchain_ledger import ledger
+from backend.app.services.history_store import history_store
 
-router = APIRouter(prefix="/api", tags=["VoiceShield Verification"])
-
-_stats_counter = {
-    "total": 142,
-    "genuine": 88,
-    "suspicious": 32,
-    "ai_generated": 22,
-    "risk_sum": 4580,
-    "high_risk_prevented": 54
-}
+router = APIRouter(prefix="/api", tags=["VoiceShield Security Engine"])
 
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health status and configuration."""
+    """Health status and system configuration."""
     return HealthResponse(
         status="healthy",
         app_name=settings.APP_NAME,
@@ -44,14 +38,11 @@ async def health_check():
 
 @router.post("/test-microphone", response_model=MicrophoneTestResponse)
 async def test_microphone(
-    audio: UploadFile = File(..., description="Short 1-2s audio sample for microphone testing")
+    audio: UploadFile = File(..., description="Short audio sample for microphone diagnostic testing")
 ):
     """
     Microphone Diagnostic Test:
-    Returns:
-    - '🎙️ Microphone detected' (clear voice)
-    - '🔇 No voice detected' (silence / too quiet)
-    - '⚠️ Microphone not detected' (corrupted stream)
+    Returns status: 'detected', 'not_detected', or 'no_voice'.
     """
     try:
         contents = await audio.read()
@@ -63,7 +54,7 @@ async def test_microphone(
                 audio_level=0.0
             )
 
-        samples, sr, duration = AcousticAnalyzer.parse_audio_samples(contents)
+        samples, sr, duration, channels = AcousticAnalyzer.parse_audio_samples(contents)
         if len(samples) == 0:
             return MicrophoneTestResponse(
                 status="not_detected",
@@ -75,18 +66,18 @@ async def test_microphone(
         rms = float(np.sqrt(np.mean(samples ** 2)))
         peak = float(np.max(np.abs(samples)))
 
-        if rms < 0.004 and peak < 0.012:
+        if rms < 0.003 and peak < 0.009:
             return MicrophoneTestResponse(
                 status="no_voice",
                 title="🔇 No voice detected",
-                message="Microphone is active but no speech was heard. Please check your volume.",
+                message="Microphone is active but no speech was heard. Please verify input volume.",
                 audio_level=round(rms * 100, 1)
             )
 
         return MicrophoneTestResponse(
             status="detected",
             title="🎙️ Microphone detected",
-            message="Microphone is working clearly! You are ready to start voice verification.",
+            message="Microphone is active and working clearly! Ready for voice analysis.",
             audio_level=round(rms * 100, 1)
         )
     except Exception as e:
@@ -100,13 +91,14 @@ async def test_microphone(
 
 @router.post("/analyze-voice", response_model=VoiceAnalysisResponse)
 async def analyze_voice(
-    audio: UploadFile = File(..., description="Audio file in WAV, MP3, M4A, WebM, or OGG format"),
-    sample_hint: Optional[str] = Form(None, description="Optional classification hint for demo benchmarking"),
-    fast_mode: bool = Form(False, description="Set true for faster, less thorough analysis")
+    audio: UploadFile = File(..., description="Audio file in WAV, MP3, M4A, WebM, FLAC, or OGG format"),
+    sample_hint: Optional[str] = Form(None, description="Optional classification hint for benchmark evaluation"),
+    fast_mode: bool = Form(False, description="Fast mode execution")
 ):
     """
     Main Voice Verification Endpoint:
-    Checks for presence of speech first (VAD), audio quality, duration, and then detects AI cloning.
+    Checks for speech presence (VAD), pre-analysis quality, acoustic biometrics,
+    liveness/replay indicators, and generates probabilistic authenticity verdict.
     """
     if not audio.filename:
         raise HTTPException(
@@ -118,14 +110,14 @@ async def analyze_voice(
     if ext and ext not in settings.ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file type (.{ext}). VoiceShield AI accepts: {', '.join(settings.ALLOWED_EXTENSIONS).upper()}."
+            detail=f"Unsupported file format (.{ext}). Accepted formats: {', '.join(settings.ALLOWED_EXTENSIONS).upper()}."
         )
 
     contents = await audio.read()
     if len(contents) == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The uploaded audio is empty. Please check your microphone or file."
+            detail="The uploaded audio is empty. Please check your recording or file."
         )
 
     if len(contents) > settings.MAX_FILE_SIZE_BYTES:
@@ -141,19 +133,6 @@ async def analyze_voice(
             sample_hint=sample_hint,
             fast_mode=fast_mode
         )
-
-        if result.status == "success" and result.risk_score is not None:
-            _stats_counter["total"] += 1
-            _stats_counter["risk_sum"] += result.risk_score
-            if result.classification == "genuine":
-                _stats_counter["genuine"] += 1
-            elif result.classification == "suspicious":
-                _stats_counter["suspicious"] += 1
-                _stats_counter["high_risk_prevented"] += 1
-            else:
-                _stats_counter["ai_generated"] += 1
-                _stats_counter["high_risk_prevented"] += 1
-
         return result
 
     except Exception as exc:
@@ -166,10 +145,10 @@ async def analyze_voice(
 @router.post("/analyze-demo/{sample_id}", response_model=VoiceAnalysisResponse)
 async def analyze_demo_sample(sample_id: str):
     """
-    Instant test analysis for the 3 demo examples:
-    - 'rahul' or 'genuine' -> Example 1: Rahul Natural Human Voice
-    - 'suspicious' -> Example 2: Urgent Verification Suspicious Voice
-    - 'processed' or 'ai_generated' -> Example 3: Processed AI Voice Clone
+    Instant test analysis for the 3 demo benchmark samples:
+    - 'rahul' / 'genuine' -> Rahul Natural Human Voice
+    - 'suspicious' -> Urgent Verification Suspicious Voice
+    - 'processed' / 'ai_generated' -> Processed AI Voice Clone
     """
     sample_mapping = {
         "rahul": ("example-rahul.wav", "genuine"),
@@ -184,16 +163,21 @@ async def analyze_demo_sample(sample_id: str):
     if sample_id not in sample_mapping:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Sample '{sample_id}' not found. Available examples: rahul, suspicious, processed."
+            detail=f"Sample '{sample_id}' not found. Available: rahul, suspicious, processed."
         )
 
     filename, hint = sample_mapping[sample_id]
     sample_path = os.path.join(settings.SAMPLES_DIR, filename)
 
     if not os.path.exists(sample_path):
-        # Fallback to old sample names if needed
         fallback_name = "sample-genuine.wav" if hint == "genuine" else ("sample-suspicious.wav" if hint == "suspicious" else "sample-ai-clone.wav")
         sample_path = os.path.join(settings.SAMPLES_DIR, fallback_name)
+
+    if not os.path.exists(sample_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Demo sample file '{filename}' was not found on the server."
+        )
 
     with open(sample_path, "rb") as f:
         audio_bytes = f.read()
@@ -203,40 +187,107 @@ async def analyze_demo_sample(sample_id: str):
         filename=filename,
         sample_hint=hint
     )
-
-    if result.status == "success" and result.risk_score is not None:
-        _stats_counter["total"] += 1
-        _stats_counter["risk_sum"] += result.risk_score
-        if result.classification == "genuine":
-            _stats_counter["genuine"] += 1
-        elif result.classification == "suspicious":
-            _stats_counter["suspicious"] += 1
-            _stats_counter["high_risk_prevented"] += 1
-        else:
-            _stats_counter["ai_generated"] += 1
-            _stats_counter["high_risk_prevented"] += 1
-
     return result
 
 
-@router.get("/stats", response_model=StatsSummary)
-async def get_stats():
-    """Returns aggregated verification metrics for dashboard analytics."""
-    total = _stats_counter["total"]
-    avg_risk = round(_stats_counter["risk_sum"] / total, 1) if total > 0 else 0.0
+@router.get("/dashboard/stats", response_model=DashboardStatsResponse)
+async def get_dashboard_stats():
+    """
+    Returns real aggregate metrics and responsive chart data:
+    Total Analyses, Authentic, Synthetic, Uncertain, Risk/Confidence distribution.
+    """
+    stats = history_store.get_dashboard_stats()
+    return stats
 
+
+@router.get("/stats", response_model=StatsSummary)
+async def get_legacy_stats():
+    """Returns basic verification counts for backward compatibility."""
+    stats = history_store.get_dashboard_stats()
     return StatsSummary(
-        total_verifications=total,
-        genuine_count=_stats_counter["genuine"],
-        suspicious_count=_stats_counter["suspicious"],
-        ai_count=_stats_counter["ai_generated"],
-        avg_risk_score=avg_risk,
-        high_risk_prevented=_stats_counter["high_risk_prevented"]
+        total_verifications=stats["total_analyses"],
+        genuine_count=stats["likely_authentic"],
+        suspicious_count=stats["uncertain"],
+        ai_count=stats["likely_synthetic"],
+        avg_risk_score=round(100.0 - stats["avg_confidence"], 1),
+        high_risk_prevented=stats["high_risk_prevented"]
     )
 
 
+@router.get("/history")
+async def get_history(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    search: Optional[str] = Query(None),
+    verdict: Optional[str] = Query(None),
+    risk: Optional[str] = Query(None)
+):
+    """
+    Returns paginated verification history records with search and filtering.
+    """
+    records = history_store.get_history(
+        limit=limit,
+        offset=offset,
+        search=search,
+        verdict_filter=verdict,
+        risk_filter=risk
+    )
+    return {
+        "status": "success",
+        "count": len(records),
+        "records": records
+    }
+
+
+@router.get("/history/{record_id}")
+async def get_history_detail(record_id: str):
+    """
+    Retrieves full details of a specific past analysis.
+    """
+    record = history_store.get_record(record_id)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Analysis record '{record_id}' not found."
+        )
+    return {
+        "status": "success",
+        "record": record
+    }
+
+
+@router.delete("/history/{record_id}")
+async def delete_history_item(record_id: str):
+    """
+    Deletes a specific analysis record from persistent storage.
+    """
+    deleted = history_store.delete_record(record_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Analysis record '{record_id}' not found or already deleted."
+        )
+    return {
+        "status": "success",
+        "message": f"Record '{record_id}' deleted successfully."
+    }
+
+
+@router.delete("/history")
+async def clear_all_history():
+    """
+    Privacy control: Deletes all stored analysis records.
+    """
+    count = history_store.clear_all()
+    return {
+        "status": "success",
+        "message": f"All {count} analysis records have been permanently cleared."
+    }
+
+
 @router.get("/blockchain/records")
-async def get_blockchain_records(limit: int = 10):
+async def get_blockchain_records(limit: int = Query(10, ge=1, le=50)):
+    """Returns recent tamper-evident ledger records."""
     return {
         "status": "success",
         "records": ledger.get_recent_records(limit=limit),
@@ -247,4 +298,5 @@ async def get_blockchain_records(limit: int = 10):
 
 @router.get("/blockchain/verify-chain")
 async def verify_blockchain_chain():
+    """Verifies cryptographic chain integrity."""
     return ledger.verify_integrity()
