@@ -9,7 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from backend.app.config import settings
 from backend.app.api.endpoints import router as api_router
 
@@ -35,68 +35,94 @@ app.add_middleware(
 app.include_router(api_router)
 
 # Resolve frontend directory path
-frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend"))
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+frontend_dir = os.path.join(repo_root, "frontend")
 
+# Safely mount static directories if available
 if os.path.exists(frontend_dir):
-    # Mount assets and static files
-    assets_dir = os.path.join(frontend_dir, "assets")
-    css_dir = os.path.join(frontend_dir, "css")
-    js_dir = os.path.join(frontend_dir, "js")
-    if os.path.exists(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
-    if os.path.exists(css_dir):
-        app.mount("/css", StaticFiles(directory=css_dir), name="css")
-    if os.path.exists(js_dir):
-        app.mount("/js", StaticFiles(directory=js_dir), name="js")
-    # Keep /static as a legacy mount pointing to the full frontend dir
-    app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+    try:
+        assets_dir = os.path.join(frontend_dir, "assets")
+        if os.path.exists(assets_dir):
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+    except Exception:
+        pass
 
-    # Serve vite.svg
-    @app.get("/vite.svg", include_in_schema=False)
-    async def serve_vite_svg():
-        svg_file = os.path.join(frontend_dir, "vite.svg")
-        if os.path.exists(svg_file):
-            return FileResponse(svg_file, media_type="image/svg+xml")
-        return FileResponse(os.path.join(frontend_dir, "assets", "vite.svg"), media_type="image/svg+xml")
+    try:
+        css_dir = os.path.join(frontend_dir, "css")
+        if os.path.exists(css_dir):
+            app.mount("/css", StaticFiles(directory=css_dir), name="css")
+    except Exception:
+        pass
 
-    # Serve favicon.ico
-    @app.get("/favicon.ico", include_in_schema=False)
-    async def serve_favicon():
-        fav_file = os.path.join(frontend_dir, "favicon.ico")
-        if os.path.exists(fav_file):
-            return FileResponse(fav_file, media_type="image/x-icon")
-        return FileResponse(os.path.join(frontend_dir, "assets", "vite.svg"), media_type="image/svg+xml")
+    try:
+        js_dir = os.path.join(frontend_dir, "js")
+        if os.path.exists(js_dir):
+            app.mount("/js", StaticFiles(directory=js_dir), name="js")
+    except Exception:
+        pass
 
-    # Serve index.html at root
-    @app.get("/", include_in_schema=False)
-    async def serve_index():
-        index_file = os.path.join(frontend_dir, "index.html")
-        if os.path.exists(index_file):
-            return FileResponse(index_file)
-        return {"message": "Frontend index.html not found"}
+    try:
+        app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+    except Exception:
+        pass
 
-    @app.get("/index.html", include_in_schema=False)
-    async def serve_index_html():
-        index_file = os.path.join(frontend_dir, "index.html")
-        if os.path.exists(index_file):
-            return FileResponse(index_file)
-        return {"message": "Frontend index.html not found"}
 
-    @app.get("/index_custom.html", include_in_schema=False)
-    async def serve_index_custom():
-        custom_file = os.path.join(frontend_dir, "index_custom.html")
-        if os.path.exists(custom_file):
-            return FileResponse(custom_file)
-        return {"message": "Frontend index_custom.html not found"}
-else:
-    @app.get("/")
-    async def root():
-        return {
-            "app": settings.APP_NAME,
-            "version": settings.APP_VERSION,
-            "status": "online",
-            "docs": "/api/docs"
-        }
+def _read_html_file(filename: str) -> str:
+    candidates = [
+        os.path.join(frontend_dir, filename),
+        os.path.join(repo_root, filename),
+        filename,
+        os.path.join("frontend", filename)
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            try:
+                with open(c, "r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception:
+                pass
+    return ""
+
+
+# Serve index.html at root
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def serve_index():
+    content = _read_html_file("index.html")
+    if content:
+        return HTMLResponse(content=content)
+    return HTMLResponse(content="<h1>VoiceShield AI is Online</h1><p><a href='/api/docs'>API Documentation</a></p>")
+
+
+@app.get("/index.html", response_class=HTMLResponse, include_in_schema=False)
+async def serve_index_html():
+    content = _read_html_file("index.html")
+    if content:
+        return HTMLResponse(content=content)
+    return HTMLResponse(content="<h1>VoiceShield AI is Online</h1><p><a href='/api/docs'>API Documentation</a></p>")
+
+
+@app.get("/index_custom.html", response_class=HTMLResponse, include_in_schema=False)
+async def serve_index_custom():
+    content = _read_html_file("index_custom.html")
+    if content:
+        return HTMLResponse(content=content)
+    return HTMLResponse(content="<h1>VoiceShield AI Custom View</h1><p><a href='/api/docs'>API Documentation</a></p>")
+
+
+@app.get("/vite.svg", include_in_schema=False)
+async def serve_vite_svg():
+    for p in [os.path.join(frontend_dir, "vite.svg"), os.path.join(repo_root, "vite.svg"), "vite.svg"]:
+        if os.path.exists(p):
+            return FileResponse(p, media_type="image/svg+xml")
+    return {"message": "vite.svg not found"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def serve_favicon():
+    for p in [os.path.join(frontend_dir, "favicon.ico"), os.path.join(repo_root, "favicon.ico"), "favicon.ico"]:
+        if os.path.exists(p):
+            return FileResponse(p, media_type="image/x-icon")
+    return {"message": "favicon.ico not found"}
 
 
 def run():
