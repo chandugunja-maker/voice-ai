@@ -298,6 +298,9 @@
                 <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
                   Supports: <strong>WAV, MP3, M4A, FLAC, OGG</strong> (Max 25 MB)
                 </p>
+                <div id="uploadEmptyStateNotice" style="margin-bottom: 1rem; font-size: 0.88rem; color: var(--text-muted);">
+                  Status: <strong style="color: var(--text-secondary);">No audio selected</strong>
+                </div>
                 <button id="btnBrowseUpload" class="btn btn-secondary btn-sm" type="button">
                   Browse Audio Files
                 </button>
@@ -312,9 +315,9 @@
                     <p id="uploadedFileSize" style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">--</p>
                   </div>
                   <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button id="btnUploadPlayPause" class="btn btn-secondary btn-sm" type="button">▶ Play</button>
-                    <button id="btnRemoveUpload" class="btn btn-tertiary btn-sm" type="button">Remove</button>
-                    <button id="btnCheckUploadedVoice" class="btn btn-primary btn-sm" type="button">🔍 Analyze Voice</button>
+                    <button id="btnUploadPlayPause" class="btn btn-secondary btn-sm" type="button" disabled>▶ Play</button>
+                    <button id="btnRemoveUpload" class="btn btn-tertiary btn-sm" type="button" disabled>Remove</button>
+                    <button id="btnCheckUploadedVoice" class="btn btn-primary btn-sm" type="button" disabled>🔍 Analyze Voice</button>
                   </div>
                 </div>
               </div>
@@ -855,7 +858,7 @@
         <div class="card" style="max-width: 800px; margin: 0 auto; line-height: 1.7; font-size: 0.95rem;">
           <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.5rem;">How VoiceShield AI Works</h3>
           <p style="color: var(--text-secondary); margin-bottom: 1.25rem;">
-            Modern voice cloning architectures synthesize speech by generating acoustic spectral frames through neural vocoders. VoiceShield AI analyzes physical vocal tract bio-signals, prosodic inflection variability, neuromuscular micro-jitter, and pause room-tone physics to differentiate authentic human speech from synthetic artifacts.
+            VoiceShield AI operates as an acoustic anomaly screening and digital signal processing (DSP) system. It evaluates pitch variability (F0 dynamics), spectral centroid and flatness, energy envelope variance, and ambient pause acoustics to detect synthetic artifacts, robotic regularities, and loudspeaker acoustic replays without persisting raw audio.
           </p>
 
           <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.5rem;">Acoustic Liveness & Replay Analysis</h3>

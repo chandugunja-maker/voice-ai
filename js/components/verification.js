@@ -480,6 +480,7 @@ export class VerificationWorkspace {
       this.currentDuration = tempAudio.duration || 0;
       const metaDuration = document.getElementById('uploadMetaDuration');
       if (metaDuration) metaDuration.textContent = `${this.currentDuration.toFixed(1)}s`;
+      if (sizeEl) sizeEl.textContent = `${ext.toUpperCase()} • ${(file.size / (1024 * 1024)).toFixed(2)} MB • ${this.currentDuration.toFixed(1)}s`;
     };
     tempAudio.onerror = () => {
       toast.show('Unable to decode this audio file.', 'error');
@@ -495,6 +496,9 @@ export class VerificationWorkspace {
     const metaSize = document.getElementById('uploadMetaSize');
     const metaQuality = document.getElementById('uploadMetaQuality');
     const qualityBadge = document.getElementById('uploadQualityBadge');
+    const playBtn = document.getElementById('btnUploadPlayPause');
+    const removeBtn = document.getElementById('btnRemoveUpload');
+    const analyzeBtn = document.getElementById('btnCheckUploadedVoice');
 
     if (dropzone) dropzone.style.display = 'none';
     if (previewBar) previewBar.style.display = 'block';
@@ -502,6 +506,9 @@ export class VerificationWorkspace {
     if (sizeEl) sizeEl.textContent = `${ext.toUpperCase()} • ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
     if (metaFormat) metaFormat.textContent = ext.toUpperCase();
     if (metaSize) metaSize.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    if (playBtn) playBtn.disabled = false;
+    if (removeBtn) removeBtn.disabled = false;
+    if (analyzeBtn) analyzeBtn.disabled = false;
 
     // Fetch pre-analysis diagnostics for uploaded file
     VoiceShieldAPI.checkAudioQuality(file, file.name).then(diag => {
@@ -535,12 +542,18 @@ export class VerificationWorkspace {
     const fileInput = document.getElementById('fileUploadInput');
     const nameEl = document.getElementById('uploadedFileName');
     const sizeEl = document.getElementById('uploadedFileSize');
+    const playBtn = document.getElementById('btnUploadPlayPause');
+    const removeBtn = document.getElementById('btnRemoveUpload');
+    const analyzeBtn = document.getElementById('btnCheckUploadedVoice');
 
     if (dropzone) dropzone.style.display = 'block';
     if (previewBar) previewBar.style.display = 'none';
     if (fileInput) fileInput.value = '';
     if (nameEl) nameEl.textContent = 'No audio selected';
     if (sizeEl) sizeEl.textContent = '--';
+    if (playBtn) playBtn.disabled = true;
+    if (removeBtn) removeBtn.disabled = true;
+    if (analyzeBtn) analyzeBtn.disabled = true;
   }
 
   _togglePlayback() {
