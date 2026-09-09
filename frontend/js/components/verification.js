@@ -77,12 +77,14 @@ export class VerificationWorkspace {
       if (navigator.mediaDevices.enumerateDevices) {
         const devices = await Promise.race([
           navigator.mediaDevices.enumerateDevices(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1200))
         ]);
-        const hasAudioInput = devices.some(d => d.kind === 'audioinput');
-        if (!hasAudioInput && devices.length > 0) {
-          this._setMicStatus('Microphone Unavailable', 'status-denied');
-          return;
+        if (Array.isArray(devices)) {
+          const hasAudioInput = devices.some(d => d.kind === 'audioinput');
+          if (!hasAudioInput) {
+            this._setMicStatus('Microphone Unavailable', 'status-denied');
+            return;
+          }
         }
       }
     } catch (e) {}
@@ -479,6 +481,29 @@ export class VerificationWorkspace {
     this.currentFilename = file.name;
     this.sampleHint = null;
 
+    // Grab Upload UI elements first
+    const dropzone = document.getElementById('uploadDropzone');
+    const previewBar = document.getElementById('uploadFilePreview');
+    const nameEl = document.getElementById('uploadedFileName');
+    const sizeEl = document.getElementById('uploadedFileSize');
+    const metaFormat = document.getElementById('uploadMetaFormat');
+    const metaSize = document.getElementById('uploadMetaSize');
+    const metaQuality = document.getElementById('uploadMetaQuality');
+    const qualityBadge = document.getElementById('uploadQualityBadge');
+    const playBtn = document.getElementById('btnUploadPlayPause');
+    const removeBtn = document.getElementById('btnRemoveUpload');
+    const analyzeBtn = document.getElementById('btnCheckUploadedVoice');
+
+    if (dropzone) dropzone.style.display = 'none';
+    if (previewBar) previewBar.style.display = 'block';
+    if (nameEl) nameEl.textContent = file.name;
+    if (sizeEl) sizeEl.textContent = `${ext.toUpperCase()} • ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    if (metaFormat) metaFormat.textContent = ext.toUpperCase();
+    if (metaSize) metaSize.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    if (playBtn) playBtn.disabled = false;
+    if (removeBtn) removeBtn.disabled = false;
+    if (analyzeBtn) analyzeBtn.disabled = false;
+
     // Inspect audio duration via temporary audio object
     const objectUrl = URL.createObjectURL(file);
     this.audioPlayer.src = objectUrl;
@@ -520,29 +545,6 @@ export class VerificationWorkspace {
           });
       } catch (e) {}
     }
-
-    // Update Upload UI
-    const dropzone = document.getElementById('uploadDropzone');
-    const previewBar = document.getElementById('uploadFilePreview');
-    const nameEl = document.getElementById('uploadedFileName');
-    const sizeEl = document.getElementById('uploadedFileSize');
-    const metaFormat = document.getElementById('uploadMetaFormat');
-    const metaSize = document.getElementById('uploadMetaSize');
-    const metaQuality = document.getElementById('uploadMetaQuality');
-    const qualityBadge = document.getElementById('uploadQualityBadge');
-    const playBtn = document.getElementById('btnUploadPlayPause');
-    const removeBtn = document.getElementById('btnRemoveUpload');
-    const analyzeBtn = document.getElementById('btnCheckUploadedVoice');
-
-    if (dropzone) dropzone.style.display = 'none';
-    if (previewBar) previewBar.style.display = 'block';
-    if (nameEl) nameEl.textContent = file.name;
-    if (sizeEl) sizeEl.textContent = `${ext.toUpperCase()} • ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
-    if (metaFormat) metaFormat.textContent = ext.toUpperCase();
-    if (metaSize) metaSize.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
-    if (playBtn) playBtn.disabled = false;
-    if (removeBtn) removeBtn.disabled = false;
-    if (analyzeBtn) analyzeBtn.disabled = false;
 
     // Fetch pre-analysis diagnostics for uploaded file
     VoiceShieldAPI.checkAudioQuality(file, file.name).then(diag => {

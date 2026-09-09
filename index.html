@@ -143,26 +143,44 @@
                     el.className = 'mic-status-pill status-denied';
                     return;
                   }
-                  if (navigator.permissions && navigator.permissions.query) {
-                    navigator.permissions.query({ name: 'microphone' }).then(function(res) {
-                      function update(st) {
-                        if (st === 'granted') {
-                          el.textContent = 'Microphone Ready';
-                          el.className = 'mic-status-pill status-ready';
-                        } else if (st === 'denied') {
-                          el.textContent = 'Permission Denied';
-                          el.className = 'mic-status-pill status-denied';
-                        } else {
-                          el.textContent = 'Permission Required';
-                          el.className = 'mic-status-pill status-prompt';
-                        }
-                      }
-                      update(res.state);
-                      res.onchange = function() { update(res.state); };
-                    }).catch(function() {
+                  function updateUI(st) {
+                    if (st === 'granted') {
+                      el.textContent = 'Microphone Ready';
+                      el.className = 'mic-status-pill status-ready';
+                    } else if (st === 'denied') {
+                      el.textContent = 'Permission Denied';
+                      el.className = 'mic-status-pill status-denied';
+                    } else {
                       el.textContent = 'Permission Required';
                       el.className = 'mic-status-pill status-prompt';
+                    }
+                  }
+                  function checkPermissions() {
+                    if (navigator.permissions && navigator.permissions.query) {
+                      navigator.permissions.query({ name: 'microphone' }).then(function(res) {
+                        updateUI(res.state);
+                        res.onchange = function() { updateUI(res.state); };
+                      }).catch(function() {
+                        updateUI('prompt');
+                      });
+                    } else {
+                      updateUI('prompt');
+                    }
+                  }
+                  if (navigator.mediaDevices.enumerateDevices) {
+                    navigator.mediaDevices.enumerateDevices().then(function(devices) {
+                      var hasMic = devices.some(function(d) { return d.kind === 'audioinput'; });
+                      if (!hasMic && devices.length > 0) {
+                        el.textContent = 'Microphone Unavailable';
+                        el.className = 'mic-status-pill status-denied';
+                      } else {
+                        checkPermissions();
+                      }
+                    }).catch(function() {
+                      checkPermissions();
                     });
+                  } else {
+                    checkPermissions();
                   }
                 })();
               </script>
@@ -1244,7 +1262,7 @@
     </div>
   </footer>
 
-  <script type="module" src="./js/app.js?v=2.3"></script>
+  <script type="module" src="./js/app.js?v=3.0"></script>
 </body>
 </html>
 

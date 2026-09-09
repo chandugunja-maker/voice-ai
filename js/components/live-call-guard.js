@@ -421,30 +421,30 @@ export class LiveCallGuard {
     let replayIndicators = 0;
     let livenessIssues = 0;
 
-    // Robotic flat pitch indicator (Synthetic TTS vocoders often produce flat prosody < 7.5 Hz)
-    if (pitches.length >= 8 && pitchStd < 7.0) {
+    // Robotic flat pitch indicator (Synthetic TTS vocoders often produce flat prosody < 5.0 Hz)
+    if (pitches.length >= 8 && pitchStd < 5.0) {
       syntheticIndicators++;
     }
 
     // Unnatural pitch variance (sudden erratic jumps or synthesis glitch)
-    if (pitches.length >= 8 && pitchStd > 50.0 && !pitchBimodal) {
+    if (pitches.length >= 8 && pitchStd > 58.0 && !pitchBimodal) {
       syntheticIndicators++;
     }
 
     // Digital silence during pauses (neural synthesis with zero room tone)
-    if (digitalSilenceRatio > 0.25 && noiseFloor < 0.0006) {
+    if (digitalSilenceRatio > 0.30 && noiseFloor < 0.0004) {
       syntheticIndicators++;
     }
 
     // Comb-filter replay reflections
-    if (combPeak > 0.48) {
+    if (combPeak > 0.52) {
       replayIndicators += 2;
-    } else if (combPeak > 0.35) {
+    } else if (combPeak > 0.38) {
       replayIndicators += 1;
     }
 
     // Liveness: human dynamic inflection
-    if (pitches.length >= 8 && pitchStd < 5.5) {
+    if (pitches.length >= 8 && pitchStd < 4.8) {
       livenessIssues++;
     }
 
@@ -460,9 +460,9 @@ export class LiveCallGuard {
 
     // Window Verdict Assessment
     let windowVerdict = 'NORMAL';
-    if (syntheticIndicators >= 2 || replayIndicators >= 2) {
+    if (syntheticIndicators >= 2 || (syntheticIndicators >= 1 && replayIndicators >= 2)) {
       windowVerdict = 'SUSPICIOUS';
-    } else if (syntheticIndicators >= 1 || replayIndicators >= 1 || livenessIssues >= 1) {
+    } else if (syntheticIndicators >= 1 || replayIndicators >= 2) {
       windowVerdict = 'REVIEW';
     }
 
@@ -884,7 +884,7 @@ High Risk Incidents: ${this.sessionSummary.highRiskEvents}
 
 [DECISION SUPPORT DISCLOSURE]
 VoiceShield AI acts as real-time decision support for human operators.
-Evaluations are derived mathematically from acoustic bio-signal boundaries in volatile memory.
+Evaluations are derived mathematically from acoustic signal boundaries in volatile memory.
 No audio streams were permanently persisted or transmitted to third-party APIs.
 
 [TIMELINE EVENT LOG]

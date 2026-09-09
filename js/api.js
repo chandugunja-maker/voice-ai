@@ -296,7 +296,7 @@ export class VoiceShieldAPI {
           passed = false;
           status = 'poor_quality';
           title = '⚠️ Insufficient Audio Quality';
-          message = 'Heavy background noise obscures acoustic vocal tract characteristics.';
+          message = 'Heavy background noise obscures acoustic voice characteristics.';
         }
 
         await ctx.close().catch(() => {});
@@ -869,35 +869,41 @@ export class VoiceShieldAPI {
     let syntheticIndicatorCount = 0;
     const syntheticEvidence = [];
 
-    // Indicator A: Flat robotic pitch prosody (synthetic TTS typically has pitchStd < 6.5 Hz across >= 8 voiced frames)
-    if (voicedPitchesCount >= 8 && pitchStd < 6.5) {
+    // Indicator A: Flat robotic pitch prosody
+    // Natural human speech across a sentence has prosodic modulation (> 6.5 Hz standard deviation).
+    // Parametric or neural speech synthesis without natural prosodic inflection often exhibits flat pitch contours (< 5.0 Hz).
+    if (voicedPitchesCount >= 10 && pitchStd < 5.0) {
       syntheticIndicatorCount++;
-      syntheticEvidence.push(`Flat prosodic pitch contour (std: ${pitchStd.toFixed(1)} Hz) typical of parametric/neural speech synthesis`);
+      syntheticEvidence.push(`Flat prosodic pitch contour (std: ${pitchStd.toFixed(1)} Hz) characteristic of monotonic speech synthesis`);
     }
 
-    // Indicator B: Lack of physiological vocal micro-tremor (human vocal cords have 0.45% - 2.8% tremor)
-    if (voicedPitchesCount >= 8 && jitterPct < 0.35) {
+    // Indicator B: Lack of physiological vocal micro-tremor
+    // Human vocal fold vibrations exhibit natural period perturbation (0.40% - 2.8% micro-jitter).
+    // Synthetic waveforms synthesized without natural irregularity have minimal perturbation (< 0.22%).
+    if (voicedPitchesCount >= 10 && jitterPct < 0.22) {
       syntheticIndicatorCount++;
-      syntheticEvidence.push(`Absence of physiological vocal micro-tremor (${jitterPct.toFixed(2)}%)`);
+      syntheticEvidence.push(`Absence of natural pitch micro-jitter (${jitterPct.toFixed(2)}%)`);
     }
 
-    // Indicator C: Digital zero silence in speech pauses (neural synthesis with zero room tone)
-    if (digitalSilencePct > 18.0 && noiseFloor < 0.0006) {
+    // Indicator C: Digital zero silence in speech pauses
+    // Neural synthesis generated in clean isolation has digital absolute zeros in inter-word pauses with no room noise.
+    if (digitalSilencePct > 35.0 && noiseFloor < 0.0003) {
       syntheticIndicatorCount++;
-      syntheticEvidence.push('Digital zero silence in speech pauses without natural room tone');
+      syntheticEvidence.push('Digital zero silence in speech pauses without natural ambient noise');
     }
 
     // Indicator D: Steep vocoder high-frequency spectral cutoff
-    if (rolloffHz < 2400.0 && (pitchStd < 7.0 || jitterPct < 0.40)) {
+    // Corroborated cutoff: steep rolloff with flat pitch or absent jitter
+    if (rolloffHz < 2200.0 && voicedPitchesCount >= 10 && (pitchStd < 5.5 || jitterPct < 0.28)) {
       syntheticIndicatorCount++;
       syntheticEvidence.push('Steep high-frequency spectral cutoff consistent with low-bitrate vocoder');
     }
 
     // 2. Replay Indicators:
     let replayRisk = 'LOW';
-    if (combScore > 0.48) {
+    if (combScore > 0.52) {
       replayRisk = 'HIGH';
-    } else if (combScore > 0.35) {
+    } else if (combScore > 0.38) {
       replayRisk = 'MEDIUM';
     }
 
@@ -905,7 +911,7 @@ export class VoiceShieldAPI {
     let liveness = 'PASS';
     if (duration < 2.0 || voicedPitchesCount < 5) {
       liveness = 'INSUFFICIENT EVIDENCE';
-    } else if (pitchStd < 5.0 && jitterPct < 0.30) {
+    } else if (pitchStd < 4.8 && jitterPct < 0.25) {
       liveness = 'REVIEW';
     }
 
@@ -918,20 +924,16 @@ export class VoiceShieldAPI {
     let verdict = 'LIKELY AUTHENTIC';
     let authenticityScore = 92;
 
-    if (duration < 2.0 || snrDb < 4.0 || silencePct > 75.0 || voicedPitchesCount < 5) {
-      // Audio quality is insufficient or poor signal -> reduces confidence to UNCERTAIN
+    if (duration < 2.0 || snrDb < 3.5 || silencePct > 80.0 || voicedPitchesCount < 5) {
+      // Audio quality is insufficient or high noise -> reduces certainty to UNCERTAIN
       verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
       authenticityScore = 52;
-    } else if (syntheticIndicatorCount >= 2) {
-      // Strong evidence: at least 2 independent synthetic indicators
+    } else if (syntheticIndicatorCount >= 2 || (syntheticIndicatorCount >= 1 && replayRisk === 'HIGH')) {
+      // Strong evidence: multiple corroborating synthetic markers
       verdict = 'LIKELY SYNTHETIC';
       authenticityScore = 16;
-    } else if (syntheticIndicatorCount === 1 || replayRisk === 'HIGH') {
-      // Moderate concern or single indicator -> UNCERTAIN, do NOT jump to high risk
-      verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
-      authenticityScore = 48;
     } else {
-      // Natural human speech indicators strong
+      // Natural human speech indicators present
       verdict = 'LIKELY AUTHENTIC';
       authenticityScore = 92;
     }
@@ -940,6 +942,7 @@ export class VoiceShieldAPI {
     // SYSTEM B: SPEAKER IDENTITY VERIFICATION
     // Evaluates reference voice profile if enrolled.
     // Critical Rule: Identity mismatch does NOT cause High Risk!
+    // Authenticity ≠ Identity ≠ Security Risk
     // =========================================================================
     const identityResult = SpeakerEnrollment.verifyIdentity({
       mean_pitch: meanPitch,
@@ -951,29 +954,32 @@ export class VoiceShieldAPI {
     // =========================================================================
     // SYSTEM C: SECURITY RISK EVALUATION
     // Independent evidence-based threat model:
-    // - LOW: authentic indicators strong (even if identity is NO MATCH or UNKNOWN)
-    // - MEDIUM: moderate concern, conflicting signals, or replay warning
-    // - HIGH: strong persistent synthetic evidence OR Cloned User Voice case
+    // "Authenticity ≠ Identity ≠ Security Risk"
+    //
+    // - Genuine human voice (MATCH, NO MATCH, or UNKNOWN identity) -> LOW RISK
+    // - Normal compression, room echo, accent, gender, or noise -> LOW RISK
+    // - Inconclusive audio quality -> LOW RISK (Quality Inconclusive)
+    // - Strong synthetic evidence or impersonation attack -> HIGH RISK
     // =========================================================================
     let riskLevel = 'LOW RISK';
     let riskScore = 12;
 
     if (verdict === 'LIKELY SYNTHETIC') {
       if (identityResult.status === 'MATCH' || identityResult.status === 'POSSIBLE MATCH') {
-        // Cloned Voice Impersonation Case: sounds like user's contact but synthetic!
+        // Cloned Voice Impersonation Case: synthetic voice matching user's contact!
         riskLevel = 'HIGH RISK';
         riskScore = 94;
-      } else if (syntheticIndicatorCount >= 2 || (syntheticIndicatorCount >= 1 && replayRisk === 'HIGH')) {
+      } else if (syntheticIndicatorCount >= 2) {
         riskLevel = 'HIGH RISK';
         riskScore = 88;
       } else {
         riskLevel = 'MEDIUM RISK';
-        riskScore = 58;
+        riskScore = 55;
       }
     } else if (verdict === 'UNCERTAIN — REVIEW RECOMMENDED') {
-      // Poor quality or single weak signal must NOT cause High Risk!
-      riskLevel = 'MEDIUM RISK';
-      riskScore = replayRisk === 'HIGH' ? 56 : 42;
+      // Inconclusive audio quality or mild noise is NOT an attack threat!
+      riskLevel = 'LOW RISK';
+      riskScore = 22;
     } else {
       // LIKELY AUTHENTIC
       // Genuine user voice (MATCH), friend (NO MATCH), or stranger (UNKNOWN) -> LOW RISK!
@@ -998,7 +1004,7 @@ export class VoiceShieldAPI {
       const snrBonus = Math.min(5, snrDb * 0.15);
       confidence = Math.min(96, Math.max(82, Math.round(84 + durBonus + snrBonus)));
     } else {
-      // MEDIUM RISK / UNCERTAIN: confidence reflects uncertainty / limited evidence
+      // MEDIUM RISK: confidence reflects uncertainty / limited evidence
       confidence = Math.min(68, Math.max(42, Math.round(48 + (snrDb * 0.5))));
     }
 
@@ -1020,30 +1026,30 @@ export class VoiceShieldAPI {
     const positiveIndicators = [];
     const potentialConcerns = [];
 
-    if (pitchStd >= 9.0) {
+    if (pitchStd >= 8.0) {
       positiveIndicators.push(`Natural prosodic pitch modulation observed (std: ${pitchStd.toFixed(1)} Hz)`);
     }
-    if (jitterPct >= 0.45 && jitterPct <= 2.8) {
-      positiveIndicators.push(`Physiological vocal micro-jitter present (${jitterPct.toFixed(2)}% perturbation)`);
+    if (jitterPct >= 0.35 && jitterPct <= 3.2) {
+      positiveIndicators.push(`Voiced frame pitch micro-jitter present (${jitterPct.toFixed(2)}% perturbation)`);
     }
-    if (rolloffHz >= 3000.0) {
+    if (rolloffHz >= 2800.0) {
       positiveIndicators.push('Continuous broadband spectral envelope without vocoder cutoff');
     }
-    if (combScore < 0.30) {
-      positiveIndicators.push('No acoustic comb filtering or loudspeaker replay artifacts detected');
+    if (combScore < 0.35) {
+      positiveIndicators.push('No periodic reflection notches or loudspeaker replay artifacts detected');
     }
-    if (snrDb >= 14.0) {
-      positiveIndicators.push(`Strong signal-to-noise ratio (${snrDb} dB)`);
+    if (snrDb >= 12.0) {
+      positiveIndicators.push(`Clear signal-to-noise ratio (${snrDb} dB)`);
     }
-    if (digitalSilencePct < 5.0) {
+    if (digitalSilencePct < 8.0) {
       positiveIndicators.push('Ambient room tone present in natural conversational pauses');
     }
 
     if (syntheticEvidence.length > 0) {
       potentialConcerns.push(...syntheticEvidence);
     }
-    if (combScore >= 0.35) {
-      potentialConcerns.push(`Periodic comb-filter reflection in replay range (${(combScore * 100).toFixed(0)}% correlation)`);
+    if (combScore >= 0.45) {
+      potentialConcerns.push(`Periodic reflection notches in replay range (${(combScore * 100).toFixed(0)}% correlation)`);
     }
     if (snrDb < 8.0) {
       potentialConcerns.push('Elevated ambient noise floor reducing acoustic boundary confidence');
@@ -1109,7 +1115,7 @@ export class VoiceShieldAPI {
         potential_concerns: potentialConcerns.length > 0 ? potentialConcerns : ['No synthetic anomalies or replay distortion observed']
       },
       background_audio: {
-        summary: 'Acoustic background isolated from vocal tract.',
+        summary: 'Acoustic background isolated from primary speech signal.',
         primary_voice: snrDb > 10 ? 'Dominant speaker' : 'Low signal-to-noise ratio',
         background_speech: multiSpeakerDetected ? 'Multiple conversational speakers detected' : 'None detected',
         environmental_noise: noiseFloor < 0.008 ? 'Low' : (noiseFloor < 0.035 ? 'Moderate' : 'High'),

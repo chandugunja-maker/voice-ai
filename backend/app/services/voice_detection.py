@@ -174,7 +174,7 @@ class VoiceDetectionService:
             else:
                 p_penalty = 0.0
 
-            # 2. Vocal micro-jitter (Involuntary neuromuscular tremor in human speech: 0.6% - 2.5%)
+            # 2. Voice micro-jitter (Natural acoustic period perturbation in human speech: 0.6% - 2.5%)
             if j_pct < 0.46:
                 j_penalty = 28.0 * max(0.0, (0.46 - j_pct) / 0.46)
             elif j_pct > 3.8:
@@ -238,7 +238,7 @@ class VoiceDetectionService:
             classification = "genuine"
             classification_label = "Likely Real Voice"
             result_icon = "🟢 ✓"
-            summary_msg = "Speech exhibits natural human prosody and physiological micro-jitter consistent with authentic vocal tract acoustics."
+            summary_msg = "Speech exhibits natural human prosody and acoustic period variation consistent with authentic speech."
             warning = None
         elif risk_score <= 65:
             verdict = "UNCERTAIN — REVIEW RECOMMENDED"
@@ -302,7 +302,7 @@ class VoiceDetectionService:
         if p_std < 8.5:
             concerns.append(f"Atypical flat pitch prosody ({p_std:.1f} Hz) characteristic of synthetic TTS")
         if j_pct < 0.46:
-            concerns.append(f"Unnaturally smooth vocal tract period ({j_pct:.2f}% jitter) lacking involuntary human micro-tremor")
+            concerns.append(f"Unnaturally rigid pitch period ({j_pct:.2f}% jitter) lacking natural acoustic variation")
         if d_sil > 0.35 and n_floor < 0.001:
             concerns.append("Digital zero silence detected in pauses (lacks natural ambient room tone)")
         if rolloff < 2500.0:
@@ -324,7 +324,7 @@ class VoiceDetectionService:
             potential_concerns=concerns
         )
 
-        # Step 7: Background Audio Analysis (Independent of Vocal Tract)
+        # Step 7: Background Audio Analysis (Independent of Speech Signal)
         background_analysis = BackgroundAudioAnalysis(
             summary=f"Isolated background acoustics classified as {raw['background_type']} with {quality_info['background_noise_level'].lower()} floor level.",
             primary_voice="Dominant and clear" if not multiple_voices else "Primary speaker with overlapping background voice",
@@ -374,7 +374,7 @@ class VoiceDetectionService:
                 name="Background Sound Analysis",
                 score=25 if quality_info["background_noise_level"] == "Low" else (55 if quality_info["background_noise_level"] == "Medium" else 85),
                 status=f"{raw['background_type']} ({quality_info['background_noise_level']})",
-                explanation=f"Noise floor: {quality_info['noise_floor_rms']:.4f} RMS. Background sound is isolated from vocal tract."
+                explanation=f"Noise floor: {quality_info['noise_floor_rms']:.4f} RMS. Background sound is isolated from primary speech signal."
             ),
             "liveness": FeatureMetric(
                 name="Acoustic Liveness",

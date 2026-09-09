@@ -91,7 +91,7 @@ export class SpeakerEnrollment {
         status: 'MATCH',
         score: scorePct,
         label: `Speaker Match (${scorePct}%)`,
-        details: `Acoustic vocal tract profile closely aligns with enrolled contact "${enrolled.name || 'Enrolled Contact'}".`
+        details: `Acoustic voice profile closely aligns with enrolled contact "${enrolled.name || 'Enrolled Contact'}".`
       };
     } else if (totalSim >= 0.52) {
       return {

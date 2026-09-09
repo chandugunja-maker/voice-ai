@@ -205,17 +205,33 @@ export class AudioRecorder {
     this.isPaused = false;
     clearInterval(this.timerInterval);
     clearInterval(this.meterInterval);
+    this.onLevelUpdate(0, 0);
 
     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-      this.mediaRecorder.stop();
+      try {
+        this.mediaRecorder.stop();
+      } catch (e) {}
     }
 
     if (this.audioStream) {
-      this.audioStream.getTracks().forEach((track) => track.stop());
+      this.audioStream.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch (e) {}
+      });
+      this.audioStream = null;
+    }
+
+    if (this.analyserNode) {
+      try {
+        this.analyserNode.disconnect();
+      } catch (e) {}
+      this.analyserNode = null;
     }
 
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close().catch(() => {});
+      this.audioContext = null;
     }
   }
 

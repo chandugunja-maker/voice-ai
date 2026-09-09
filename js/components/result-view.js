@@ -90,7 +90,7 @@ export class ResultView {
           if (msgEl) msgEl.textContent = result.message || 'Audio quality is insufficient for reliable authenticity analysis.';
           if (hintsList) {
             hintsList.innerHTML = `
-              <li>• High background noise obscures subtle vocal tract acoustic features.</li>
+              <li>• High background noise obscures subtle acoustic speech biometrics.</li>
               <li>• Re-record in a quiet room or use a clearer recording device.</li>
             `;
           }
@@ -164,7 +164,7 @@ export class ResultView {
       if (verdict.includes('AUTHENTIC')) {
         authBadgeEl.classList.add('status-authentic');
         authBadgeEl.textContent = '🟢 LIKELY AUTHENTIC';
-        if (authDescEl) authDescEl.textContent = 'Acoustic speech production biometrics match natural human vocal tract dynamics.';
+        if (authDescEl) authDescEl.textContent = 'Acoustic signal biometrics match natural human speech prosody and pitch dynamics.';
       } else if (verdict.includes('SYNTHETIC')) {
         authBadgeEl.classList.add('status-synthetic');
         authBadgeEl.textContent = '🔴 LIKELY SYNTHETIC';
@@ -284,7 +284,7 @@ export class ResultView {
     const bgEnv = document.getElementById('bgAudioEnv');
     const bgSilence = document.getElementById('bgAudioSilence');
 
-    if (bgSummary) bgSummary.textContent = bg.summary || 'Acoustic background isolated from vocal tract.';
+    if (bgSummary) bgSummary.textContent = bg.summary || 'Acoustic background isolated from primary speech.';
     if (bgPrimary) bgPrimary.textContent = bg.primary_voice || 'Dominant speaker';
     if (bgSpeech) bgSpeech.textContent = bg.background_speech || 'None detected';
     if (bgEnv) bgEnv.textContent = bg.environmental_noise || 'Low';

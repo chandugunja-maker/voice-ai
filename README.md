@@ -48,10 +48,9 @@ With the explosive advancement of few-shot neural text-to-speech (TTS) and voice
 5. **🔬 6 Acoustic Feature Breakdown Dimensions**:
    - **Spectral Characteristics**: High-frequency roll-off & vocoder attenuation.
    - **Prosody & Pitch Patterns**: Fundamental frequency (F0) variance (robotic flattening vs natural micro-inflections).
-   - **Speech Rhythm & Pauses**: Natural respiration acoustics vs mechanical inter-word intervals.
-   - **Voice Consistency**: Biometric vocal tract formant resonance across syllables.
-   - **Background & Audio Artifacts**: Ambient room reverberation vs synthetic noise floor profiles.
-   - **Synthetic Speech Indicators**: Neural vocoder phase dispersion & deepfake footprints.
+   - **Voice Consistency**: Biometric acoustic spectral consistency across syllables.
+   - **Background & Audio Artifacts**: Ambient room noise floor vs digital silence and comb reflection patterns.
+   - **Synthetic Speech Indicators**: Period perturbation micro-jitter and flat pitch boundaries.
 
 6. **⚠️ Security Warning & Out-of-Band Verification Protocol**:
    - Instant prominent alert for suspicious/AI voices: `⚠️ Potential Voice Impersonation Detected`.
