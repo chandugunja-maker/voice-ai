@@ -99,9 +99,130 @@ export class VoiceShieldAPI {
   }
 
   /**
+   * Pre-Analysis Audio Quality Diagnostic Check.
+   * Calculates duration, sample rate, channels, RMS level, silence %, SNR, clipping, and background noise.
+   */
+  static async checkAudioQuality(audioBlob, filename = 'voice_sample.wav') {
+    if (!audioBlob) return null;
+
+    if (!isStaticHost && API_BASE !== undefined) {
+      try {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, filename);
+        const response = await fetch(`${API_BASE}/api/audio-quality`, {
+          method: 'POST',
+          body: formData
+        });
+        if (response.ok) {
+          return await response.json();
+        }
+      } catch (e) {
+        console.warn('Audio quality API request failed, evaluating client-side:', e);
+      }
+    }
+
+    // Client-side Web Audio API decoding fallback
+    try {
+      if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtxClass();
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        const channelData = audioBuffer.getChannelData(0);
+        const duration = audioBuffer.duration;
+        const sampleRate = audioBuffer.sampleRate;
+        const channels = audioBuffer.numberOfChannels;
+
+        let sumSq = 0;
+        let peak = 0;
+        let clipping = false;
+        const frameSize = Math.floor(sampleRate * 0.03);
+        const numFrames = Math.floor(channelData.length / frameSize);
+        let silentFrames = 0;
+
+        for (let i = 0; i < channelData.length; i++) {
+          const val = channelData[i];
+          sumSq += val * val;
+          if (Math.abs(val) > peak) peak = Math.abs(val);
+          if (Math.abs(val) >= 0.985) clipping = true;
+        }
+
+        const rms = Math.sqrt(sumSq / (channelData.length || 1));
+
+        for (let f = 0; f < numFrames; f++) {
+          let fSum = 0;
+          for (let j = 0; j < frameSize; j++) {
+            const v = channelData[f * frameSize + j];
+            fSum += v * v;
+          }
+          if (Math.sqrt(fSum / frameSize) < 0.008) silentFrames++;
+        }
+
+        const silencePct = numFrames > 0 ? Math.round((silentFrames / numFrames) * 100) : 0;
+        const snrDb = rms > 0.002 ? Math.min(35, Math.max(0, Math.round(20 * Math.log10(rms / 0.003)))) : 0;
+        const noiseLevel = rms < 0.01 ? 'Low' : (rms < 0.04 ? 'Medium' : 'High');
+
+        let voiceActivity = 'Speech Detected';
+        let passed = true;
+        let status = 'success';
+        let title = 'Audio Quality Verified';
+        let message = 'Audio sample meets quality requirements for voice authenticity analysis.';
+
+        if (peak < 0.007 && rms < 0.003) {
+          voiceActivity = 'No Speech Detected (Silence)';
+          passed = false;
+          status = 'no_voice';
+          title = '🔇 No Voice Detected';
+          message = 'Microphone input is silent. Please speak clearly.';
+        } else if (silencePct > 88.0) {
+          voiceActivity = 'Insufficient Speech Detected';
+          passed = false;
+          status = 'insufficient_speech';
+          title = '🔇 Insufficient Speech Detected';
+          message = 'The recording contains mostly silence. Please provide at least 3-10 seconds of clear speech.';
+        } else if (duration < 1.2) {
+          voiceActivity = 'Recording Too Short';
+          passed = false;
+          status = 'too_short';
+          title = '⏱️ Recording Too Short';
+          message = 'Minimum 1.5 seconds required for acoustic biometric evaluation.';
+        }
+
+        await ctx.close().catch(() => {});
+
+        return {
+          status: status,
+          passed: passed,
+          title: title,
+          message: message,
+          quality: {
+            duration: Math.round(duration * 10) / 10,
+            sample_rate: sampleRate,
+            channels: channels,
+            rms_level: Math.round(rms * 10000) / 10000,
+            peak_level: Math.round(peak * 10000) / 10000,
+            silence_pct: silencePct,
+            snr_estimate: `${snrDb} dB (${snrDb >= 20 ? 'Excellent' : (snrDb >= 12 ? 'Good' : 'Fair')})`,
+            snr_db: snrDb,
+            clipping_detected: clipping,
+            background_noise_level: noiseLevel,
+            voice_activity: voiceActivity,
+            noise_floor_rms: 0.002
+          }
+        };
+      }
+    } catch (e) {
+      console.warn('Fallback audio decoding error:', e);
+    }
+
+    return null;
+  }
+
+  /**
    * Retrieves platform dashboard analytics and charts.
    */
   static async getDashboardStats() {
+
     try {
       const response = await fetch(`${API_BASE}/api/dashboard/stats`);
       if (response.ok) {
@@ -167,6 +288,22 @@ export class VoiceShieldAPI {
     }
     return null; // Signals caller to use local storage cache
   }
+
+  /**
+   * Retrieves full details of a specific past analysis.
+   */
+  static async getHistoryDetail(id) {
+    try {
+      const response = await fetch(`${API_BASE}/api/history/${id}`);
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (e) {
+      console.warn('Remote history detail fetch unavailable:', e);
+    }
+    return null;
+  }
+
 
   /**
    * Deletes a specific history record.

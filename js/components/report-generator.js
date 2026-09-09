@@ -278,10 +278,11 @@ export class ReportGenerator {
   <div class="disclaimer-box">
     <strong>Security Notice & Limitations:</strong> AI voice detection is probabilistic and evaluates observed acoustic biometrics, prosodic variance, and spectral characteristics against known synthetic patterns. It should not be considered definitive proof of authenticity, human identity, or criminal intent. Always verify critical requests through an established secondary channel.
     <br><br>
-    VoiceShield AI • Enterprise Voice Security & Authenticity Verification • Smart India Hackathon 2026
+    VoiceShield AI • Enterprise Voice Security & Authenticity Verification Platform
   </div>
 </body>
 </html>
+
     `;
 
     const printWindow = window.open('', '_blank');

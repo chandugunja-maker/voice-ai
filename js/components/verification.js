@@ -47,7 +47,41 @@ export class VerificationWorkspace {
       }
     });
 
+    this._checkMicPermission();
     this._bindElements();
+  }
+
+  async _checkMicPermission() {
+    const statusEl = document.getElementById('micPermissionStatus');
+    if (!statusEl) return;
+
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const result = await navigator.permissions.query({ name: 'microphone' });
+        this._updateMicPermissionUI(result.state);
+        result.onchange = () => this._updateMicPermissionUI(result.state);
+      } catch (e) {
+        this._updateMicPermissionUI('prompt');
+      }
+    } else {
+      this._updateMicPermissionUI('prompt');
+    }
+  }
+
+  _updateMicPermissionUI(state) {
+    const statusEl = document.getElementById('micPermissionStatus');
+    if (!statusEl) return;
+
+    if (state === 'granted') {
+      statusEl.className = 'mic-status-pill status-ready';
+      statusEl.textContent = '● Granted';
+    } else if (state === 'denied') {
+      statusEl.className = 'mic-status-pill status-denied';
+      statusEl.textContent = '✕ Denied';
+    } else {
+      statusEl.className = 'mic-status-pill status-ready';
+      statusEl.textContent = '● Ready';
+    }
   }
 
   _bindElements() {
@@ -68,19 +102,24 @@ export class VerificationWorkspace {
     }
 
     const pauseBtn = document.getElementById('btnPauseRecording');
+    const resumeBtn = document.getElementById('btnResumeRecording');
+    const statusLabel = document.getElementById('recordingStatusLabel');
+
     if (pauseBtn) {
       pauseBtn.addEventListener('click', () => {
-        if (this.recorder.isPaused) {
-          this.recorder.resume();
-          pauseBtn.innerHTML = '❚❚ Pause';
-          pauseBtn.classList.remove('btn-secondary');
-          pauseBtn.classList.add('btn-warning');
-        } else {
-          this.recorder.pause();
-          pauseBtn.innerHTML = '▶ Resume';
-          pauseBtn.classList.remove('btn-warning');
-          pauseBtn.classList.add('btn-secondary');
-        }
+        this.recorder.pause();
+        pauseBtn.style.display = 'none';
+        if (resumeBtn) resumeBtn.style.display = 'inline-flex';
+        if (statusLabel) statusLabel.textContent = 'Recording Paused';
+      });
+    }
+
+    if (resumeBtn) {
+      resumeBtn.addEventListener('click', () => {
+        this.recorder.resume();
+        resumeBtn.style.display = 'none';
+        if (pauseBtn) pauseBtn.style.display = 'inline-flex';
+        if (statusLabel) statusLabel.textContent = 'Recording in Progress';
       });
     }
 
@@ -182,14 +221,7 @@ export class VerificationWorkspace {
       });
     }
 
-    // 4. Example Samples
-    document.querySelectorAll('.btn-play-example').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const sample = btn.getAttribute('data-sample');
-        this._toggleExamplePlayback(sample, btn);
-      });
-    });
-
+    // 4. Example Benchmark Samples
     document.querySelectorAll('.btn-analyze-example').forEach(btn => {
       btn.addEventListener('click', () => {
         const sample = btn.getAttribute('data-sample');
@@ -235,18 +267,26 @@ export class VerificationWorkspace {
     this.currentFilename = `rec_${Date.now()}.wav`;
 
     const started = await this.recorder.start();
-    if (!started) return;
+    if (!started) {
+      this._updateMicPermissionUI('denied');
+      return;
+    }
+    this._updateMicPermissionUI('granted');
 
     // Switch UI to active recording state
     const startBtn = document.getElementById('btnStartVoiceCheck');
     const activePanel = document.getElementById('recordingActivePanel');
     const completePanel = document.getElementById('recordingCompletePanel');
-    const preQualityCard = document.getElementById('preQualityCard');
+    const pauseBtn = document.getElementById('btnPauseRecording');
+    const resumeBtn = document.getElementById('btnResumeRecording');
+    const statusLabel = document.getElementById('recordingStatusLabel');
 
     if (startBtn) startBtn.style.display = 'none';
     if (completePanel) completePanel.style.display = 'none';
-    if (preQualityCard) preQualityCard.style.display = 'none';
     if (activePanel) activePanel.style.display = 'block';
+    if (pauseBtn) pauseBtn.style.display = 'inline-flex';
+    if (resumeBtn) resumeBtn.style.display = 'none';
+    if (statusLabel) statusLabel.textContent = 'Recording in Progress';
 
     const canvas = document.getElementById('liveWaveformCanvas');
     if (canvas && this.recorder.analyserNode) {
@@ -257,7 +297,7 @@ export class VerificationWorkspace {
     }
   }
 
-  _handleRecorderState(state, data) {
+  async _handleRecorderState(state, data) {
     if (state === 'stopped') {
       if (this.liveVisualizer) {
         this.liveVisualizer.stop();
@@ -276,11 +316,15 @@ export class VerificationWorkspace {
       const metaDuration = document.getElementById('recordedMetaDuration');
       const metaSize = document.getElementById('recordedMetaSize');
       const metaRate = document.getElementById('recordedMetaRate');
-      const preQualityCard = document.getElementById('preQualityCard');
+      const metaChannels = document.getElementById('recordedMetaChannels');
+      const metaRms = document.getElementById('recordedMetaRms');
+      const metaSilence = document.getElementById('recordedMetaSilence');
+      const metaSnr = document.getElementById('recordedMetaSnr');
+      const metaNoise = document.getElementById('recordedMetaNoise');
+      const qualityBadge = document.getElementById('recordedQualityBadge');
 
       if (activePanel) activePanel.style.display = 'none';
       if (completePanel) completePanel.style.display = 'block';
-      if (preQualityCard) preQualityCard.style.display = 'block';
 
       const mins = Math.floor(this.currentDuration / 60);
       const secs = Math.floor(this.currentDuration % 60);
@@ -289,6 +333,24 @@ export class VerificationWorkspace {
       if (metaDuration) metaDuration.textContent = `${this.currentDuration.toFixed(1)}s`;
       if (metaSize) metaSize.textContent = `${(this.currentFileSize / 1024).toFixed(1)} KB`;
       if (metaRate) metaRate.textContent = `${this.currentSampleRate} Hz`;
+      if (metaChannels) metaChannels.textContent = 'Mono (1 ch)';
+
+      // Fetch pre-analysis diagnostics
+      const diag = await VoiceShieldAPI.checkAudioQuality(this.currentBlob, this.currentFilename);
+      if (diag && diag.quality) {
+        const q = diag.quality;
+        if (metaRms) metaRms.textContent = q.rms_level;
+        if (metaSilence) metaSilence.textContent = `${q.silence_pct}%`;
+        if (metaSnr) metaSnr.textContent = q.snr_estimate;
+        if (metaNoise) metaNoise.textContent = q.background_noise_level;
+        if (qualityBadge) {
+          qualityBadge.textContent = q.voice_activity;
+          qualityBadge.className = 'quality-badge';
+          if (!diag.passed) {
+            qualityBadge.classList.add(diag.status === 'poor_quality' ? 'quality-warning' : 'quality-error');
+          }
+        }
+      }
     }
   }
 
@@ -306,17 +368,16 @@ export class VerificationWorkspace {
     const startBtn = document.getElementById('btnStartVoiceCheck');
     const activePanel = document.getElementById('recordingActivePanel');
     const completePanel = document.getElementById('recordingCompletePanel');
-    const preQualityCard = document.getElementById('preQualityCard');
 
     if (startBtn) startBtn.style.display = 'inline-flex';
     if (activePanel) activePanel.style.display = 'none';
     if (completePanel) completePanel.style.display = 'none';
-    if (preQualityCard) preQualityCard.style.display = 'none';
 
     const timerEl = document.getElementById('recordTimerText');
     if (timerEl) timerEl.textContent = '00:00';
     this._updateAudioLevelMeter(0, 0);
   }
+
 
   _handleSelectedFile(file) {
     if (!file) return;
@@ -361,14 +422,38 @@ export class VerificationWorkspace {
     const previewBar = document.getElementById('uploadFilePreview');
     const nameEl = document.getElementById('uploadedFileName');
     const sizeEl = document.getElementById('uploadedFileSize');
+    const metaFormat = document.getElementById('uploadMetaFormat');
+    const metaSize = document.getElementById('uploadMetaSize');
+    const metaQuality = document.getElementById('uploadMetaQuality');
+    const qualityBadge = document.getElementById('uploadQualityBadge');
 
     if (dropzone) dropzone.style.display = 'none';
     if (previewBar) previewBar.style.display = 'block';
     if (nameEl) nameEl.textContent = file.name;
     if (sizeEl) sizeEl.textContent = `${ext.toUpperCase()} • ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    if (metaFormat) metaFormat.textContent = ext.toUpperCase();
+    if (metaSize) metaSize.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+
+    // Fetch pre-analysis diagnostics for uploaded file
+    VoiceShieldAPI.checkAudioQuality(file, file.name).then(diag => {
+      if (diag && diag.quality) {
+        const q = diag.quality;
+        const metaDuration = document.getElementById('uploadMetaDuration');
+        if (metaDuration) metaDuration.textContent = `${q.duration}s`;
+        if (metaQuality) metaQuality.textContent = q.snr_estimate || 'Validated';
+        if (qualityBadge) {
+          qualityBadge.textContent = q.voice_activity;
+          qualityBadge.className = 'quality-badge';
+          if (!diag.passed) {
+            qualityBadge.classList.add(diag.status === 'poor_quality' ? 'quality-warning' : 'quality-error');
+          }
+        }
+      }
+    });
 
     toast.show(`Loaded "${file.name}" successfully. Click "Analyze Voice" to proceed.`, 'success');
   }
+
 
   _resetUploadUI() {
     this.audioPlayer.pause();

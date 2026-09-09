@@ -168,4 +168,6 @@ class HealthResponse(BaseModel):
     app_name: str
     version: str
     demo_mode: bool
-    sih_team: str
+    tagline: Optional[str] = "Detect AI Voices. Verify Authenticity."
+    sih_team: Optional[str] = None
+

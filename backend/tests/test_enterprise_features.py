@@ -130,6 +130,26 @@ class TestEnterpriseFeatures(unittest.TestCase):
         del_res = self.client.delete(f"/api/history/{first_id}")
         self.assertEqual(del_res.status_code, 200)
 
+    def test_audio_quality_diagnostic_endpoint(self):
+        files = {"audio": ("test_sample.wav", self.speech_wav, "audio/wav")}
+        res = self.client.post("/api/audio-quality", files=files)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["passed"])
+        self.assertEqual(data["status"], "success")
+        self.assertIn("quality", data)
+        self.assertGreater(data["quality"]["duration"], 2.0)
+        self.assertEqual(data["quality"]["sample_rate"], 16000)
+
+    def test_health_endpoint(self):
+        res = self.client.get("/api/health")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["status"], "healthy")
+        self.assertEqual(data["app_name"], "VoiceShield AI")
+        self.assertIn("tagline", data)
+
 
 if __name__ == "__main__":
     unittest.main()
+

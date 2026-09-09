@@ -32,8 +32,9 @@ async def health_check():
         app_name=settings.APP_NAME,
         version=settings.APP_VERSION,
         demo_mode=settings.DEMO_MODE,
-        sih_team=f"{settings.TEAM_NAME} ({settings.TEAM_ID})"
+        tagline=settings.APP_TAGLINE
     )
+
 
 
 @router.post("/test-microphone", response_model=MicrophoneTestResponse)
@@ -86,6 +87,44 @@ async def test_microphone(
             title="⚠️ Microphone not detected",
             message=f"Could not read microphone input: {str(e)}",
             audio_level=0.0
+        )
+
+@router.post("/audio-quality")
+async def check_audio_quality(
+    audio: UploadFile = File(..., description="Audio file to perform pre-analysis signal quality check")
+):
+    """
+    Pre-Analysis Audio Quality Diagnostic:
+    Calculates duration, sample rate, channels, RMS/volume, silence %, SNR,
+    clipping detection, background noise level, and voice activity.
+    """
+    if not audio.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No audio file was received."
+        )
+
+    contents = await audio.read()
+    if len(contents) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The uploaded audio is empty."
+        )
+
+    try:
+        samples, sr, duration, channels = AcousticAnalyzer.parse_audio_samples(contents)
+        vad_check = AcousticAnalyzer.check_voice_activity(contents, parsed_cache=(samples, sr, duration, channels))
+        return {
+            "status": vad_check["status"],
+            "passed": vad_check["passed"],
+            "title": vad_check.get("title", "Audio Quality Diagnostic"),
+            "message": vad_check.get("message", "Pre-analysis quality assessment complete."),
+            "quality": vad_check["quality"]
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Audio quality analysis failed: {str(exc)}"
         )
 
 

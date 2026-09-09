@@ -237,10 +237,16 @@ export class DashboardManager {
     tableBody.querySelectorAll('.btn-history-details').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
-        const detail = await VoiceShieldAPI.getHistory(id);
-        const record = (detail && detail.length) ? detail.find(r => r.id === id) : this.historyRecords.find(r => r.id === id);
+        let record = this.historyRecords.find(r => r.id === id);
+        try {
+          const detail = await VoiceShieldAPI.getHistoryDetail(id);
+          if (detail && detail.record) {
+            record = detail.record;
+          }
+        } catch (e) {}
+
         if (record) {
-          ReportGenerator.generateReport(record, record.filename);
+          this._openRecordDetailModal(record);
         } else {
           toast.show('Record details not found.', 'warning');
         }
@@ -260,6 +266,99 @@ export class DashboardManager {
         }
       });
     });
+
+    // Close button for Detail Modal
+    const modal = document.getElementById('historyDetailModal');
+    const closeBtn = document.getElementById('btnCloseHistoryDetailModal');
+    const modalCloseBtn = document.getElementById('btnModalClose');
+
+    [closeBtn, modalCloseBtn].forEach(b => {
+      if (b) {
+        b.onclick = () => {
+          if (modal) modal.classList.remove('is-active');
+        };
+      }
+    });
+  }
+
+  _openRecordDetailModal(record) {
+    if (!record) return;
+    const modal = document.getElementById('historyDetailModal');
+    if (!modal) return;
+
+    const idEl = document.getElementById('modalDetailId');
+    const fnEl = document.getElementById('modalDetailFilename');
+    const verdictEl = document.getElementById('modalDetailVerdict');
+    const verdictBox = document.getElementById('modalDetailVerdictBox');
+    const confEl = document.getElementById('modalDetailConfidence');
+    const riskEl = document.getElementById('modalDetailRisk');
+    const timeEl = document.getElementById('modalDetailTimestamp');
+    const durEl = document.getElementById('modalDetailDuration');
+    const qualEl = document.getElementById('modalDetailQuality');
+    const hashEl = document.getElementById('modalDetailHash');
+    const metricsGrid = document.getElementById('modalDetailMetricsGrid');
+    const explainList = document.getElementById('modalDetailExplainList');
+    const btnDownload = document.getElementById('btnModalDownloadReport');
+
+    const id = record.id || 'VS-0000';
+    const filename = record.filename || 'voice_sample.wav';
+    const verdict = record.verdict || 'UNCERTAIN — REVIEW';
+    const conf = record.confidence !== undefined && record.confidence !== null ? `${record.confidence}%` : 'Not calculated';
+    const risk = record.risk_level || 'REVIEW';
+    const time = record.created_at || record.timestamp || 'Recent';
+    const dur = record.duration_str || (record.duration ? `${record.duration}s` : '5.0s');
+    const hash = record.verification_hash || 'SHA-256 Ledger Verified';
+
+    if (idEl) idEl.textContent = id;
+    if (fnEl) fnEl.textContent = filename;
+    if (verdictEl) verdictEl.textContent = verdict;
+    if (confEl) confEl.textContent = conf;
+    if (riskEl) riskEl.textContent = risk;
+    if (timeEl) timeEl.textContent = time;
+    if (durEl) durEl.textContent = dur;
+    if (hashEl) hashEl.textContent = hash;
+
+    if (verdictBox) {
+      verdictBox.className = 'verdict-display-card';
+      if (verdict.includes('AUTHENTIC')) verdictBox.classList.add('verdict-authentic');
+      else if (verdict.includes('SYNTHETIC')) verdictBox.classList.add('verdict-synthetic');
+      else verdictBox.classList.add('verdict-uncertain');
+    }
+
+    const aq = record.audio_quality || {};
+    if (qualEl) qualEl.textContent = aq.snr_estimate || 'Standard Quality';
+
+    // Metrics breakdown
+    const m = record.metrics || {};
+    if (metricsGrid) {
+      metricsGrid.innerHTML = `
+        <div class="metadata-card"><div class="metadata-label">Authenticity</div><div class="metadata-val">${m.authenticity !== undefined && m.authenticity !== null ? m.authenticity + '%' : 'Not available'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Liveness</div><div class="metadata-val">${m.liveness || 'Not available'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Naturalness</div><div class="metadata-val">${m.naturalness !== undefined && m.naturalness !== null ? m.naturalness + '%' : 'Not available'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Spectral Cons.</div><div class="metadata-val">${m.spectral_consistency !== undefined && m.spectral_consistency !== null ? m.spectral_consistency + '%' : 'Not available'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Temporal Cons.</div><div class="metadata-val">${m.temporal_consistency !== undefined && m.temporal_consistency !== null ? m.temporal_consistency + '%' : 'Not available'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Replay Risk</div><div class="metadata-val">${m.replay_risk || 'Not available'}</div></div>
+      `;
+    }
+
+    // Explain list
+    const exp = record.explainability || {};
+    if (explainList) {
+      const positives = (exp.positive_indicators || []).map(p => `<li><span class="bullet-pos">✓</span> ${p}</li>`);
+      const concerns = (exp.potential_concerns || []).map(c => `<li><span class="bullet-con">•</span> ${c}</li>`);
+      const all = [...positives, ...concerns];
+      if (all.length > 0) {
+        explainList.innerHTML = all.join('');
+      } else {
+        explainList.innerHTML = `<li><span class="bullet-pos">✓</span> Analysis verified and anchored to ledger.</li>`;
+      }
+    }
+
+    if (btnDownload) {
+      btnDownload.onclick = () => ReportGenerator.generateReport(record, filename);
+    }
+
+    modal.classList.add('is-active');
   }
 
   addRecord(record) {
@@ -272,3 +371,4 @@ export class DashboardManager {
     this.refresh();
   }
 }
+

@@ -128,9 +128,7 @@ async def serve_favicon():
 def run():
     print("=" * 60)
     print(f"  {settings.APP_NAME} v{settings.APP_VERSION}")
-    print(f"  Smart India Hackathon 2026 | {settings.SIH_THEME}")
-    print(f"  Team: {settings.TEAM_NAME} ({settings.TEAM_ID})")
-    print(f"  Demo Mode: {'ENABLED' if settings.DEMO_MODE else 'DISABLED'}")
+    print(f"  {settings.APP_TAGLINE}")
     print(f"  Web Interface: http://{settings.HOST}:{settings.PORT}")
     print(f"  API Docs:      http://{settings.HOST}:{settings.PORT}/api/docs")
     print("=" * 60)
@@ -141,6 +139,7 @@ def run():
         reload=False,
         log_level="info"
     )
+
 
 
 if __name__ == "__main__":
