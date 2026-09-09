@@ -9,7 +9,7 @@ export class ReportGenerator {
   /**
    * Generates an official printable/PDF audit report in a dedicated print window
    */
-  static generateReport(result, filename = 'voice_sample.wav') {
+  static generateReport(result, filename = 'recording.wav') {
     if (!result) return;
 
     const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -26,7 +26,7 @@ export class ReportGenerator {
     const hash = result.verification_hash ||
                  result.sha256_hash ||
                  (result.blockchain_proof && result.blockchain_proof.verification_hash) ||
-                 'SHA-256 Calculated';
+                 '—';
 
     const printHtml = `
 <!DOCTYPE html>

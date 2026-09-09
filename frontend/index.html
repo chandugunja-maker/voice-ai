@@ -152,10 +152,15 @@
               <div style="text-align: center;">
 
                 <!-- 1. Idle State: Large Start Recording Button -->
-                <button id="btnStartVoiceCheck" class="btn-large-mic" type="button" aria-label="Start Recording">
-                  <span>🎙️</span>
-                  <span>Start Recording</span>
-                </button>
+                <div id="recordingIdleState">
+                  <button id="btnStartVoiceCheck" class="btn-large-mic" type="button" aria-label="Start Recording">
+                    <span>🎙️</span>
+                    <span>Start Recording</span>
+                  </button>
+                  <div id="recordingInitialStatus" style="margin-top: 1rem; font-size: 0.88rem; color: var(--text-muted);">
+                    Recording: <strong style="color: var(--text-secondary);">No recording yet</strong> • Duration: <span>--</span> • Signal: <span>--</span> • Noise: <span>--</span> • Speech: <span>--</span>
+                  </div>
+                </div>
 
                 <!-- 2. Active Recording State Panel -->
                 <div id="recordingActivePanel" style="display: none; margin-bottom: 1.5rem;">
@@ -206,7 +211,7 @@
                       <div>
                         <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 700; color: #10b981; margin-bottom: 0.35rem;">
                           <span>✓</span>
-                          <span>Voice Captured (<span id="recordedDurationBadge">00:00</span>)</span>
+                          <span>Voice Captured (<span id="recordedDurationBadge">--</span>)</span>
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary);">Ready for multi-signal authenticity analysis</div>
                       </div>
@@ -227,7 +232,7 @@
                     <div class="pre-quality-card" style="margin: 0;">
                       <div class="pre-quality-header">
                         <span class="pre-quality-title">Pre-Analysis Audio Quality</span>
-                        <span id="recordedQualityBadge" class="quality-badge">Ready for Scan</span>
+                        <span id="recordedQualityBadge" class="quality-badge">--</span>
                       </div>
                       <div class="metadata-grid">
                         <div class="metadata-card">
@@ -262,6 +267,10 @@
                           <div class="metadata-label">Background Noise</div>
                           <div id="recordedMetaNoise" class="metadata-val">--</div>
                         </div>
+                        <div class="metadata-card">
+                          <div class="metadata-label">Speech Status</div>
+                          <div id="recordedMetaSpeech" class="metadata-val">--</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -282,8 +291,11 @@
                 <div style="font-size: 2.5rem; margin-bottom: 0.75rem; color: var(--accent-primary);">
                   📁
                 </div>
-                <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Drop audio file here or browse</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">Drop audio file here or browse</h3>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                  Upload: <strong style="color: var(--text-secondary);">No audio selected</strong>
+                </div>
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
                   Supports: <strong>WAV, MP3, M4A, FLAC, OGG</strong> (Max 25 MB)
                 </p>
                 <button id="btnBrowseUpload" class="btn btn-secondary btn-sm" type="button">
@@ -336,14 +348,28 @@
                 </div>
 
                 <!-- Initial Ready State Box -->
-                <div id="liveGuardInitialPrompt" class="card" style="text-align: center; border: 1px dashed var(--border-accent); padding: 2.5rem 1.5rem; margin-bottom: 1.5rem;">
+                <div id="liveGuardInitialPrompt" class="card" style="text-align: center; border: 1px dashed var(--border-accent); padding: 2.25rem 1.5rem; margin-bottom: 1.5rem;">
                   <div style="font-size: 2.4rem; margin-bottom: 0.75rem;">🛡️</div>
                   <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
                     Active Conversation Security Screening
                   </h3>
-                  <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 540px; margin: 0 auto 1.5rem auto; line-height: 1.5;">
+                  <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 540px; margin: 0 auto 1.25rem auto; line-height: 1.5;">
                     Live Call Guard evaluates rolling 2.5-second conversational audio windows for robotic pitch flatness, absent micro-tremor, and loudspeaker acoustic replay reflection artifacts.
                   </p>
+
+                  <!-- Live Initial Telemetry Status Row -->
+                  <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; font-size: 0.84rem; color: var(--text-muted);">
+                    <span>Status: <strong style="color: var(--text-secondary);">READY</strong></span>
+                    <span>•</span>
+                    <span>Monitoring: <strong style="color: var(--text-secondary);">NOT ACTIVE</strong></span>
+                    <span>•</span>
+                    <span>Call Duration: <strong style="font-family: monospace; color: var(--text-secondary);">00:00:00</strong></span>
+                    <span>•</span>
+                    <span>Speech: <strong>--</strong></span>
+                    <span>•</span>
+                    <span>Risk: <strong>--</strong></span>
+                  </div>
+
                   <button id="btnStartLiveCallGuard" class="btn btn-primary btn-lg" type="button">
                     🛡️ Start Live Call Guard
                   </button>
@@ -355,7 +381,7 @@
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                       <span id="guardPulseDot" class="live-pulse-dot"></span>
-                      <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">MONITORING ACTIVE</span>
+                      <span id="guardMonitoringActiveLabel" style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">NOT ACTIVE</span>
                     </div>
                     <button id="btnStopLiveCallGuard" class="btn btn-danger btn-sm" type="button">
                       ⏹ Stop Monitoring
@@ -370,7 +396,7 @@
                     </div>
                     <div class="liveguard-stat-card">
                       <div class="liveguard-stat-label">Current Risk</div>
-                      <div><span id="guardRiskBadge" class="triad-badge status-authentic" style="margin: 0; padding: 0.2rem 0.6rem; font-size: 0.8rem;">🟢 NORMAL</span></div>
+                      <div><span id="guardRiskBadge" class="triad-badge" style="margin: 0; padding: 0.2rem 0.6rem; font-size: 0.8rem;">--</span></div>
                     </div>
                     <div class="liveguard-stat-card">
                       <div class="liveguard-stat-label">Confidence</div>
@@ -378,23 +404,23 @@
                     </div>
                     <div class="liveguard-stat-card">
                       <div class="liveguard-stat-label">Speech</div>
-                      <div id="guardSpeechStatus" class="liveguard-stat-val" style="font-size: 0.95rem; color: #10b981;">ACTIVE</div>
+                      <div id="guardSpeechStatus" class="liveguard-stat-val" style="font-size: 0.95rem;">--</div>
                     </div>
                     <div class="liveguard-stat-card">
                       <div class="liveguard-stat-label">Synthetic Signal</div>
-                      <div id="guardSyntheticSignal" class="liveguard-stat-val status-low">LOW</div>
+                      <div id="guardSyntheticSignal" class="liveguard-stat-val">--</div>
                     </div>
                     <div class="liveguard-stat-card">
                       <div class="liveguard-stat-label">Replay Signal</div>
-                      <div id="guardReplaySignal" class="liveguard-stat-val status-low">LOW</div>
+                      <div id="guardReplaySignal" class="liveguard-stat-val">--</div>
                     </div>
                     <div class="liveguard-stat-card">
                       <div class="liveguard-stat-label">Liveness</div>
-                      <div id="guardLivenessStatus" class="liveguard-stat-val" style="color: #10b981;">PASS</div>
+                      <div id="guardLivenessStatus" class="liveguard-stat-val">--</div>
                     </div>
                     <div class="liveguard-stat-card">
                       <div class="liveguard-stat-label">Background Noise</div>
-                      <div id="guardNoiseLevel" class="liveguard-stat-val" style="font-size: 0.95rem;">LOW</div>
+                      <div id="guardNoiseLevel" class="liveguard-stat-val" style="font-size: 0.95rem;">--</div>
                     </div>
                   </div>
 
@@ -966,7 +992,7 @@
         <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-primary);">Security Audit Record</span>
         <span id="modalDetailId" style="font-family: monospace; font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">—</span>
       </div>
-      <h3 id="modalDetailFilename" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-primary);">voice_sample.wav</h3>
+      <h3 id="modalDetailFilename" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-primary);">—</h3>
       
       <!-- Verdict Banner -->
       <div id="modalDetailVerdictBox" class="verdict-display-card" style="padding: 1.25rem; margin-bottom: 1.25rem;">

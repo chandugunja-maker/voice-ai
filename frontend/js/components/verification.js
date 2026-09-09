@@ -16,7 +16,7 @@ export class VerificationWorkspace {
 
     // State
     this.currentBlob = null;
-    this.currentFilename = 'voice_sample.wav';
+    this.currentFilename = null;
     this.currentDuration = 0;
     this.currentFileSize = 0;
     this.currentSampleRate = 16000;
@@ -327,6 +327,8 @@ export class VerificationWorkspace {
 
   async _handleRecorderState(state, data) {
     if (state === 'recording') {
+      const idleContainer = document.getElementById('recordingIdleState');
+      if (idleContainer) idleContainer.style.display = 'none';
       this._setMicStatus('Recording', 'status-recording');
     } else if (state === 'paused') {
       this._setMicStatus('Recording paused', 'status-prompt');
@@ -339,6 +341,7 @@ export class VerificationWorkspace {
       }
 
       this.currentBlob = data.blob;
+      this.currentFilename = 'microphone_recording.wav';
       this.currentDuration = data.duration;
       this.currentFileSize = data.sizeBytes || (data.blob ? data.blob.size : 0);
       this.currentSampleRate = data.sampleRate || 16000;
@@ -356,6 +359,7 @@ export class VerificationWorkspace {
       const metaSilence = document.getElementById('recordedMetaSilence');
       const metaSnr = document.getElementById('recordedMetaSnr');
       const metaNoise = document.getElementById('recordedMetaNoise');
+      const metaSpeech = document.getElementById('recordedMetaSpeech');
       const qualityBadge = document.getElementById('recordedQualityBadge');
 
       if (activePanel) activePanel.style.display = 'none';
@@ -380,6 +384,7 @@ export class VerificationWorkspace {
         if (metaSilence) metaSilence.textContent = `${q.silence_pct}%`;
         if (metaSnr) metaSnr.textContent = q.snr_estimate;
         if (metaNoise) metaNoise.textContent = q.background_noise_level;
+        if (metaSpeech) metaSpeech.textContent = q.voice_activity;
         if (qualityBadge) {
           qualityBadge.textContent = q.voice_activity;
           qualityBadge.className = 'quality-badge';
@@ -400,27 +405,39 @@ export class VerificationWorkspace {
     }
     this.audioPlayer.pause();
     this.currentBlob = null;
+    this.currentFilename = null;
     this.currentDuration = 0;
 
     this._checkMicPermission();
 
     const startBtn = document.getElementById('btnStartVoiceCheck');
+    const idleContainer = document.getElementById('recordingIdleState');
     const activePanel = document.getElementById('recordingActivePanel');
     const completePanel = document.getElementById('recordingCompletePanel');
 
     if (startBtn) startBtn.style.display = 'inline-flex';
+    if (idleContainer) idleContainer.style.display = 'block';
     if (activePanel) activePanel.style.display = 'none';
     if (completePanel) completePanel.style.display = 'none';
 
     const timerEl = document.getElementById('recordTimerText');
     if (timerEl) timerEl.textContent = '00:00';
     const durationBadge = document.getElementById('recordedDurationBadge');
-    if (durationBadge) durationBadge.textContent = '00:00';
+    if (durationBadge) durationBadge.textContent = '--';
     const recMetaDuration = document.getElementById('recordedMetaDuration');
     if (recMetaDuration) recMetaDuration.textContent = '--';
+    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setEl('recordedMetaRate', '--');
+    setEl('recordedMetaChannels', '--');
+    setEl('recordedMetaSize', '--');
+    setEl('recordedMetaRms', '--');
+    setEl('recordedMetaSilence', '--');
+    setEl('recordedMetaSnr', '--');
+    setEl('recordedMetaNoise', '--');
+    setEl('recordedMetaSpeech', '--');
     const recQualityBadge = document.getElementById('recordedQualityBadge');
     if (recQualityBadge) {
-      recQualityBadge.textContent = 'Ready for Scan';
+      recQualityBadge.textContent = '--';
       recQualityBadge.className = 'quality-badge';
     }
     this._updateAudioLevelMeter(0, 0);
@@ -510,7 +527,7 @@ export class VerificationWorkspace {
   _resetUploadUI() {
     this.audioPlayer.pause();
     this.currentBlob = null;
-    this.currentFilename = 'voice_sample.wav';
+    this.currentFilename = null;
     this.currentDuration = 0;
 
     const dropzone = document.getElementById('uploadDropzone');
@@ -628,9 +645,10 @@ export class VerificationWorkspace {
     this._updateAnalysisStage(0);
 
     try {
+      const effectiveFilename = this.currentFilename || 'microphone_recording.wav';
       const result = await VoiceShieldAPI.analyzeVoice(
         this.currentBlob,
-        this.currentFilename,
+        effectiveFilename,
         this.sampleHint,
         (stageIdx) => {
           this._updateAnalysisStage(stageIdx);
@@ -639,7 +657,7 @@ export class VerificationWorkspace {
       this._completeAllAnalysisStages();
       await new Promise(r => setTimeout(r, 120));
       this._hideAnalysisOverlay();
-      this.onAnalysisComplete(result, this.currentFilename);
+      this.onAnalysisComplete(result, effectiveFilename);
     } catch (err) {
       this._hideAnalysisOverlay();
       toast.show(`Analysis error: ${err.message || 'Verification failed'}`, 'error');

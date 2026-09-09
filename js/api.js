@@ -27,7 +27,7 @@ export class VoiceShieldAPI {
   /**
    * Uploads an audio blob/file for comprehensive authenticity analysis.
    */
-  static async analyzeVoice(audioBlob, filename = 'voice_sample.wav', sampleHint = null, onStageUpdate = null) {
+  static async analyzeVoice(audioBlob, filename = 'recording.wav', sampleHint = null, onStageUpdate = null) {
     if (isStaticHost && !API_BASE) {
       return await this._runClientAcousticAnalysis(audioBlob, filename, sampleHint, onStageUpdate);
     }
@@ -176,7 +176,7 @@ export class VoiceShieldAPI {
    * Pre-Analysis Audio Quality Diagnostic Check.
    * Calculates duration, sample rate, channels, RMS level, silence %, SNR, clipping, and background noise.
    */
-  static async checkAudioQuality(audioBlob, filename = 'voice_sample.wav') {
+  static async checkAudioQuality(audioBlob, filename = 'recording.wav') {
     if (!audioBlob) return null;
 
     if (!isStaticHost && API_BASE) {
@@ -416,7 +416,7 @@ export class VoiceShieldAPI {
         confidence_distribution: confDist,
         recent_activity: userRecords.slice(0, 10).map(r => ({
           id: r.id || r.analysis_id,
-          filename: r.filename || 'voice_sample.wav',
+          filename: r.filename || 'recording.wav',
           duration_str: r.duration_str || (r.duration ? `${r.duration}s` : '5.0s'),
           verdict: r.verdict,
           confidence: r.confidence,
@@ -543,7 +543,7 @@ export class VoiceShieldAPI {
     return (hex(h1) + hex(h2) + hex(h3) + hex(h4) + hex(h1 ^ h3) + hex(h2 ^ h4) + hex(h1 ^ h2) + hex(h3 ^ h4)).toLowerCase();
   }
 
-  static async _runClientAcousticAnalysis(audioBlob, filename = 'voice_sample.wav', sampleHint = null, onStageUpdate = null) {
+  static async _runClientAcousticAnalysis(audioBlob, filename = 'recording.wav', sampleHint = null, onStageUpdate = null) {
     const advanceStage = async (idx) => {
       if (typeof onStageUpdate === 'function') onStageUpdate(idx);
       await new Promise(r => setTimeout(r, 40));

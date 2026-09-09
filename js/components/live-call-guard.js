@@ -235,7 +235,8 @@ export class LiveCallGuard {
       // 3. Initialize state
       this.isActive = true;
       this.hasAlerted = false;
-      this.sessionId = `CALL-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 899 + 100)}`;
+      const randSeed = (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto.getRandomValues(new Uint16Array(1))[0] : Math.floor(Date.now() % 899 + 100);
+      this.sessionId = `CALL-${Date.now().toString(36).toUpperCase()}-${randSeed}`;
       this.startTime = Date.now();
       this.elapsedSeconds = 0;
       this.recentWindows = [];
@@ -255,7 +256,7 @@ export class LiveCallGuard {
       };
 
       this._updateUIStarted();
-      this._addTimelineEvent('NORMAL', 'Live Call Guard Started', 'Monitoring session activated with explicit user consent. Capturing conversational audio stream.', 95);
+      this._addTimelineEvent('NORMAL', 'Live Call Guard Started', 'Monitoring session activated with explicit user consent. Capturing conversational audio stream.', null);
 
       // 4. Start call duration timer
       this.timerInterval = setInterval(() => {
@@ -275,7 +276,11 @@ export class LiveCallGuard {
       toast.show('Live Call Guard active. Monitoring conversation for suspicious voice traits.', 'info');
     } catch (err) {
       console.error('Failed to start Live Call Guard:', err);
-      toast.show(`Could not start audio monitoring: ${err.message || 'Permission denied'}`, 'error');
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        toast.show('Microphone permission was denied. Live monitoring cannot start.', 'error');
+      } else {
+        toast.show(`Could not start audio monitoring: ${err.message || 'Permission denied'}`, 'error');
+      }
       this.stop();
     }
   }
@@ -327,12 +332,12 @@ export class LiveCallGuard {
     // If pure silence or insufficient speech: stay calm, no false alerts
     if (!speechActive || rms < 0.005) {
       this._updateLiveDashboard({
-        speech: 'SILENCE',
-        risk: this.currentState,
-        confidence: 90,
-        syntheticSignal: 'LOW',
-        replaySignal: 'LOW',
-        liveness: 'PASS',
+        speech: 'NOT DETECTED',
+        risk: this.currentState === 'HIGHRISK' ? this.currentState : 'NORMAL',
+        confidence: '--',
+        syntheticSignal: '--',
+        replaySignal: '--',
+        liveness: '--',
         backgroundNoise: noiseFloor > 0.02 ? 'HIGH' : (noiseFloor > 0.008 ? 'MEDIUM' : 'LOW')
       });
       return;
@@ -584,40 +589,49 @@ export class LiveCallGuard {
     const noiseVal = document.getElementById('guardNoiseLevel');
     const pulseDot = document.getElementById('guardPulseDot');
 
-    if (confidenceVal) confidenceVal.textContent = `${data.confidence}%`;
+    if (confidenceVal) {
+      confidenceVal.textContent = (data.confidence !== '--' && data.confidence !== null && data.confidence !== undefined) ? `${data.confidence}%` : '--';
+    }
     if (speechVal) {
       speechVal.textContent = data.speech;
-      speechVal.style.color = data.speech === 'ACTIVE' ? '#10b981' : (data.speech === 'MULTIPLE SPEAKERS' ? '#2563eb' : '#64748b');
+      speechVal.style.color = data.speech === 'ACTIVE' ? '#10b981' : (data.speech === 'MULTIPLE SPEAKERS' ? '#2563eb' : 'var(--text-muted)');
     }
     if (synVal) {
       synVal.textContent = data.syntheticSignal;
-      synVal.className = `liveguard-stat-val status-${data.syntheticSignal.toLowerCase()}`;
+      synVal.className = (data.syntheticSignal !== '--') ? `liveguard-stat-val status-${data.syntheticSignal.toLowerCase()}` : 'liveguard-stat-val';
     }
     if (repVal) {
       repVal.textContent = data.replaySignal;
-      repVal.className = `liveguard-stat-val status-${data.replaySignal.toLowerCase()}`;
+      repVal.className = (data.replaySignal !== '--') ? `liveguard-stat-val status-${data.replaySignal.toLowerCase()}` : 'liveguard-stat-val';
     }
     if (liveVal) {
       liveVal.textContent = data.liveness;
-      liveVal.style.color = data.liveness === 'PASS' ? '#10b981' : '#f59e0b';
+      liveVal.style.color = data.liveness === 'PASS' ? '#10b981' : (data.liveness === 'REVIEW' ? '#f59e0b' : 'var(--text-muted)');
     }
     if (noiseVal) {
       noiseVal.textContent = data.backgroundNoise;
     }
 
     if (statusBadge) {
-      statusBadge.className = `triad-badge status-${data.risk.toLowerCase()}`;
       if (data.risk === 'HIGHRISK') {
+        statusBadge.className = 'triad-badge status-high';
         statusBadge.textContent = '🔴 HIGH RISK';
         if (pulseDot) pulseDot.className = 'live-pulse-dot pulse-high';
       } else if (data.risk === 'ELEVATED') {
+        statusBadge.className = 'triad-badge status-elevated';
         statusBadge.textContent = '🟠 ELEVATED';
         if (pulseDot) pulseDot.className = 'live-pulse-dot pulse-elevated';
       } else if (data.risk === 'REVIEW') {
+        statusBadge.className = 'triad-badge status-uncertain';
         statusBadge.textContent = '🟡 REVIEW';
         if (pulseDot) pulseDot.className = 'live-pulse-dot pulse-review';
-      } else {
+      } else if (data.risk === 'NORMAL') {
+        statusBadge.className = 'triad-badge status-authentic';
         statusBadge.textContent = '🟢 NORMAL';
+        if (pulseDot) pulseDot.className = 'live-pulse-dot';
+      } else {
+        statusBadge.className = 'triad-badge';
+        statusBadge.textContent = '--';
         if (pulseDot) pulseDot.className = 'live-pulse-dot';
       }
     }
@@ -633,12 +647,13 @@ export class LiveCallGuard {
     else if (riskState === 'ELEVATED') { stateClass = 'item-elevated'; icon = '🟠'; }
     else if (riskState === 'REVIEW') { stateClass = 'item-review'; icon = '🟡'; }
 
+    const confTag = (confidence !== null && confidence !== undefined && confidence !== '--') ? ` (${confidence}%)` : '';
     const item = document.createElement('div');
     item.className = `timeline-item ${stateClass}`;
     item.innerHTML = `
       <div class="timeline-timestamp">${timeStr}</div>
       <div class="timeline-content">
-        <div class="timeline-event-title">${icon} ${title} (${confidence}%)</div>
+        <div class="timeline-event-title">${icon} ${title}${confTag}</div>
         <div class="timeline-event-evidence">${evidence}</div>
       </div>
     `;
@@ -699,6 +714,7 @@ export class LiveCallGuard {
     const liveStudio = document.getElementById('liveGuardActiveStudio');
     const initialPrompt = document.getElementById('liveGuardInitialPrompt');
     const statusPill = document.getElementById('guardMonitoringStatusPill');
+    const activeLabel = document.getElementById('guardMonitoringActiveLabel');
 
     if (startBtn) startBtn.style.display = 'none';
     if (stopBtn) stopBtn.style.display = 'inline-flex';
@@ -707,6 +723,9 @@ export class LiveCallGuard {
     if (statusPill) {
       statusPill.textContent = 'ACTIVE MONITORING';
       statusPill.className = 'triad-badge status-authentic';
+    }
+    if (activeLabel) {
+      activeLabel.textContent = 'MONITORING ACTIVE';
     }
   }
 
@@ -751,13 +770,38 @@ export class LiveCallGuard {
     const startBtn = document.getElementById('btnStartLiveCallGuard');
     const stopBtn = document.getElementById('btnStopLiveCallGuard');
     const statusPill = document.getElementById('guardMonitoringStatusPill');
+    const activeLabel = document.getElementById('guardMonitoringActiveLabel');
+    const initialPrompt = document.getElementById('liveGuardInitialPrompt');
+    const liveStudio = document.getElementById('liveGuardActiveStudio');
 
     if (startBtn) startBtn.style.display = 'inline-flex';
     if (stopBtn) stopBtn.style.display = 'none';
+    if (initialPrompt) initialPrompt.style.display = 'block';
+    if (liveStudio) liveStudio.style.display = 'none';
     if (statusPill) {
       statusPill.textContent = 'READY';
       statusPill.className = 'triad-badge status-nomatch';
     }
+    if (activeLabel) {
+      activeLabel.textContent = 'NOT ACTIVE';
+    }
+
+    // Reset dashboard telemetry to clean initial state
+    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setEl('guardCallDuration', '00:00:00');
+    setEl('guardConfidenceValue', '--');
+    setEl('guardSpeechStatus', '--');
+    setEl('guardSyntheticSignal', '--');
+    setEl('guardReplaySignal', '--');
+    setEl('guardLivenessStatus', '--');
+    setEl('guardNoiseLevel', '--');
+    const badge = document.getElementById('guardRiskBadge');
+    if (badge) {
+      badge.className = 'triad-badge';
+      badge.textContent = '--';
+    }
+    const pulseDot = document.getElementById('guardPulseDot');
+    if (pulseDot) pulseDot.className = 'live-pulse-dot';
   }
 
   _generateSessionSummaryModal() {
@@ -769,8 +813,8 @@ export class LiveCallGuard {
     const durStr = `${durMins}m ${durSecs}s`;
 
     const avgConf = this.sessionSummary.confidences.length > 0
-      ? Math.round(this.sessionSummary.confidences.reduce((a, b) => a + b, 0) / this.sessionSummary.confidences.length)
-      : 88;
+      ? `${Math.round(this.sessionSummary.confidences.reduce((a, b) => a + b, 0) / this.sessionSummary.confidences.length)}%`
+      : '--';
 
     const setEl = (id, text) => {
       const el = document.getElementById(id);

@@ -12,7 +12,7 @@ export class ResultView {
     this.onReset = options.onReset || (() => {});
     this.onTestMic = options.onTestMic || (() => {});
     this.currentResult = null;
-    this.currentFilename = 'voice_sample.wav';
+    this.currentFilename = '';
 
     this._bindEvents();
   }
@@ -40,7 +40,7 @@ export class ResultView {
     if (downloadReportBtn) {
       downloadReportBtn.addEventListener('click', () => {
         if (this.currentResult) {
-          ReportGenerator.generateReport(this.currentResult, this.currentFilename);
+          ReportGenerator.generateReport(this.currentResult, this.currentFilename || 'recording.wav');
         } else {
           toast.show('No analysis result available to generate a report.', 'warning');
         }
@@ -48,9 +48,9 @@ export class ResultView {
     }
   }
 
-  render(result, filename = 'voice_sample.wav') {
+  render(result, filename = '') {
     this.currentResult = result;
-    this.currentFilename = filename;
+    this.currentFilename = filename || (result && result.filename) || 'recording.wav';
     if (!this.container) return;
 
     const waitingPanel = document.getElementById('resultWaitingPanel');
@@ -297,8 +297,8 @@ export class ResultView {
     result.id = result.id || analysisId;
 
     let hash = result.verification_hash || result.sha256_hash || (result.blockchain_proof && result.blockchain_proof.verification_hash);
-    if (!hash || hash.includes('Ledger Verified') || hash === '—' || hash === '--') {
-      hash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    if (!hash || hash.includes('Ledger Verified')) {
+      hash = '—';
     }
     result.verification_hash = hash;
 
@@ -315,5 +315,30 @@ export class ResultView {
     if (waitingPanel) waitingPanel.style.display = 'block';
     if (noVoicePanel) noVoicePanel.style.display = 'none';
     if (validVoicePanel) validVoicePanel.style.display = 'none';
+    this.currentResult = null;
+    this.currentFilename = '';
+
+    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setEl('resultVerdictText', '--');
+    setEl('resultSummaryText', 'Waiting for audio analysis.');
+    setEl('resultAuthBadge', '--');
+    setEl('resultAuthDesc', 'Waiting for audio analysis.');
+    setEl('resultIdentityBadge', '--');
+    setEl('resultIdentityDesc', 'Waiting for audio analysis.');
+    setEl('resultRiskBadge', '--');
+    setEl('resultRiskDesc', 'Waiting for audio analysis.');
+    setEl('resultConfidenceValue', '--');
+    const confBar = document.getElementById('resultConfidenceBar');
+    if (confBar) confBar.style.width = '0%';
+    setEl('metricAuthenticity', '--');
+    setEl('metricLiveness', '--');
+    setEl('metricNaturalness', '--');
+    setEl('metricSpectral', '--');
+    setEl('metricTemporal', '--');
+    setEl('metricQuality', '--');
+    setEl('metricReplay', '--');
+    setEl('metricBackground', '--');
+    setEl('resultMetaId', '—');
+    setEl('resultMetaHash', '—');
   }
 }

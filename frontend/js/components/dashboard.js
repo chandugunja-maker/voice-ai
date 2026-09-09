@@ -218,8 +218,8 @@ export class DashboardManager {
 
     tableBody.innerHTML = filtered.map(item => {
       const recId = item.id || item.analysis_id || 'VS-0000';
-      const recName = item.filename || 'voice_sample.wav';
-      const recDur = item.duration_str || (item.audio_duration ? `${item.audio_duration}s` : (item.duration ? `${item.duration}s` : '5.0s'));
+      const recName = item.filename || 'recording.wav';
+      const recDur = item.duration_str || (item.audio_duration ? `${item.audio_duration}s` : (item.duration ? `${item.duration}s` : '--'));
       const verdict = item.verdict || 'UNCERTAIN — REVIEW';
       let pillClass = 'badge-uncertain';
       if (verdict.includes('AUTHENTIC')) pillClass = 'badge-authentic';
@@ -320,13 +320,13 @@ export class DashboardManager {
     const btnDownload = document.getElementById('btnModalDownloadReport');
 
     const id = record.id || 'VS-0000';
-    const filename = record.filename || 'voice_sample.wav';
+    const filename = record.filename || 'recording.wav';
     const verdict = record.verdict || 'UNCERTAIN — REVIEW';
     const conf = record.confidence !== undefined && record.confidence !== null ? `${record.confidence}%` : 'Not calculated';
     const risk = record.risk_level || 'REVIEW';
     const time = record.created_at || record.timestamp || 'Recent';
-    const dur = record.duration_str || (record.duration ? `${record.duration}s` : '5.0s');
-    const hash = record.verification_hash || 'SHA-256 Ledger Verified';
+    const dur = record.duration_str || (record.duration ? `${record.duration}s` : (record.audio_duration ? `${record.audio_duration}s` : '--'));
+    const hash = record.verification_hash || '—';
 
     if (idEl) idEl.textContent = id;
     if (fnEl) fnEl.textContent = filename;
@@ -389,8 +389,8 @@ export class DashboardManager {
       ...record,
       id: recId,
       analysis_id: recId,
-      filename: record.filename || 'voice_sample.wav',
-      duration_str: record.duration_str || (record.audio_duration ? `${record.audio_duration}s` : (record.duration ? `${record.duration}s` : '5.0s')),
+      filename: record.filename || 'recording.wav',
+      duration_str: record.duration_str || (record.audio_duration ? `${record.audio_duration}s` : (record.duration ? `${record.duration}s` : '--')),
       created_at: record.created_at || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     };
 
