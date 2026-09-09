@@ -4,11 +4,16 @@
  * Smart India Hackathon 2026 | Theme: Blockchain & Cybersecurity | Team: Agents (TEAM-312)
  */
 
+import { VoiceShieldAPI } from './api.js';
 import { ResultView } from './components/result-view.js';
 import { VerificationWorkspace } from './components/verification.js';
 import { DashboardManager } from './components/dashboard.js';
 import { SpeakerEnrollment } from './components/speaker-enrollment.js';
 import { LiveCallGuard } from './components/live-call-guard.js';
+
+if (typeof window !== 'undefined') {
+  window.VoiceShieldAPI = VoiceShieldAPI;
+}
 
 class VoiceShieldApp {
   constructor() {
