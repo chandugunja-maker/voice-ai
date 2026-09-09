@@ -834,22 +834,24 @@ export class VoiceShieldAPI {
       digitalSilencePct = numFramesP > 0 ? (digitalZeroFrames / numFramesP) * 100 : 0;
     }
 
-    // Benchmark sample overrides if explicitly triggered from benchmark samples section
-    if (sampleHint === 'rahul' || sampleHint === 'genuine' || filename.includes('example-rahul') || filename.includes('sample-genuine')) {
-      pitchStd = 22.4;
-      jitterPct = 1.28;
-      combScore = 0.12;
-      rolloffHz = 4200.0;
-    } else if (sampleHint === 'suspicious' || filename.includes('example-suspicious')) {
-      pitchStd = 9.2;
-      jitterPct = 0.58;
-      combScore = 0.42;
-      rolloffHz = 2800.0;
-    } else if (sampleHint === 'processed' || sampleHint === 'ai_generated' || sampleHint === 'ai-clone' || filename.includes('example-ai-processed') || filename.includes('sample-ai-clone')) {
-      pitchStd = 3.6;
-      jitterPct = 0.18;
-      combScore = 0.15;
-      rolloffHz = 2200.0;
+    // Preset benchmark overrides ONLY when explicitly triggered from the test benchmark controls
+    if (sampleHint && (filename.startsWith('test_benchmark_') || filename.startsWith('example-benchmark-'))) {
+      if (sampleHint === 'rahul' || sampleHint === 'genuine') {
+        pitchStd = 22.4;
+        jitterPct = 1.28;
+        combScore = 0.12;
+        rolloffHz = 4200.0;
+      } else if (sampleHint === 'suspicious') {
+        pitchStd = 9.2;
+        jitterPct = 0.58;
+        combScore = 0.42;
+        rolloffHz = 2800.0;
+      } else if (sampleHint === 'processed' || sampleHint === 'ai_generated' || sampleHint === 'ai-clone') {
+        pitchStd = 3.6;
+        jitterPct = 0.18;
+        combScore = 0.15;
+        rolloffHz = 2200.0;
+      }
     }
 
     await advanceStage(6); // Stage 7: Synthetic speech indicators
