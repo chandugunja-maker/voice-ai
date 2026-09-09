@@ -48,7 +48,10 @@ class Settings(BaseModel):
     # CORS allowed origins — comma-separated list. Use * for dev, specific domains for prod.
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")
 
-    # Path to demo sample audio files (relative to project working directory)
-    SAMPLES_DIR: str = os.getenv("SAMPLES_DIR", "frontend/assets/samples")
+    # Path to demo sample audio files (resilient to different execution roots)
+    SAMPLES_DIR: str = os.getenv(
+        "SAMPLES_DIR",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend", "assets", "samples")
+    )
 
 settings = Settings()

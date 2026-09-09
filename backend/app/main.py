@@ -74,6 +74,20 @@ if os.path.exists(frontend_dir):
         if os.path.exists(index_file):
             return FileResponse(index_file)
         return {"message": "Frontend index.html not found"}
+
+    @app.get("/index.html", include_in_schema=False)
+    async def serve_index_html():
+        index_file = os.path.join(frontend_dir, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return {"message": "Frontend index.html not found"}
+
+    @app.get("/index_custom.html", include_in_schema=False)
+    async def serve_index_custom():
+        custom_file = os.path.join(frontend_dir, "index_custom.html")
+        if os.path.exists(custom_file):
+            return FileResponse(custom_file)
+        return {"message": "Frontend index_custom.html not found"}
 else:
     @app.get("/")
     async def root():
