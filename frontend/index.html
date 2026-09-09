@@ -199,64 +199,16 @@
                   </div>
                 </div>
 
-                <!-- 3. Recording Complete State Panel -->
-                <div id="recordingCompletePanel" style="display: none; margin-bottom: 1.5rem;">
-                  <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.95rem; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; color: #10b981; margin-bottom: 1rem;">
-                    <span>✓</span>
-                    <span>Voice Captured (<span id="recordedDurationBadge">00:05</span>)</span>
-                  </div>
-
-                  <!-- Pre-Analysis Audio Quality Diagnostic Card -->
-                  <div class="pre-quality-card">
-                    <div class="pre-quality-header">
-                      <span class="pre-quality-title">Pre-Analysis Audio Quality</span>
-                      <span id="recordedQualityBadge" class="quality-badge">Ready for Scan</span>
-                    </div>
-                    <div class="metadata-grid">
-                      <div class="metadata-card">
-                        <div class="metadata-label">Duration</div>
-                        <div id="recordedMetaDuration" class="metadata-val">--</div>
-                      </div>
-                      <div class="metadata-card">
-                        <div class="metadata-label">Sample Rate</div>
-                        <div id="recordedMetaRate" class="metadata-val">--</div>
-                      </div>
-                      <div class="metadata-card">
-                        <div class="metadata-label">Channels</div>
-                        <div id="recordedMetaChannels" class="metadata-val">--</div>
-                      </div>
-                      <div class="metadata-card">
-                        <div class="metadata-label">File Size</div>
-                        <div id="recordedMetaSize" class="metadata-val">--</div>
-                      </div>
-                      <div class="metadata-card">
-                        <div class="metadata-label">RMS Level</div>
-                        <div id="recordedMetaRms" class="metadata-val">--</div>
-                      </div>
-                      <div class="metadata-card">
-                        <div class="metadata-label">Silence Ratio</div>
-                        <div id="recordedMetaSilence" class="metadata-val">--</div>
-                      </div>
-                      <div class="metadata-card">
-                        <div class="metadata-label">SNR Estimate</div>
-                        <div id="recordedMetaSnr" class="metadata-val">--</div>
-                      </div>
-                      <div class="metadata-card">
-                        <div class="metadata-label">Background Noise</div>
-                        <div id="recordedMetaNoise" class="metadata-val">--</div>
-                    <button id="btnStopRecording" class="btn btn-danger btn-sm" type="button">
-                      ⏹ Stop Recording
-                    </button>
-                  </div>
-                </div>
-
-                <!-- State 3: Recording Complete & Ready for Analysis -->
-                <div id="recordingCompletePanel" style="display: none; width: 100%;">
+                <!-- 3. Recording Complete State Panel (Initially Hidden) -->
+                <div id="recordingCompletePanel" style="display: none; margin-bottom: 1.5rem; text-align: left;">
                   <div class="audio-preview-bar">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
                       <div>
-                        <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.2rem;">Recorded Voice Audio</div>
-                        <div id="recordedAudioDurationText" style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">00:05 • Ready for Scan</div>
+                        <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 700; color: #10b981; margin-bottom: 0.35rem;">
+                          <span>✓</span>
+                          <span>Voice Captured (<span id="recordedDurationBadge">00:00</span>)</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Ready for multi-signal authenticity analysis</div>
                       </div>
                       <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <button id="btnPlayVoicePreview" class="btn btn-secondary btn-sm" type="button">
@@ -271,28 +223,44 @@
                       </div>
                     </div>
 
-                    <!-- Pre-Analysis Quality Card -->
-                    <div id="recPreQualityCard" class="pre-quality-card" style="margin: 0;">
+                    <!-- Pre-Analysis Audio Quality Diagnostic Card -->
+                    <div class="pre-quality-card" style="margin: 0;">
                       <div class="pre-quality-header">
                         <span class="pre-quality-title">Pre-Analysis Audio Quality</span>
-                        <span id="recQualityBadge" class="quality-badge">Validated Audio</span>
+                        <span id="recordedQualityBadge" class="quality-badge">Ready for Scan</span>
                       </div>
                       <div class="metadata-grid">
                         <div class="metadata-card">
                           <div class="metadata-label">Duration</div>
-                          <div id="recMetaDuration" class="metadata-val">--</div>
+                          <div id="recordedMetaDuration" class="metadata-val">--</div>
                         </div>
                         <div class="metadata-card">
-                          <div class="metadata-label">Input Quality</div>
-                          <div id="recMetaQuality" class="metadata-val" style="color: #10b981;">Good Signal</div>
+                          <div class="metadata-label">Sample Rate</div>
+                          <div id="recordedMetaRate" class="metadata-val">--</div>
                         </div>
                         <div class="metadata-card">
-                          <div class="metadata-label">Noise Floor</div>
-                          <div id="recMetaNoise" class="metadata-val">Low</div>
+                          <div class="metadata-label">Channels</div>
+                          <div id="recordedMetaChannels" class="metadata-val">--</div>
                         </div>
                         <div class="metadata-card">
-                          <div class="metadata-label">Speech Status</div>
-                          <div id="recMetaSpeech" class="metadata-val" style="color: var(--accent-primary);">Detected</div>
+                          <div class="metadata-label">File Size</div>
+                          <div id="recordedMetaSize" class="metadata-val">--</div>
+                        </div>
+                        <div class="metadata-card">
+                          <div class="metadata-label">RMS Level</div>
+                          <div id="recordedMetaRms" class="metadata-val">--</div>
+                        </div>
+                        <div class="metadata-card">
+                          <div class="metadata-label">Silence Ratio</div>
+                          <div id="recordedMetaSilence" class="metadata-val">--</div>
+                        </div>
+                        <div class="metadata-card">
+                          <div class="metadata-label">SNR Estimate</div>
+                          <div id="recordedMetaSnr" class="metadata-val">--</div>
+                        </div>
+                        <div class="metadata-card">
+                          <div class="metadata-label">Background Noise</div>
+                          <div id="recordedMetaNoise" class="metadata-val">--</div>
                         </div>
                       </div>
                     </div>
@@ -566,9 +534,9 @@
                   <span style="font-size: 1.1rem;">🧬</span>
                 </div>
                 <div>
-                  <span id="resultAuthBadge" class="triad-badge status-authentic">🟢 LIKELY AUTHENTIC</span>
+                  <span id="resultAuthBadge" class="triad-badge">--</span>
                   <p id="resultAuthDesc" class="triad-desc">
-                    Acoustic speech production biometrics match natural human vocal tract dynamics.
+                    Waiting for audio analysis.
                   </p>
                 </div>
               </div>
@@ -580,9 +548,9 @@
                   <span style="font-size: 1.1rem;">👤</span>
                 </div>
                 <div>
-                  <span id="resultIdentityBadge" class="triad-badge status-unknown">UNKNOWN</span>
+                  <span id="resultIdentityBadge" class="triad-badge">--</span>
                   <p id="resultIdentityDesc" class="triad-desc">
-                    Evaluated against enrolled reference voice. A different voice is NOT inherently synthetic.
+                    Waiting for audio analysis.
                   </p>
                 </div>
               </div>
@@ -594,9 +562,9 @@
                   <span style="font-size: 1.1rem;">🛡️</span>
                 </div>
                 <div>
-                  <span id="resultRiskBadge" class="triad-badge status-low">LOW RISK</span>
+                  <span id="resultRiskBadge" class="triad-badge">--</span>
                   <p id="resultRiskDesc" class="triad-desc">
-                    Evidence-based risk calculation derived independently from multi-signal anomaly screening.
+                    Waiting for audio analysis.
                   </p>
                 </div>
               </div>
@@ -804,7 +772,7 @@
         <div class="section-header">
           <div class="section-tag">Audit Trail</div>
           <h2 class="section-title">Verification History</h2>
-          <p class="section-subtitle">Search and inspect previous voice verification assessments.</p>
+          <p class="section-subtitle">Search and inspect previous voice verification assessments. History stored locally in this browser.</p>
         </div>
 
         <div class="card" style="padding: 1.75rem;">

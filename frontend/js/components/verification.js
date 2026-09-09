@@ -414,6 +414,15 @@ export class VerificationWorkspace {
 
     const timerEl = document.getElementById('recordTimerText');
     if (timerEl) timerEl.textContent = '00:00';
+    const durationBadge = document.getElementById('recordedDurationBadge');
+    if (durationBadge) durationBadge.textContent = '00:00';
+    const recMetaDuration = document.getElementById('recordedMetaDuration');
+    if (recMetaDuration) recMetaDuration.textContent = '--';
+    const recQualityBadge = document.getElementById('recordedQualityBadge');
+    if (recQualityBadge) {
+      recQualityBadge.textContent = 'Ready for Scan';
+      recQualityBadge.className = 'quality-badge';
+    }
     this._updateAudioLevelMeter(0, 0);
   }
 
@@ -454,6 +463,10 @@ export class VerificationWorkspace {
       this.currentDuration = tempAudio.duration || 0;
       const metaDuration = document.getElementById('uploadMetaDuration');
       if (metaDuration) metaDuration.textContent = `${this.currentDuration.toFixed(1)}s`;
+    };
+    tempAudio.onerror = () => {
+      toast.show('Unable to decode this audio file.', 'error');
+      this._resetUploadUI();
     };
 
     // Update Upload UI
@@ -503,10 +516,14 @@ export class VerificationWorkspace {
     const dropzone = document.getElementById('uploadDropzone');
     const previewBar = document.getElementById('uploadFilePreview');
     const fileInput = document.getElementById('fileUploadInput');
+    const nameEl = document.getElementById('uploadedFileName');
+    const sizeEl = document.getElementById('uploadedFileSize');
 
     if (dropzone) dropzone.style.display = 'block';
     if (previewBar) previewBar.style.display = 'none';
     if (fileInput) fileInput.value = '';
+    if (nameEl) nameEl.textContent = 'No audio selected';
+    if (sizeEl) sizeEl.textContent = '--';
   }
 
   _togglePlayback() {

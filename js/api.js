@@ -669,6 +669,22 @@ export class VoiceShieldAPI {
       realSha256 = VoiceShieldAPI._computeDeterministicHash(new TextEncoder().encode(`${filename}-${duration}-${sampleRate}`));
     }
 
+    // STRICT REJECTION OF UNDECODABLE AUDIO
+    if (audioBlob && !channelData) {
+      return {
+        analysis_id: analysisId,
+        status: 'decode_error',
+        verdict: 'UNABLE TO DECODE AUDIO FILE',
+        confidence: null,
+        risk_level: null,
+        title: '⚠️ Unable to Decode Audio File',
+        message: 'Unable to decode this audio file. Please ensure it is a valid, uncorrupted audio recording.',
+        instructions: 'Please provide a valid audio file (WAV, MP3, M4A, FLAC, OGG).',
+        audio_duration: 0,
+        verification_hash: realSha256 || '—'
+      };
+    }
+
     // STRICT REJECTION OF SILENCE & NON-SPEECH
     if ((peak < 0.007 && rms < 0.003) || silencePct > 85.0 || duration < 1.8) {
       if (typeof onStageUpdate === 'function') {

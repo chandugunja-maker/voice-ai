@@ -94,6 +94,17 @@ export class ResultView {
               <li>• Re-record in a quiet room or use a clearer recording device.</li>
             `;
           }
+        } else if (result.status === 'decode_error') {
+          if (iconEl) iconEl.textContent = '⚠️';
+          if (titleEl) titleEl.textContent = 'Unable to decode this audio file';
+          if (msgEl) msgEl.textContent = result.message || 'Unable to decode this audio file. Please ensure it is a valid, uncorrupted audio recording.';
+          if (hintsList) {
+            hintsList.innerHTML = `
+              <li>• Ensure the file is not corrupted or truncated.</li>
+              <li>• Supported formats: WAV, MP3, M4A, FLAC, OGG (Max 25 MB).</li>
+              <li>• Check that the recording contains playable audio.</li>
+            `;
+          }
         } else {
           if (iconEl) iconEl.textContent = '⏱️';
           if (titleEl) titleEl.textContent = result.title || 'Recording Too Short';

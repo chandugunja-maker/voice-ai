@@ -162,7 +162,7 @@ export class AudioRecorder {
     } catch (err) {
       console.error('Microphone error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        this.onError('Microphone permission denied. Please allow microphone access in your browser settings and try again.');
+        this.onError('Microphone permission is required to record audio.');
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         this.onError('No microphone detected. Please connect an audio input device and try again.');
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
