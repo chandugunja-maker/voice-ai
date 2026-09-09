@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoiceShield AI | Real-Time Voice Cloning Impersonation Detection</title>
+  <meta name="description" content="AI-Powered Real-Time Detection and Prevention of Voice Cloning Impersonation Attacks. Smart India Hackathon 2026." />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <script>
+    window.VOICESHIELD_API_URL = window.VOICESHIELD_API_URL || "";
+  </script>
+</head>
+<body>
+
+  <!-- =========================================================================
+       1. Top Sticky Navigation Bar
+       ========================================================================= -->
+  <header class="navbar" role="banner">
+    <div class="container nav-container">
+      <!-- Logo & Brand -->
+      <a href="#home" class="nav-brand" aria-label="VoiceShield AI Home">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v6h-2V7zm0 8h2v2h-2v-2z"/>
+          </svg>
+        </div>
+        <span>VoiceShield AI</span>
+        <span class="brand-badge">SIH 2026</span>
+      </a>
+
+      <!-- Desktop & Mobile Navigation Links -->
+      <nav id="navMenu" class="nav-menu" role="navigation" aria-label="Primary Navigation">
+        <a href="#home" class="nav-link active">Home</a>
+        <a href="#verify" class="nav-link">Verify Voice</a>
+        <a href="#live" class="nav-link">Live Verification</a>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#history" class="nav-link">History</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#blockchain" class="nav-link">Blockchain Integrity</a>
+        <a href="#about" class="nav-link">About</a>
+      </nav>
+
+      <!-- Action Buttons & Demo Indicator -->
+      <div class="nav-actions">
+        <div class="demo-pill" title="Decision-Support Mode for SIH 2026 Demonstration">
+          <span class="demo-pill-dot"></span>
+          <span>Demo Mode</span>
+        </div>
+        <button id="btnNavStartVerify" class="btn btn-primary btn-sm">
+          Start Verification
+        </button>
+        <button id="navToggleBtn" class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          ☰
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       Main Content Area (Single Page Application Views)
+       ========================================================================= -->
+  <main class="main-content" role="main">
+
+    <!-- =======================================================================
+         VIEW 1: Home Page
+         ======================================================================= -->
+    <section id="view-home" class="section hero">
+      <div class="container">
+        <div class="hero-grid">
+          <!-- Left Content -->
+          <div class="hero-content">
+            <div class="section-tag">Cybersecurity & AI Defense</div>
+            <h1>Can You Trust <br /><span class="gradient-text">The Voice?</span></h1>
+            <p class="hero-description">
+              Detect suspicious and AI-generated voices before they become successful impersonation attacks.
+              AI-powered voice verification and deepfake voice detection designed to protect users from voice-cloning impersonation attacks.
+            </p>
+            <div class="hero-cta">
+              <button id="btnHeroVerify" class="btn btn-primary btn-lg">
+                Verify a Voice
+              </button>
+              <button id="btnHeroHow" class="btn btn-secondary btn-lg">
+                How It Works
+              </button>
+            </div>
+            <div class="trust-statement">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>Designed for real-time voice-cloning impersonation detection. Decision-support security tool (does not claim 100% detection accuracy).</span>
+            </div>
+          </div>
+
+          <!-- Right Interactive Visualizer HUD -->
+          <div class="hero-visual" aria-hidden="true">
+            <div class="hero-visual-header">
+              <span style="font-size: 0.85rem; font-weight: 600; color: #fff;">Acoustic Biometric HUD</span>
+              <div class="hud-status">
+                <span class="hud-status-dot"></span>
+                <span>SYSTEM ARMED</span>
+              </div>
+            </div>
+
+            <!-- Waveform Canvas -->
+            <canvas id="heroVisualizerCanvas" class="hud-canvas"></canvas>
+
+            <!-- Real-time HUD Sub-metrics -->
+            <div class="hero-metrics-grid">
+              <div class="hero-metric-item">
+                <div class="hero-metric-label">Pitch Contour</div>
+                <div class="hero-metric-val" style="color: var(--color-genuine);">DYNAMIC F0</div>
+              </div>
+              <div class="hero-metric-item">
+                <div class="hero-metric-label">Spectral Roll-Off</div>
+                <div class="hero-metric-val" style="color: var(--accent-primary);">3.8 kHz</div>
+              </div>
+              <div class="hero-metric-item">
+                <div class="hero-metric-label">Neural Artifacts</div>
+                <div class="hero-metric-val" style="color: var(--color-genuine);">NOMINAL</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Threat Context Cards -->
+        <div class="threat-grid">
+          <div class="threat-card">
+            <div class="threat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+            </div>
+            <h3>Executive Wire Impersonation</h3>
+            <p>Attackers clone executive and CEO voices from public speeches to authorize fraudulent wire transfers and bypass telephone approvals.</p>
+          </div>
+
+          <div class="threat-card">
+            <div class="threat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </div>
+            <h3>Urgent Family Scams</h3>
+            <p>Cloned audio of loved ones crying or claiming false emergencies to induce panic and demand untraceable ransom or bail transfers.</p>
+          </div>
+
+          <div class="threat-card">
+            <div class="threat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h3>IT Helpdesk Social Engineering</h3>
+            <p>Synthetic voice clones impersonating employees to request password resets, MFA bypasses, and access credentials from corporate support.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         VIEW 2: Dedicated Voice Verification Workspace
+         ======================================================================= -->
+    <section id="view-verify" class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Core Verification Layer</div>
+          <h2 class="section-title">Voice Verification</h2>
+          <p class="section-subtitle">Record or upload a voice sample to analyze its authenticity.</p>
+        </div>
+
+        <!-- Verification Card Container -->
+        <div class="verification-box">
+          <!-- Tab Header -->
+          <div class="tab-header" role="tablist">
+            <button class="tab-btn active" data-tab="record" role="tab" aria-selected="true" aria-controls="tabPaneRecord">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+              <span>Record Voice</span>
+            </button>
+            <button class="tab-btn" data-tab="upload" role="tab" aria-selected="false" aria-controls="tabPaneUpload">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span>Upload Audio</span>
+            </button>
+          </div>
+
+          <!-- Tab Content -->
+          <div class="tab-content">
+            <!-- PANE 1: Record Voice -->
+            <div id="tabPaneRecord" class="tab-pane active" role="tabpanel">
+              <div class="recorder-wrapper">
+                <!-- Large Mic Button -->
+                <button id="btnStartRecord" class="record-mic-btn" aria-label="Start Voice Recording">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                </button>
+                <div id="recordStatusText" class="recorder-status-text">Start Recording</div>
+                <div id="recordHintText" class="recorder-hint">Speak naturally for 5–10 seconds.</div>
+
+                <!-- Live Waveform & Timer (Shown during recording) -->
+                <div id="recordLivePanel" class="record-live-panel">
+                  <div class="live-timer-badge">
+                    <span class="live-record-dot"></span>
+                    <span id="recordTimerText">00:00</span>
+                  </div>
+                  <canvas id="recordLiveCanvas" class="live-canvas"></canvas>
+                  <button id="btnStopRecord" class="btn btn-danger btn-sm" style="margin-top: 1rem;">
+                    ■ Stop Recording
+                  </button>
+                </div>
+
+                <!-- Recorded Audio Preview Bar (Shown after recording) -->
+                <div id="recordPreviewBar" class="audio-preview-bar">
+                  <div class="preview-info">
+                    <div class="preview-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                      </svg>
+                    </div>
+                    <div class="preview-text">
+                      <h4>Recording Complete</h4>
+                      <p id="recordDurationDisplay">00:06</p>
+                    </div>
+                  </div>
+                  <div class="playback-controls">
+                    <button id="btnPreviewPlayPause" class="btn-play-pause" aria-label="Play recording preview">
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                    </button>
+                    <button id="btnReRecord" class="btn btn-secondary btn-sm">
+                      Record Again
+                    </button>
+                    <button id="btnAnalyzeRecord" class="btn btn-primary btn-sm">
+                      Analyze Voice
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Privacy Reminder -->
+                <div class="privacy-notice-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <span>Your microphone is used only after you grant permission. Audio is analyzed in real-time and not permanently retained without explicit consent.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANE 2: Upload Audio -->
+            <div id="tabPaneUpload" class="tab-pane" role="tabpanel">
+              <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload audio drop zone">
+                <div class="dropzone-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
+                <h3>Drop your audio file here</h3>
+                <p>or</p>
+                <button id="btnBrowseFiles" class="btn btn-secondary btn-sm" type="button">
+                  Browse Files
+                </button>
+                <input type="file" id="audioFileInput" accept=".wav,.mp3,.m4a,.webm,.ogg,audio/*" style="display: none;" />
+                <div class="accepted-formats" style="margin-top: 1rem;">
+                  Supported formats: WAV, MP3, M4A, WebM, OGG (Max 25 MB)
+                </div>
+              </div>
+
+              <!-- Upload Preview Bar -->
+              <div id="uploadPreviewBar" class="audio-preview-bar">
+                <div class="preview-info">
+                  <div class="preview-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                    </svg>
+                  </div>
+                  <div class="preview-text">
+                    <h4 id="uploadFileName">audio_sample.wav</h4>
+                    <p id="uploadFileMeta">WAV • 1.2 MB</p>
+                  </div>
+                </div>
+                <div class="playback-controls">
+                  <button id="btnUploadPlayPause" class="btn-play-pause" aria-label="Play uploaded audio">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                  </button>
+                  <button id="btnUploadClear" class="btn btn-secondary btn-sm">
+                    Replace
+                  </button>
+                  <button id="btnAnalyzeUpload" class="btn btn-primary btn-sm">
+                    Analyze Voice
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SIH Presentation Demo Sample Presets -->
+            <div class="demo-samples-wrapper">
+              <div class="demo-samples-label">SIH 2026 Presentation Quick-Test Samples</div>
+              <div class="demo-chips">
+                <button class="demo-chip genuine-chip" data-sample="genuine">
+                  ✓ Sample: Likely Genuine (Human Voice)
+                </button>
+                <button class="demo-chip suspicious-chip" data-sample="suspicious">
+                  ⚠ Sample: Suspicious (Atypical Prosody)
+                </button>
+                <button class="demo-chip ai-chip" data-sample="ai_generated">
+                  ! Sample: Possible AI-Generated (Voice Clone)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =====================================================================
+             Verification Result Section
+             ===================================================================== -->
+        <div id="resultContainer" class="result-container" style="margin-top: 3.5rem;">
+          <div class="result-hero-card">
+            <h2 style="font-size: 1.75rem; margin-bottom: 1.25rem;">Voice Verification Result</h2>
+
+            <!-- Circular Result Verdict Badge -->
+            <div id="resultVerdictBadge" class="verdict-badge genuine">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>LIKELY GENUINE</span>
+            </div>
+
+            <!-- Dual Metrics Row: Risk Score + Confidence -->
+            <div class="metrics-row">
+              <!-- Risk Score Circular Gauge -->
+              <div class="gauge-box">
+                <div style="position: relative; width: 170px; height: 170px;">
+                  <svg class="gauge-svg" viewBox="0 0 170 170">
+                    <circle class="gauge-track" cx="85" cy="85" r="70" />
+                    <circle id="gaugeArc" class="gauge-value-arc" cx="85" cy="85" r="70" stroke-dasharray="440" stroke-dashoffset="440" />
+                  </svg>
+                  <div class="gauge-center-text">
+                    <div id="gaugeScoreNum" class="gauge-score-number">18</div>
+                    <div class="gauge-score-total">/ 100</div>
+                  </div>
+                </div>
+                <div id="gaugeRiskLabel" class="gauge-label">Low Risk</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Biometric Risk Index</div>
+              </div>
+
+              <!-- Detection Confidence Metric -->
+              <div class="confidence-box">
+                <div class="confidence-header">
+                  <span>Detection Confidence</span>
+                </div>
+                <div id="confidenceValue" class="confidence-val">94%</div>
+                <div class="confidence-bar-bg">
+                  <div id="confidenceBarFill" class="confidence-bar-fill" style="width: 94%;"></div>
+                </div>
+                <p class="distinction-note">
+                  <strong>Risk Score ≠ Confidence:</strong> Risk measures probability of synthetic cloning anomalies; Confidence indicates acoustic feature certainty.
+                </p>
+              </div>
+            </div>
+
+            <!-- Analysis Summary Narrative -->
+            <div class="result-summary-box">
+              <p id="resultSummaryText">
+                Based on the analyzed audio characteristics, the voice appears likely to be genuine. No strong synthetic patterns were detected.
+              </p>
+            </div>
+
+            <!-- Security Warning Box (Active for Suspicious / AI) -->
+            <div id="securityWarningBox" class="security-warning-box">
+              <div class="security-warning-header">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Potential Voice Impersonation Detected</span>
+              </div>
+              <ul id="securityActionsList" class="security-actions-list">
+                <!-- Populated dynamically -->
+              </ul>
+              <button id="btnOpenAltVerification" class="btn btn-secondary btn-sm" type="button">
+                Verify Using Another Method
+              </button>
+            </div>
+
+            <!-- Six Feature Breakdown Cards -->
+            <div class="features-section">
+              <div class="features-section-title">
+                <h3 style="font-size: 1.15rem;">What did VoiceShield analyze?</h3>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">6 Biometric Acoustic Dimensions</span>
+              </div>
+              <div id="featuresGrid" class="features-grid">
+                <!-- Filled dynamically by result-view.js -->
+              </div>
+            </div>
+
+            <!-- Blockchain Audit Proof Card -->
+            <div class="blockchain-proof-card">
+              <div class="proof-details">
+                <div class="proof-tag">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <span>Tamper-Evident Ledger Digest</span>
+                </div>
+                <div id="blockchainBlockIndex" style="font-size: 0.8rem; color: var(--text-muted);">Block #42 • Cryptographic Proof</div>
+                <div id="blockchainProofHash" class="proof-hash-code">2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae</div>
+              </div>
+              <button id="btnCopyProofHash" class="btn btn-secondary btn-sm" type="button">
+                Copy Hash
+              </button>
+            </div>
+
+            <!-- Result Actions -->
+            <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;">
+              <button id="btnResetVerification" class="btn btn-primary">
+                Verify Another Voice
+              </button>
+              <a href="#history" class="btn btn-secondary">
+                View Audit History
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         VIEW 3: Live Real-Time Voice Verification Mode
+         ======================================================================= -->
+    <section id="view-live" class="section" style="display: none;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">High-Speed Demonstration</div>
+          <h2 class="section-title">Live Voice Verification</h2>
+          <p class="section-subtitle">Real-time live streaming audio buffer verification for rapid identification.</p>
+        </div>
+
+        <div class="live-verify-card">
+          <div id="liveIndicatorRing" class="live-indicator-ring">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-primary);">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            </svg>
+          </div>
+
+          <div id="liveStatusText" style="font-size: 1.15rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+            Ready • Click to begin 5-second live capture
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 480px; margin: 0 auto 1.5rem auto;">
+            VoiceShield will automatically record a short 5-second burst, extract spectral anomalies, and return risk verification.
+          </p>
+
+          <canvas id="liveStreamCanvas" class="live-stream-canvas"></canvas>
+
+          <button id="btnStartLiveVerification" class="btn btn-primary btn-lg">
+            Start Live Verification
+          </button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         VIEW 4: Dashboard & Analytics
+         ======================================================================= -->
+    <section id="view-dashboard" class="section" style="display: none;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Cybersecurity Metrics</div>
+          <h2 class="section-title">Detection Dashboard</h2>
+          <p class="section-subtitle">Live system telemetry and risk aggregates for impersonation defense.</p>
+        </div>
+
+        <!-- 5 Dashboard Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Total Verifications</span>
+            </div>
+            <div id="statTotalVerifications" class="stat-value">142</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Genuine Voices</span>
+            </div>
+            <div id="statGenuineVoices" class="stat-value" style="color: var(--color-genuine);">88</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Suspicious Voices</span>
+            </div>
+            <div id="statSuspiciousVoices" class="stat-value" style="color: var(--color-suspicious);">32</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Potential AI Clones</span>
+            </div>
+            <div id="statAIVoices" class="stat-value" style="color: var(--color-ai);">22</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Average Risk Score</span>
+            </div>
+            <div id="statAvgRiskScore" class="stat-value" style="color: var(--accent-primary);">32/100</div>
+          </div>
+        </div>
+
+        <!-- Recent Verifications Table Container -->
+        <div class="card" style="padding: 1.5rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+            <h3 style="font-size: 1.15rem;">Recent Verification Stream</h3>
+            <a href="#history" class="btn btn-secondary btn-sm">Full History</a>
+          </div>
+          <div class="history-table-container">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Timestamp / ID</th>
+                  <th>Result</th>
+                  <th>Risk Score</th>
+                  <th>Confidence</th>
+                  <th>Duration</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardRecentTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         VIEW 5: Verification History
+         ======================================================================= -->
+    <section id="view-history" class="section" style="display: none;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Audit Trail</div>
+          <h2 class="section-title">Verification History</h2>
+          <p class="section-subtitle">Review previous voice evaluations, risk ratings, and cryptographic records.</p>
+        </div>
+
+        <div class="card" style="padding: 1.5rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+            <span style="font-size: 0.9rem; color: var(--text-muted);">Stored locally in browser with cryptographic integrity digests.</span>
+            <button id="btnClearHistory" class="btn btn-tertiary btn-sm">
+              Clear History
+            </button>
+          </div>
+
+          <div class="history-table-container">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Timestamp / Record ID</th>
+                  <th>Result</th>
+                  <th>Risk Score</th>
+                  <th>Confidence</th>
+                  <th>Duration</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <!-- Populated by dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         VIEW 6: How It Works
+         ======================================================================= -->
+    <section id="view-how-it-works" class="section" style="display: none;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Architecture & Process</div>
+          <h2 class="section-title">How It Works</h2>
+          <p class="section-subtitle">A multi-layered acoustic pipeline designed for real-time voice cloning detection.</p>
+        </div>
+
+        <!-- 4 Step Pipeline -->
+        <div class="process-grid">
+          <div class="process-card">
+            <div class="process-step-num">01</div>
+            <h3>Capture</h3>
+            <p>User records live voice via Web Audio API or uploads an audio file (WAV, MP3, WebM, OGG). The sample is pre-processed ephemerally in memory.</p>
+          </div>
+
+          <div class="process-card">
+            <div class="process-step-num">02</div>
+            <h3>Analyze</h3>
+            <p>Signal processing algorithms extract fundamental frequency (F0) contours, spectral roll-off, zero-crossing rates, and respiration intervals.</p>
+          </div>
+
+          <div class="process-card">
+            <div class="process-step-num">03</div>
+            <h3>Detect</h3>
+            <p>Neural classifier modules evaluate spectral gating, robotic pitch constancy, vocoder phase dispersion, and synthetic diffusion footprints.</p>
+          </div>
+
+          <div class="process-card">
+            <div class="process-step-num">04</div>
+            <h3>Protect</h3>
+            <p>Delivers an instant 0–100 risk score, actionable defensive steps, and logs a tamper-evident SHA-256 digest to the verification ledger.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         VIEW 7: Blockchain Integrity Section
+         ======================================================================= -->
+    <section id="view-blockchain" class="section" style="display: none;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">SIH 2026 Theme: Blockchain & Cybersecurity</div>
+          <h2 class="section-title">Tamper-Evident Ledger Integrity</h2>
+          <p class="section-subtitle">How cryptographic hash chaining protects voice verification records against tampering.</p>
+        </div>
+
+        <!-- Conceptual Flow Diagram -->
+        <div class="blockchain-flow-diagram">
+          <div class="flow-steps">
+            <div class="flow-step-item">
+              <h4>1. Voice Analysis</h4>
+              <p>AI evaluates acoustic biometric indicators</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step-item">
+              <h4>2. Verification Result</h4>
+              <p>Calculates risk score & confidence</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step-item">
+              <h4>3. SHA-256 Digest</h4>
+              <p>Hashes audio + result + previous hash</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step-item">
+              <h4>4. Immutable Ledger</h4>
+              <p>Anchors tamper-evident verification event</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Architectural Clarity Callout -->
+        <div class="card" style="margin-bottom: 2rem; border-left: 3px solid var(--accent-primary);">
+          <h4 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #fff;">Core Architectural Distinction:</h4>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+            <strong>AI analyzes the voice:</strong> Neural vocoder detection and acoustic signal processing detect the synthetic traits.<br />
+            <strong>Blockchain secures the audit trail:</strong> Cryptographic SHA-256 chaining ensures verification logs cannot be altered, forged, or backdated after an incident.<br />
+            <em style="color: var(--text-muted);">Note: Raw voice recordings are never stored on public blockchains for privacy and efficiency compliance.</em>
+          </p>
+        </div>
+
+        <!-- Ledger Blocks Table -->
+        <div class="card" style="padding: 1.5rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+            <div id="ledgerIntegrityBadge" style="font-size: 0.9rem; font-weight: 600; color: var(--color-genuine);">
+              ✓ Ledger Integrity: Cryptographically Verified
+            </div>
+            <button id="btnVerifyChainIntegrity" class="btn btn-secondary btn-sm">
+              Verify Chain Integrity
+            </button>
+          </div>
+
+          <div class="history-table-container">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Block #</th>
+                  <th>Timestamp</th>
+                  <th>Audio SHA-256</th>
+                  <th>Classification</th>
+                  <th>Risk Score</th>
+                  <th>Block Hash</th>
+                </tr>
+              </thead>
+              <tbody id="blockchainTableBody">
+                <!-- Populated by blockchain-view.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         VIEW 8: About Page (SIH 2026)
+         ======================================================================= -->
+    <section id="view-about" class="section" style="display: none;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Project Overview</div>
+          <h2 class="section-title">About VoiceShield AI</h2>
+          <p class="section-subtitle">Smart India Hackathon 2026 Project Submission</p>
+        </div>
+
+        <div class="card" style="max-width: 840px; margin: 0 auto; padding: 2.5rem;">
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 1.75rem; border-bottom: 1px solid var(--border-subtle);">
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Theme</div>
+              <div style="font-size: 1.05rem; font-weight: 700; color: #fff;">Blockchain & Cybersecurity</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Category</div>
+              <div style="font-size: 1.05rem; font-weight: 700; color: #fff;">Software</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Team Name</div>
+              <div style="font-size: 1.05rem; font-weight: 700; color: #fff;">Agents</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Team ID</div>
+              <div style="font-size: 1.05rem; font-weight: 700; color: var(--accent-primary);">TEAM-312</div>
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.25rem; margin-bottom: 0.75rem;">Problem Statement</h3>
+          <p style="margin-bottom: 1.5rem; font-size: 0.95rem;">
+            With the rapid proliferation of few-shot neural text-to-speech models and generative voice cloning systems (e.g. ElevenLabs, VALL-E, Bark), cybercriminals can replicate an individual’s voice using only a few seconds of public audio. These clones power high-yield social engineering attacks, CEO wire transfer fraud, grandparent ransom scams, and customer support impersonations.
+          </p>
+
+          <h3 style="font-size: 1.25rem; margin-bottom: 0.75rem;">Our Solution</h3>
+          <p style="margin-bottom: 1.5rem; font-size: 0.95rem;">
+            VoiceShield AI provides an accessible, non-intrusive decision-support verification layer. By combining acoustic signal extraction (measuring pitch jitter, spectral roll-off, respiration rhythm, and vocoder phase noise) with cryptographic SHA-256 tamper-evident logging, it delivers fast risk assessments and clear response protocols.
+          </p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         VIEW 9: Privacy & Data Ethics
+         ======================================================================= -->
+    <section id="view-privacy" class="section" style="display: none;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Data Protection & Privacy</div>
+          <h2 class="section-title">Voice Data Privacy Policy</h2>
+          <p class="section-subtitle">Voice data is sensitive biometric information. VoiceShield AI processes all audio responsibly.</p>
+        </div>
+
+        <div class="card" style="max-width: 800px; margin: 0 auto; padding: 2.5rem;">
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div>
+              <h4 style="color: #fff; margin-bottom: 0.35rem;">1. Clear Consent Before Access</h4>
+              <p style="font-size: 0.9rem;">Your microphone is only accessed when you explicitly click "Start Recording" or "Start Live Verification" and approve browser permissions.</p>
+            </div>
+            <div>
+              <h4 style="color: #fff; margin-bottom: 0.35rem;">2. Ephemeral In-Memory Processing</h4>
+              <p style="font-size: 0.9rem;">Voice recordings are processed in ephemeral memory for the duration of the acoustic feature extraction and are not stored permanently by default.</p>
+            </div>
+            <div>
+              <h4 style="color: #fff; margin-bottom: 0.35rem;">3. User-Controlled History & Deletion</h4>
+              <p style="font-size: 0.9rem;">Verification history logs are stored locally on your device. You have full control to view individual records or clear your history at any time.</p>
+            </div>
+            <div>
+              <h4 style="color: #fff; margin-bottom: 0.35rem;">4. Cryptographic Proofs Only on Ledger</h4>
+              <p style="font-size: 0.9rem;">No raw voice audio is ever stored on the blockchain. Only irreversible SHA-256 mathematical hashes are recorded to verify tamper-evident integrity.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+
+  <!-- =========================================================================
+       Analysis Loading Modal Overlay
+       ========================================================================= -->
+  <div id="analysisOverlay" class="analysis-overlay" role="dialog" aria-modal="true" aria-label="Analyzing Voice">
+    <div class="analysis-card">
+      <h3>Analyzing Voice</h3>
+      <p class="subtitle">Extracting acoustic & biometric voice characteristics...</p>
+
+      <!-- Animated Scanning Waveform Canvas -->
+      <canvas id="analysisWaveformCanvas" class="analysis-waveform-canvas"></canvas>
+
+      <!-- 6 Stages Checklist -->
+      <ul class="stage-checklist">
+        <li class="stage-item completed">
+          <span class="stage-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span>Audio received</span>
+        </li>
+        <li class="stage-item completed">
+          <span class="stage-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span>Audio quality checked</span>
+        </li>
+        <li class="stage-item in-progress">
+          <span class="stage-icon"><div class="stage-spinner"></div></span>
+          <span>Extracting voice features</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>Detecting synthetic patterns</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>Comparing voice characteristics</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>Generating risk assessment</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       Modal: Verify Using Another Method (Incident Response Guide)
+       ========================================================================= -->
+  <div id="altMethodModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Alternative Verification Protocol">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1.25rem;">Out-of-Band Verification Guide</h3>
+        <button class="modal-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <p style="font-size: 0.9rem; margin-bottom: 1.25rem;">
+        When a voice sample is classified as <strong>Suspicious</strong> or <strong>Possible AI-Generated</strong>, follow these recommended cybersecurity verification protocols:
+      </p>
+
+      <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; font-size: 0.875rem;">
+        <li style="display: flex; gap: 0.75rem;">
+          <span style="color: var(--accent-primary); font-weight: 700;">1.</span>
+          <span><strong>Hang up and call back:</strong> Never use the phone number the caller provides. Call back using a verified internal contact directory or previously known telephone number.</span>
+        </li>
+        <li style="display: flex; gap: 0.75rem;">
+          <span style="color: var(--accent-primary); font-weight: 700;">2.</span>
+          <span><strong>Request a secondary channel confirmation:</strong> Ask the person to confirm their request via authenticated enterprise chat (Slack/Teams) or signed corporate email.</span>
+        </li>
+        <li style="display: flex; gap: 0.75rem;">
+          <span style="color: var(--accent-primary); font-weight: 700;">3.</span>
+          <span><strong>Use a pre-agreed challenge phrase:</strong> For high-value transactions or family emergencies, ask a shared personal question that an AI model cannot infer from social media.</span>
+        </li>
+        <li style="display: flex; gap: 0.75rem;">
+          <span style="color: var(--accent-primary); font-weight: 700;">4.</span>
+          <span><strong>Halt all financial movement:</strong> Never expedite wire transfers, OTP transmissions, or gift card purchases under urgent voice pressure.</span>
+        </li>
+      </ul>
+
+      <div style="text-align: right;">
+        <button class="btn btn-secondary modal-close">Close Guide</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       Modal: Clear History Confirmation
+       ========================================================================= -->
+  <div id="clearHistoryModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Clear History Confirmation">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; color: #ef4444;">Clear Verification History?</h3>
+        <button class="modal-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Are you sure you want to delete all locally stored voice verification records? This action cannot be undone.
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button id="btnCancelClearHistory" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="btnConfirmClearHistory" class="btn btn-danger btn-sm">Clear All Records</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       Footer
+       ========================================================================= -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h4>VoiceShield AI</h4>
+          <p>
+            AI-powered voice verification and deepfake voice detection designed to protect users from voice-cloning impersonation attacks.
+          </p>
+          <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--accent-primary);">
+            Tagline: “Verify the Voice. Stop the Impersonation.”
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Features</h5>
+          <ul class="footer-links">
+            <li><a href="#verify">Record & Verify</a></li>
+            <li><a href="#verify">Upload Audio</a></li>
+            <li><a href="#live">Live Verification</a></li>
+            <li><a href="#dashboard">Dashboard Telemetry</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Security & Trust</h5>
+          <ul class="footer-links">
+            <li><a href="#blockchain">Blockchain Audit</a></li>
+            <li><a href="#how-it-works">Detection Pipeline</a></li>
+            <li><a href="#privacy">Biometric Privacy</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Hackathon</h5>
+          <ul class="footer-links">
+            <li><a href="#about">Smart India Hackathon 2026</a></li>
+            <li><a href="#about">Theme: Blockchain & Cyber</a></li>
+            <li><a href="#about">Team: Agents (TEAM-312)</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 VoiceShield AI • Smart India Hackathon 2026 • Decision-Support Security Tool</div>
+        <div>Designed for Real-Time Impersonation Defense</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Entry Point -->
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

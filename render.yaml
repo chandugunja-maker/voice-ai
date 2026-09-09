@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: voiceshield-backend
+    runtime: docker
+    plan: free
+    envVars:
+      - key: VOICESHIELD_DEMO_MODE
+        value: true
+      - key: ALLOWED_ORIGINS
+        value: https://voiceshield-ai.vercel.app
+      - key: SAMPLES_DIR
+        value: frontend/assets/samples

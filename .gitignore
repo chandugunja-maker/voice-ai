@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+*.egg
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Binaries and executables
+*.exe
+bin/*.exe
+
+# Backend models
+backend/models/*.pt
+backend/models/*.onnx
+
+# Test artifacts
+.pytest_cache/
+*.log
+
+# Node (if added later)
+node_modules/
+.npm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
