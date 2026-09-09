@@ -42,6 +42,9 @@ class VoiceShieldApp {
       onAnalysisComplete: (result, filename) => {
         this.resultView.render(result, filename);
         if (this.dashboardManager && result.status === 'success') {
+          result.filename = result.filename || filename;
+          result.id = result.id || result.analysis_id;
+          result.analysis_id = result.analysis_id || result.id;
           this.dashboardManager.addRecord(result);
         }
       }

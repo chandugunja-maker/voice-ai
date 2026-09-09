@@ -634,6 +634,12 @@ export class VoiceShieldAPI {
       }
     }
 
+    if (audioBlob && !arrayBuffer) {
+      try {
+        arrayBuffer = await audioBlob.arrayBuffer();
+      } catch (e) {}
+    }
+
     // Compute Cryptographic SHA-256 Digest
     let realSha256 = '';
     if (arrayBuffer && window.crypto && window.crypto.subtle) {

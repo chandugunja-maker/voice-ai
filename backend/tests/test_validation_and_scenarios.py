@@ -89,6 +89,24 @@ class TestVoiceShieldScenarios(unittest.TestCase):
         self.assertIn("metrics", data)
         self.assertIn("explainability", data)
 
+        # Verification of Analysis ID format: VS-YYYYMMDD-XXXXXX
+        self.assertTrue(data["analysis_id"].startswith("VS-"))
+        self.assertGreaterEqual(len(data["analysis_id"]), 17)
+
+        # Verification of Cryptographic SHA-256 Hash
+        self.assertIn("verification_hash", data)
+        self.assertIsNotNone(data["verification_hash"])
+        self.assertEqual(len(data["verification_hash"]), 64)
+        # Ensure it's valid hexadecimal
+        int(data["verification_hash"], 16)
+
+        # Verification of Audio Quality
+        self.assertIn("audio_quality", data)
+        aq = data["audio_quality"]
+        self.assertEqual(aq["sample_rate"], 16000)
+        self.assertGreater(aq["duration"], 3.5)
+        self.assertGreater(aq["rms_level"], 0.01)
+
     def test_empty_audio_rejected(self):
         files = {"audio": ("empty.wav", b"", "audio/wav")}
         res = self.client.post("/api/analyze-voice", files=files)

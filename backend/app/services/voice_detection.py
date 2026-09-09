@@ -425,6 +425,8 @@ class VoiceDetectionService:
             audio_duration=quality_info["duration"],
             processing_time=processing_time,
             blockchain_proof=proof,
+            verification_hash=proof.verification_hash,
+            sha256_hash=proof.audio_sha256,
             demo_mode=self.demo_mode,
             notice="VoiceShield AI Enterprise Decision Support",
             created_at=datetime.now(timezone.utc).isoformat()

@@ -70,6 +70,8 @@ class VoiceAnalysisResponse(BaseModel):
     verdict: Optional[str] = Field(None, description="'LIKELY AUTHENTIC', 'UNCERTAIN — REVIEW', or 'LIKELY SYNTHETIC'")
     confidence: Optional[int] = Field(None, description="Overall confidence percentage (only if calculated)")
     risk_level: Optional[str] = Field(None, description="'LOW RISK', 'MEDIUM RISK', or 'HIGH RISK'")
+    verification_hash: Optional[str] = Field(None, description="Cryptographic SHA-256 ledger digest")
+    sha256_hash: Optional[str] = Field(None, description="Cryptographic SHA-256 hash of audio stream")
     
     # Structured Analysis Sections
     audio_quality: Optional[AudioQualityMetrics] = None

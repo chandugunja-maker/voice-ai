@@ -217,6 +217,9 @@ export class DashboardManager {
     }
 
     tableBody.innerHTML = filtered.map(item => {
+      const recId = item.id || item.analysis_id || 'VS-0000';
+      const recName = item.filename || 'voice_sample.wav';
+      const recDur = item.duration_str || (item.audio_duration ? `${item.audio_duration}s` : (item.duration ? `${item.duration}s` : '5.0s'));
       const verdict = item.verdict || 'UNCERTAIN — REVIEW';
       let pillClass = 'badge-uncertain';
       if (verdict.includes('AUTHENTIC')) pillClass = 'badge-authentic';
@@ -227,9 +230,9 @@ export class DashboardManager {
 
       return `
         <tr style="border-bottom: 1px solid var(--border-subtle);">
-          <td style="padding: 12px 14px; font-family: monospace; font-size: 0.8rem; color: var(--accent-primary);">${item.id}</td>
-          <td style="padding: 12px 14px; font-weight: 600; color: var(--text-primary);">${item.filename || 'voice_sample.wav'}</td>
-          <td style="padding: 12px 14px; color: var(--text-muted);">${item.duration_str || item.duration + 's' || '5.0s'}</td>
+          <td style="padding: 12px 14px; font-family: monospace; font-size: 0.8rem; color: var(--accent-primary);">${recId}</td>
+          <td style="padding: 12px 14px; font-weight: 600; color: var(--text-primary);">${recName}</td>
+          <td style="padding: 12px 14px; color: var(--text-muted);">${recDur}</td>
           <td style="padding: 12px 14px;">
             <span class="history-pill ${pillClass}">${verdict}</span>
           </td>
@@ -237,10 +240,10 @@ export class DashboardManager {
           <td style="padding: 12px 14px; color: var(--text-secondary);">${risk}</td>
           <td style="padding: 12px 14px; text-align: right;">
             <div style="display: flex; gap: 6px; justify-content: flex-end;">
-              <button class="btn btn-sm btn-secondary btn-history-details" data-id="${item.id}" type="button" title="View Details">
+              <button class="btn btn-sm btn-secondary btn-history-details" data-id="${recId}" type="button" title="View Details">
                 Details
               </button>
-              <button class="btn btn-sm btn-tertiary btn-history-delete" data-id="${item.id}" type="button" title="Delete" style="color: #ef4444;">
+              <button class="btn btn-sm btn-tertiary btn-history-delete" data-id="${recId}" type="button" title="Delete" style="color: #ef4444;">
                 ✕
               </button>
             </div>
@@ -348,12 +351,12 @@ export class DashboardManager {
     const m = record.metrics || {};
     if (metricsGrid) {
       metricsGrid.innerHTML = `
-        <div class="metadata-card"><div class="metadata-label">Authenticity</div><div class="metadata-val">${m.authenticity !== undefined && m.authenticity !== null ? m.authenticity + '%' : 'Not available'}</div></div>
-        <div class="metadata-card"><div class="metadata-label">Liveness</div><div class="metadata-val">${m.liveness || 'Not available'}</div></div>
-        <div class="metadata-card"><div class="metadata-label">Naturalness</div><div class="metadata-val">${m.naturalness !== undefined && m.naturalness !== null ? m.naturalness + '%' : 'Not available'}</div></div>
-        <div class="metadata-card"><div class="metadata-label">Spectral Cons.</div><div class="metadata-val">${m.spectral_consistency !== undefined && m.spectral_consistency !== null ? m.spectral_consistency + '%' : 'Not available'}</div></div>
-        <div class="metadata-card"><div class="metadata-label">Temporal Cons.</div><div class="metadata-val">${m.temporal_consistency !== undefined && m.temporal_consistency !== null ? m.temporal_consistency + '%' : 'Not available'}</div></div>
-        <div class="metadata-card"><div class="metadata-label">Replay Risk</div><div class="metadata-val">${m.replay_risk || 'Not available'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Authenticity</div><div class="metadata-val">${m.authenticity !== undefined && m.authenticity !== null ? m.authenticity + '%' : 'Insufficient evidence'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Liveness</div><div class="metadata-val">${m.liveness || 'Insufficient evidence'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Naturalness</div><div class="metadata-val">${m.naturalness !== undefined && m.naturalness !== null ? m.naturalness + '%' : 'Insufficient evidence'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Spectral Cons.</div><div class="metadata-val">${m.spectral_consistency !== undefined && m.spectral_consistency !== null ? m.spectral_consistency + '%' : 'Insufficient evidence'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Temporal Cons.</div><div class="metadata-val">${m.temporal_consistency !== undefined && m.temporal_consistency !== null ? m.temporal_consistency + '%' : 'Insufficient evidence'}</div></div>
+        <div class="metadata-card"><div class="metadata-label">Replay Risk</div><div class="metadata-val">${m.replay_risk || 'Insufficient evidence'}</div></div>
       `;
     }
 
@@ -379,7 +382,19 @@ export class DashboardManager {
 
   addRecord(record) {
     if (!record) return;
-    this.historyRecords.unshift(record);
+    const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const hexSuffix = Math.floor(Date.now() % 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
+    const recId = record.id || record.analysis_id || `VS-${ymd}-${hexSuffix}`;
+    const normalized = {
+      ...record,
+      id: recId,
+      analysis_id: recId,
+      filename: record.filename || 'voice_sample.wav',
+      duration_str: record.duration_str || (record.audio_duration ? `${record.audio_duration}s` : (record.duration ? `${record.duration}s` : '5.0s')),
+      created_at: record.created_at || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    };
+
+    this.historyRecords.unshift(normalized);
     try {
       localStorage.setItem('voiceshield_verification_history', JSON.stringify(this.historyRecords.slice(0, 50)));
     } catch (e) {}

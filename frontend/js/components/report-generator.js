@@ -3,6 +3,8 @@
  * Generates official voice authenticity and cryptographic audit reports for export/printing.
  */
 
+import { toast } from './toast.js';
+
 export class ReportGenerator {
   /**
    * Generates an official printable/PDF audit report in a dedicated print window
@@ -12,11 +14,11 @@ export class ReportGenerator {
 
     const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const hexSuffix = Math.floor(Date.now() % 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
-    const analysisId = result.analysis_id || `VS-${ymd}-${hexSuffix}`;
+    const analysisId = result.analysis_id || result.id || `VS-${ymd}-${hexSuffix}`;
     const dateStr = new Date().toUTCString();
     const verdict = result.verdict || result.classification_label || 'UNCERTAIN — REVIEW RECOMMENDED';
-    const confidence = result.confidence ? `${result.confidence}%` : 'Not calculated';
-    const riskLevel = result.risk_level || (result.risk_score ? `${result.risk_score}/100` : 'Not calculated');
+    const confidence = result.confidence ? `${result.confidence}%` : 'Insufficient evidence';
+    const riskLevel = result.risk_level || (result.risk_score ? `${result.risk_score}/100` : 'Insufficient evidence');
     const quality = result.audio_quality || {};
     const metrics = result.metrics || {};
     const bg = result.background_audio || {};
@@ -236,12 +238,12 @@ export class ReportGenerator {
     <div>
       <div class="section-title">Acoustic Biometric Metrics</div>
       <table class="data-table">
-        <tr><td>Authenticity Score</td><td>${metrics.authenticity !== undefined && metrics.authenticity !== null ? metrics.authenticity + '%' : 'Not available'}</td></tr>
-        <tr><td>Acoustic Liveness</td><td>${metrics.liveness || 'Not available'}</td></tr>
-        <tr><td>Prosodic Naturalness</td><td>${metrics.naturalness !== undefined && metrics.naturalness !== null ? metrics.naturalness + '%' : 'Not available'}</td></tr>
-        <tr><td>Spectral Consistency</td><td>${metrics.spectral_consistency !== undefined && metrics.spectral_consistency !== null ? metrics.spectral_consistency + '%' : 'Not available'}</td></tr>
-        <tr><td>Temporal Consistency</td><td>${metrics.temporal_consistency !== undefined && metrics.temporal_consistency !== null ? metrics.temporal_consistency + '%' : 'Not available'}</td></tr>
-        <tr><td>Replay Risk Indicator</td><td>${metrics.replay_risk || 'Not available'}</td></tr>
+        <tr><td>Authenticity Score</td><td>${metrics.authenticity !== undefined && metrics.authenticity !== null ? metrics.authenticity + '%' : 'Insufficient evidence'}</td></tr>
+        <tr><td>Acoustic Liveness</td><td>${metrics.liveness || 'Insufficient evidence'}</td></tr>
+        <tr><td>Prosodic Naturalness</td><td>${metrics.naturalness !== undefined && metrics.naturalness !== null ? metrics.naturalness + '%' : 'Insufficient evidence'}</td></tr>
+        <tr><td>Spectral Consistency</td><td>${metrics.spectral_consistency !== undefined && metrics.spectral_consistency !== null ? metrics.spectral_consistency + '%' : 'Insufficient evidence'}</td></tr>
+        <tr><td>Temporal Consistency</td><td>${metrics.temporal_consistency !== undefined && metrics.temporal_consistency !== null ? metrics.temporal_consistency + '%' : 'Insufficient evidence'}</td></tr>
+        <tr><td>Replay Risk Indicator</td><td>${metrics.replay_risk || 'Insufficient evidence'}</td></tr>
       </table>
     </div>
   </div>
@@ -288,13 +290,35 @@ export class ReportGenerator {
 
     `;
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.open();
-      printWindow.document.write(printHtml);
-      printWindow.document.close();
+    let popupOpened = false;
+    try {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(printHtml);
+        printWindow.document.close();
+        popupOpened = true;
+      }
+    } catch (e) {}
+
+    // Fallback or direct download if popup was blocked
+    if (!popupOpened) {
+      try {
+        const blob = new Blob([printHtml], { type: 'text/html;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `VoiceShield_Security_Report_${analysisId}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        toast.show(`Report downloaded: VoiceShield_Security_Report_${analysisId}.html`, 'success');
+      } catch (err) {
+        toast.show('Please allow popups to view the security report.', 'warning');
+      }
     } else {
-      alert('Popup was blocked by your browser. Please allow popups for VoiceShield AI to view and download reports.');
+      toast.show('Security report opened in new tab for printing.', 'success');
     }
   }
 }
