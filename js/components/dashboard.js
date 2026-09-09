@@ -101,13 +101,28 @@ export class DashboardManager {
   _renderCharts(charts) {
     if (!charts) return;
 
-    // 1. Verdict Breakdown Chart (Horizontal Multi-Bar)
+    // Check if there are any records
+    const vData = charts.verdict_distribution || {};
+    const totalVerdicts = Object.values(vData).reduce((a, b) => a + b, 0);
+
     const verdictContainer = document.getElementById('chartVerdictDistribution');
+    const riskContainer = document.getElementById('chartRiskDistribution');
+    const confContainer = document.getElementById('chartConfidenceDistribution');
+
+    if (totalVerdicts === 0) {
+      const emptyHtml = `<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 2.25rem 1rem;">No analysis data yet — perform your first verification above to generate telemetry.</div>`;
+      if (verdictContainer) verdictContainer.innerHTML = emptyHtml;
+      if (riskContainer) riskContainer.innerHTML = emptyHtml;
+      if (confContainer) confContainer.innerHTML = emptyHtml;
+      return;
+    }
+
+    // 1. Verdict Breakdown Chart (Horizontal Multi-Bar)
     if (verdictContainer && charts.verdict_distribution) {
       const data = charts.verdict_distribution;
-      const total = Object.values(data).reduce((a, b) => a + b, 0) || 1;
+      const total = totalVerdicts || 1;
       const authPct = Math.round(((data['Likely Authentic'] || 0) / total) * 100);
-      const uncPct = Math.round(((data['Uncertain — Review'] || 0) / total) * 100);
+      const uncPct = Math.round(((data['Uncertain — Review Recommended'] || data['Uncertain — Review'] || 0) / total) * 100);
       const synPct = Math.round(((data['Likely Synthetic'] || 0) / total) * 100);
 
       verdictContainer.innerHTML = `
@@ -125,7 +140,6 @@ export class DashboardManager {
     }
 
     // 2. Risk Distribution Chart
-    const riskContainer = document.getElementById('chartRiskDistribution');
     if (riskContainer && charts.risk_distribution) {
       const data = charts.risk_distribution;
       const maxVal = Math.max(1, ...Object.values(data));
@@ -149,7 +163,6 @@ export class DashboardManager {
     }
 
     // 3. Confidence Range Distribution
-    const confContainer = document.getElementById('chartConfidenceDistribution');
     if (confContainer && charts.confidence_distribution) {
       const data = charts.confidence_distribution;
       const maxVal = Math.max(1, ...Object.values(data));

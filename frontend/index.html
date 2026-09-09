@@ -64,7 +64,7 @@
           <div class="section-tag">AI Voice Security Platform</div>
           <h1>Is This Voice Real <br />or AI-Generated?</h1>
           <p class="hero-subtitle">
-            Analyze voice recordings using multiple audio and authenticity signals to identify potentially synthetic or manipulated speech.
+            Analyze voice recordings using multiple audio, authenticity, liveness and replay signals to identify potentially synthetic or manipulated speech.
           </p>
 
           <div class="hero-actions">
@@ -202,40 +202,40 @@
                   <div class="pre-quality-card">
                     <div class="pre-quality-header">
                       <span class="pre-quality-title">Pre-Analysis Audio Quality</span>
-                      <span id="recordedQualityBadge" class="quality-badge">Speech Detected</span>
+                      <span id="recordedQualityBadge" class="quality-badge">Ready for Scan</span>
                     </div>
                     <div class="metadata-grid">
                       <div class="metadata-card">
                         <div class="metadata-label">Duration</div>
-                        <div id="recordedMetaDuration" class="metadata-val">5.0s</div>
+                        <div id="recordedMetaDuration" class="metadata-val">--</div>
                       </div>
                       <div class="metadata-card">
                         <div class="metadata-label">Sample Rate</div>
-                        <div id="recordedMetaRate" class="metadata-val">16000 Hz</div>
+                        <div id="recordedMetaRate" class="metadata-val">--</div>
                       </div>
                       <div class="metadata-card">
                         <div class="metadata-label">Channels</div>
-                        <div id="recordedMetaChannels" class="metadata-val">Mono (1 ch)</div>
+                        <div id="recordedMetaChannels" class="metadata-val">--</div>
                       </div>
                       <div class="metadata-card">
                         <div class="metadata-label">File Size</div>
-                        <div id="recordedMetaSize" class="metadata-val">160 KB</div>
+                        <div id="recordedMetaSize" class="metadata-val">--</div>
                       </div>
                       <div class="metadata-card">
                         <div class="metadata-label">RMS Level</div>
-                        <div id="recordedMetaRms" class="metadata-val">0.048</div>
+                        <div id="recordedMetaRms" class="metadata-val">--</div>
                       </div>
                       <div class="metadata-card">
                         <div class="metadata-label">Silence Ratio</div>
-                        <div id="recordedMetaSilence" class="metadata-val">12%</div>
+                        <div id="recordedMetaSilence" class="metadata-val">--</div>
                       </div>
                       <div class="metadata-card">
                         <div class="metadata-label">SNR Estimate</div>
-                        <div id="recordedMetaSnr" class="metadata-val">24 dB (Good)</div>
+                        <div id="recordedMetaSnr" class="metadata-val">--</div>
                       </div>
                       <div class="metadata-card">
                         <div class="metadata-label">Background Noise</div>
-                        <div id="recordedMetaNoise" class="metadata-val">Low</div>
+                        <div id="recordedMetaNoise" class="metadata-val">--</div>
                       </div>
                     </div>
                   </div>
@@ -522,8 +522,8 @@
 
             <!-- Cryptographic Ledger Footer -->
             <div style="text-align: center; font-size: 0.8rem; color: var(--text-muted); padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
-              Analysis ID: <span id="resultMetaId" style="font-family: monospace; color: #38bdf8; font-weight: 700;">VS-1024</span> • 
-              Ledger Hash: <span id="resultMetaHash" style="font-family: monospace;">e3b0c44298fc1c149afbf4c8...</span>
+              Analysis ID: <span id="resultMetaId" style="font-family: monospace; color: #38bdf8; font-weight: 700;">—</span> • 
+              Ledger Hash: <span id="resultMetaHash" style="font-family: monospace;">—</span>
             </div>
 
           </div>
@@ -547,23 +547,23 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
           <div class="card">
             <div class="metadata-label">Total Analyses</div>
-            <div id="statTotalAnalyses" style="font-size: 2rem; font-weight: 800; color: #f8fafc;">1,248</div>
+            <div id="statTotalAnalyses" style="font-size: 2rem; font-weight: 800; color: #f8fafc;">0</div>
           </div>
           <div class="card">
             <div class="metadata-label">Likely Authentic</div>
-            <div id="statLikelyAuthentic" style="font-size: 2rem; font-weight: 800; color: #10b981;">982</div>
+            <div id="statLikelyAuthentic" style="font-size: 2rem; font-weight: 800; color: #10b981;">0</div>
           </div>
           <div class="card">
             <div class="metadata-label">Likely Synthetic</div>
-            <div id="statLikelySynthetic" style="font-size: 2rem; font-weight: 800; color: #ef4444;">186</div>
+            <div id="statLikelySynthetic" style="font-size: 2rem; font-weight: 800; color: #ef4444;">0</div>
           </div>
           <div class="card">
             <div class="metadata-label">Uncertain</div>
-            <div id="statUncertain" style="font-size: 2rem; font-weight: 800; color: #f59e0b;">80</div>
+            <div id="statUncertain" style="font-size: 2rem; font-weight: 800; color: #f59e0b;">0</div>
           </div>
           <div class="card">
             <div class="metadata-label">High Risk Prevented</div>
-            <div id="statHighRiskPrevented" style="font-size: 2rem; font-weight: 800; color: #38bdf8;">245</div>
+            <div id="statHighRiskPrevented" style="font-size: 2rem; font-weight: 800; color: #38bdf8;">0</div>
           </div>
         </div>
 
@@ -738,39 +738,51 @@
       <ul id="analysisStagesList" class="stage-checklist">
         <li class="stage-item completed">
           <span class="stage-icon">✓</span>
-          <span>Audio preprocessing</span>
+          <span>1. Audio preprocessing</span>
         </li>
         <li class="stage-item in-progress">
           <span class="stage-icon"><div class="stage-spinner"></div></span>
-          <span>Speech detection & VAD</span>
+          <span>2. Speech detection / VAD</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Audio quality analysis</span>
+          <span>3. Audio quality analysis</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Spectral analysis & rolloff</span>
+          <span>4. Spectral analysis</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Temporal pattern & prosody analysis</span>
+          <span>5. Temporal analysis</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Synthetic speech indicators</span>
+          <span>6. Prosody analysis</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Liveness & replay analysis</span>
+          <span>7. Synthetic speech indicators</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Background audio isolation</span>
+          <span>8. Liveness analysis</span>
         </li>
         <li class="stage-item">
           <span class="stage-icon">○</span>
-          <span>Authenticity estimation</span>
+          <span>9. Replay-risk analysis</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>10. Background audio analysis</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>11. Authenticity estimation</span>
+        </li>
+        <li class="stage-item">
+          <span class="stage-icon">○</span>
+          <span>12. Confidence calculation</span>
         </li>
       </ul>
     </div>
@@ -784,16 +796,16 @@
       <button class="modal-close-btn" id="btnCloseHistoryDetailModal" type="button" aria-label="Close modal">✕</button>
       <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
         <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-primary);">Security Audit Record</span>
-        <span id="modalDetailId" style="font-family: monospace; font-size: 0.9rem; font-weight: 700; color: #fff;">#VS-1024</span>
+        <span id="modalDetailId" style="font-family: monospace; font-size: 0.9rem; font-weight: 700; color: #fff;">—</span>
       </div>
       <h3 id="modalDetailFilename" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem; color: #fff;">voice_sample.wav</h3>
       
       <!-- Verdict Banner -->
       <div id="modalDetailVerdictBox" class="verdict-display-card" style="padding: 1.25rem; margin-bottom: 1.25rem;">
-        <div id="modalDetailVerdict" class="verdict-title" style="font-size: 1.6rem; margin-bottom: 0.25rem;">LIKELY AUTHENTIC</div>
+        <div id="modalDetailVerdict" class="verdict-title" style="font-size: 1.6rem; margin-bottom: 0.25rem;">—</div>
         <div style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.85rem; margin-top: 0.5rem;">
-          <span>Confidence: <strong id="modalDetailConfidence" style="color: #fff;">94%</strong></span>
-          <span>Risk: <strong id="modalDetailRisk" style="color: #fff;">LOW RISK</strong></span>
+          <span>Confidence: <strong id="modalDetailConfidence" style="color: #fff;">—</strong></span>
+          <span>Risk: <strong id="modalDetailRisk" style="color: #fff;">—</strong></span>
         </div>
       </div>
 
@@ -801,15 +813,15 @@
       <div class="metadata-grid" style="margin-bottom: 1.25rem;">
         <div class="metadata-card">
           <div class="metadata-label">Timestamp</div>
-          <div id="modalDetailTimestamp" class="metadata-val" style="font-size: 0.82rem;">Today, 10:45 AM</div>
+          <div id="modalDetailTimestamp" class="metadata-val" style="font-size: 0.82rem;">—</div>
         </div>
         <div class="metadata-card">
           <div class="metadata-label">Duration</div>
-          <div id="modalDetailDuration" class="metadata-val" style="font-size: 0.85rem;">5.4s</div>
+          <div id="modalDetailDuration" class="metadata-val" style="font-size: 0.85rem;">—</div>
         </div>
         <div class="metadata-card">
           <div class="metadata-label">Audio Quality</div>
-          <div id="modalDetailQuality" class="metadata-val" style="font-size: 0.85rem;">23.4 dB SNR</div>
+          <div id="modalDetailQuality" class="metadata-val" style="font-size: 0.85rem;">—</div>
         </div>
       </div>
 

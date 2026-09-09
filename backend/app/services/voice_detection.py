@@ -58,7 +58,9 @@ class VoiceDetectionService:
         fast_mode: bool = False
     ) -> VoiceAnalysisResponse:
         start_time = time.time()
-        analysis_id = f"VS-{int(time.time() * 1000) % 90000 + 10000}"
+        now_utc = datetime.now(timezone.utc)
+        hex_suffix = f"{int(time.time() * 1000) % 0xFFFFFF:06X}"
+        analysis_id = f"VS-{now_utc.strftime('%Y%m%d')}-{hex_suffix}"
 
         # Step 0: Parse audio and cache PCM samples
         samples, sr, duration, channels = AcousticAnalyzer.parse_audio_samples(audio_bytes)
@@ -239,7 +241,7 @@ class VoiceDetectionService:
             summary_msg = "Speech exhibits natural human prosody and physiological micro-jitter consistent with authentic vocal tract acoustics."
             warning = None
         elif risk_score <= 65:
-            verdict = "UNCERTAIN — REVIEW"
+            verdict = "UNCERTAIN — REVIEW RECOMMENDED"
             risk_level = "MEDIUM RISK"
             classification = "suspicious"
             classification_label = "Suspicious Voice"

@@ -74,8 +74,10 @@ export class ResultView {
           if (msgEl) msgEl.textContent = result.message || 'The recording does not contain enough usable speech for reliable voice-authenticity analysis.';
           if (hintsList) {
             hintsList.innerHTML = `
-              <li>• Please speak closer to the microphone with clear conversational volume.</li>
-              <li>• Ensure the recording duration contains at least 3 to 10 seconds of speech.</li>
+              <li>• Speak closer to the microphone.</li>
+              <li>• Speak clearly.</li>
+              <li>• Record for 3–10 seconds.</li>
+              <li>• Check microphone permissions.</li>
               <li>• Silence and background noise are never classified as an AI voice.</li>
             `;
           }
@@ -95,7 +97,7 @@ export class ResultView {
           if (msgEl) msgEl.textContent = result.message || 'Audio duration is too short for reliable biometric evaluation.';
           if (hintsList) {
             hintsList.innerHTML = `
-              <li>• Speech verification requires at least 2.5 to 10 seconds of spoken audio.</li>
+              <li>• Speech verification requires at least 3 to 10 seconds of spoken audio.</li>
             `;
           }
         }
@@ -109,9 +111,9 @@ export class ResultView {
     if (noVoicePanel) noVoicePanel.style.display = 'none';
     if (validVoicePanel) validVoicePanel.style.display = 'block';
 
-    const verdict = result.verdict || result.classification_label || 'UNCERTAIN — REVIEW';
+    const verdict = result.verdict || result.classification_label || 'UNCERTAIN — REVIEW RECOMMENDED';
     const confidence = result.confidence !== undefined && result.confidence !== null ? result.confidence : result.confidence_percentage;
-    const riskLevel = result.risk_level || (result.risk_score ? (result.risk_score > 65 ? 'HIGH RISK' : (result.risk_score > 34 ? 'MEDIUM RISK' : 'LOW RISK')) : 'REVIEW');
+    const riskLevel = result.risk_level || (result.risk_score ? (result.risk_score > 62 ? 'HIGH RISK' : (result.risk_score > 35 ? 'MEDIUM RISK' : 'LOW RISK')) : 'REVIEW');
     const riskScore = result.risk_score !== undefined ? result.risk_score : 50;
 
     // 1. Verdict Badge
@@ -218,7 +220,7 @@ export class ResultView {
     // 7. Analysis ID & Date in Results Footer
     const metaIdEl = document.getElementById('resultMetaId');
     const metaHashEl = document.getElementById('resultMetaHash');
-    if (metaIdEl) metaIdEl.textContent = result.analysis_id || 'VS-1024';
+    if (metaIdEl) metaIdEl.textContent = result.analysis_id || '—';
     if (metaHashEl) {
       const hash = (result.blockchain_proof && result.blockchain_proof.verification_hash) || result.verification_hash || 'SHA-256 Ledger Verified';
       metaHashEl.textContent = hash;

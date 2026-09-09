@@ -68,9 +68,7 @@ class HistoryStore:
                     )
                 """)
                 conn.commit()
-
-            if self._count_records() == 0:
-                self._seed_baseline_records()
+            # Real analyses will populate the store dynamically
         except Exception as e:
             print(f"[HistoryStore] Init DB error: {e}")
 
@@ -81,118 +79,6 @@ class HistoryStore:
                 return cursor.fetchone()[0]
         except Exception:
             return 0
-
-    def _seed_baseline_records(self):
-        seed_items = [
-            {
-                "id": "VS-1024",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "filename": "executive_briefing_sample.wav",
-                "duration": 5.4,
-                "verdict": "LIKELY AUTHENTIC",
-                "confidence": 94,
-                "risk_level": "LOW RISK",
-                "risk_score": 16,
-                "status": "success",
-                "verification_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                "audio_quality_json": json.dumps({
-                    "duration": 5.4,
-                    "sample_rate": 16000,
-                    "channels": 1,
-                    "rms_level": 0.048,
-                    "silence_pct": 14.2,
-                    "snr_estimate": "23.4 dB (Good)",
-                    "clipping_detected": False,
-                    "background_noise_level": "Low",
-                    "voice_activity": "Speech Detected"
-                }),
-                "metrics_json": json.dumps({
-                    "authenticity": 94,
-                    "liveness": "PASS",
-                    "naturalness": 96,
-                    "spectral_consistency": 89,
-                    "temporal_consistency": 93,
-                    "audio_quality_score": 90,
-                    "replay_risk": "LOW",
-                    "background_noise": "Low (Clean)"
-                }),
-                "background_audio_json": json.dumps({
-                    "summary": "Clean acoustic environment with low ambient floor",
-                    "primary_voice": "Dominant",
-                    "background_speech": "None detected",
-                    "environmental_noise": "Low",
-                    "silence": "Normal conversational pauses",
-                    "noise_floor_rms": 0.0024
-                }),
-                "explainability_json": json.dumps({
-                    "positive_indicators": [
-                        "Natural vocal micro-jitter present (1.12%)",
-                        "Dynamic prosodic pitch inflection (std: 18.4 Hz)",
-                        "Natural room tone present in conversational pauses",
-                        "Broadband spectral envelope without sharp vocoder cutoff"
-                    ],
-                    "potential_concerns": []
-                }),
-                "created_at": "Today, 10:45 AM"
-            },
-            {
-                "id": "VS-1025",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "filename": "urgent_transfer_request.mp3",
-                "duration": 6.8,
-                "verdict": "LIKELY SYNTHETIC",
-                "confidence": 93,
-                "risk_level": "HIGH RISK",
-                "risk_score": 88,
-                "status": "success",
-                "verification_hash": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
-                "audio_quality_json": json.dumps({
-                    "duration": 6.8,
-                    "sample_rate": 16000,
-                    "channels": 1,
-                    "rms_level": 0.062,
-                    "silence_pct": 8.5,
-                    "snr_estimate": "19.8 dB (Good)",
-                    "clipping_detected": False,
-                    "background_noise_level": "Low",
-                    "voice_activity": "Speech Detected"
-                }),
-                "metrics_json": json.dumps({
-                    "authenticity": 12,
-                    "liveness": "REVIEW",
-                    "naturalness": 18,
-                    "spectral_consistency": 24,
-                    "temporal_consistency": 32,
-                    "audio_quality_score": 85,
-                    "replay_risk": "MEDIUM",
-                    "background_noise": "Low"
-                }),
-                "background_audio_json": json.dumps({
-                    "summary": "Synthesized voice profile with artificial silence",
-                    "primary_voice": "Dominant",
-                    "background_speech": "None detected",
-                    "environmental_noise": "Low",
-                    "silence": "Digital zero silence detected between phrases",
-                    "noise_floor_rms": 0.0002
-                }),
-                "explainability_json": json.dumps({
-                    "positive_indicators": [
-                        "Adequate signal-to-noise ratio"
-                    ],
-                    "potential_concerns": [
-                        "Flat prosodic pitch intonation characteristic of neural TTS",
-                        "Absence of physiological vocal micro-jitter (<0.38%)",
-                        "Digital zero silence in pauses (lacks ambient room tone)",
-                        "Steep vocoder spectral rolloff above 3.8 kHz"
-                    ]
-                }),
-                "created_at": "Today, 09:15 AM"
-            }
-        ]
-
-        for item in seed_items:
-            self.save_verification(item)
-
     def save_verification(self, record: Dict[str, Any]) -> Dict[str, Any]:
         try:
             with self._conn() as conn:

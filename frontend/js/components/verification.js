@@ -34,6 +34,10 @@ export class VerificationWorkspace {
         const timerEl = document.getElementById('recordTimerText');
         if (timerEl) timerEl.textContent = formattedTime;
         this.currentDuration = seconds;
+        if (seconds >= 60 && this.recorder.isRecording) {
+          toast.show('Maximum recording duration reached (60 seconds). Stopping recording.', 'info');
+          this.recorder.stop();
+        }
       },
       onLevelUpdate: (levelPct, peakPct) => {
         this._updateAudioLevelMeter(levelPct, peakPct);
@@ -333,7 +337,9 @@ export class VerificationWorkspace {
       if (metaDuration) metaDuration.textContent = `${this.currentDuration.toFixed(1)}s`;
       if (metaSize) metaSize.textContent = `${(this.currentFileSize / 1024).toFixed(1)} KB`;
       if (metaRate) metaRate.textContent = `${this.currentSampleRate} Hz`;
-      if (metaChannels) metaChannels.textContent = 'Mono (1 ch)';
+      if (this.currentDuration < 3.0) {
+        toast.show('Recording is under 3 seconds. For reliable biometric analysis, 3 to 10 seconds of speech is recommended.', 'warning', 5000);
+      }
 
       // Fetch pre-analysis diagnostics
       const diag = await VoiceShieldAPI.checkAudioQuality(this.currentBlob, this.currentFilename);
