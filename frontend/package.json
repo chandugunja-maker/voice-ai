@@ -1,0 +1,16 @@
+{
+  "name": "voiceshield-ai",
+  "version": "2.0.0",
+  "private": true,
+  "description": "VoiceShield AI - Real-Time AI Voice Authenticity & Deepfake Call Guard",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --check js/app.js && node --check js/api.js && node --check js/components/live-call-guard.js && node --check js/components/speaker-enrollment.js && node --check js/components/result-view.js"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

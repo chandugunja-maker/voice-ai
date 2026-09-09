@@ -61,6 +61,7 @@ export class VerificationWorkspace {
 
     this._checkMicPermission();
     this._bindElements();
+    this._resetUploadUI();
   }
 
   async _checkMicPermission() {
@@ -707,9 +708,11 @@ export class VerificationWorkspace {
 
     const livePane = document.getElementById('tabPaneLive');
     const uploadPane = document.getElementById('tabPaneUpload');
+    const liveGuardPane = document.getElementById('tabPaneLiveGuard');
 
     if (livePane) livePane.classList.toggle('active', tabName === 'live');
     if (uploadPane) uploadPane.classList.toggle('active', tabName === 'upload');
+    if (liveGuardPane) liveGuardPane.classList.toggle('active', tabName === 'liveguard');
   }
 
   reset() {

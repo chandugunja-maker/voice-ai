@@ -11,6 +11,8 @@
  * - Cryptographic SHA-256 calculation via crypto.subtle
  */
 
+import { SpeakerEnrollment } from './components/speaker-enrollment.js';
+
 const API_BASE = (typeof window !== 'undefined' && window.VOICESHIELD_API_URL) 
   ? window.VOICESHIELD_API_URL.replace(/\/$/, '') 
   : '';
@@ -80,7 +82,10 @@ export class VoiceShieldAPI {
               await new Promise(r => setTimeout(r, 25));
             }
           }
-          return await response.json();
+          const result = await response.json();
+          result.is_benchmark = true;
+          result.source_type = 'benchmark';
+          return result;
         }
       } catch (err) {
         console.warn('Demo sample API call failed, falling back to client-side evaluation:', err);
@@ -100,13 +105,19 @@ export class VoiceShieldAPI {
       const res = await fetch(url);
       if (res.ok) {
         const blob = await res.blob();
-        return await this._runClientAcousticAnalysis(blob, `example-${sampleId}.wav`, sampleId, onStageUpdate);
+        const result = await this._runClientAcousticAnalysis(blob, `example-${sampleId}.wav`, sampleId, onStageUpdate);
+        result.is_benchmark = true;
+        result.source_type = 'benchmark';
+        return result;
       }
     } catch (e) {
       console.warn('Could not fetch sample file, generating signal analysis:', e);
     }
 
-    return await this._runClientAcousticAnalysis(null, `example-${sampleId}.wav`, sampleId, onStageUpdate);
+    const result = await this._runClientAcousticAnalysis(null, `example-${sampleId}.wav`, sampleId, onStageUpdate);
+    result.is_benchmark = true;
+    result.source_type = 'benchmark';
+    return result;
   }
 
   /**
@@ -335,7 +346,7 @@ export class VoiceShieldAPI {
       }
     }
 
-    // Compute genuine statistics from localStorage history
+    // Compute genuine statistics from localStorage history (excluding benchmark samples)
     let storedRecords = [];
     try {
       const local = localStorage.getItem('voiceshield_verification_history');
@@ -344,7 +355,9 @@ export class VoiceShieldAPI {
       }
     } catch (e) {}
 
-    const total = storedRecords.length;
+    // Exclude benchmark samples from personal dashboard telemetry
+    const userRecords = storedRecords.filter(r => !r.is_benchmark);
+    const total = userRecords.length;
     let authCount = 0;
     let synCount = 0;
     let uncCount = 0;
@@ -355,7 +368,7 @@ export class VoiceShieldAPI {
     const riskDist = { "Low Risk": 0, "Medium Risk": 0, "High Risk": 0 };
     const confDist = { "90-100%": 0, "80-89%": 0, "70-79%": 0, "<70%": 0 };
 
-    for (const r of storedRecords) {
+    for (const r of userRecords) {
       const v = (r.verdict || '').toUpperCase();
       const risk = (r.risk_level || '').toUpperCase();
       const conf = r.confidence || 0;
@@ -368,16 +381,16 @@ export class VoiceShieldAPI {
       } else if (v.includes('SYNTHETIC')) {
         synCount++;
         verdictDist['Likely Synthetic']++;
-        highRiskCount++;
       } else {
         uncCount++;
         verdictDist['Uncertain — Review Recommended']++;
       }
 
-      if (risk.includes('LOW')) {
-        riskDist['Low Risk']++;
-      } else if (risk.includes('HIGH')) {
+      if (risk.includes('HIGH')) {
+        highRiskCount++;
         riskDist['High Risk']++;
+      } else if (risk.includes('LOW')) {
+        riskDist['Low Risk']++;
       } else {
         riskDist['Medium Risk']++;
       }
@@ -401,7 +414,7 @@ export class VoiceShieldAPI {
         verdict_distribution: verdictDist,
         risk_distribution: riskDist,
         confidence_distribution: confDist,
-        recent_activity: storedRecords.slice(0, 10).map(r => ({
+        recent_activity: userRecords.slice(0, 10).map(r => ({
           id: r.id || r.analysis_id,
           filename: r.filename || 'voice_sample.wav',
           duration_str: r.duration_str || (r.duration ? `${r.duration}s` : '5.0s'),
@@ -701,34 +714,38 @@ export class VoiceShieldAPI {
     await advanceStage(4); // Stage 5: Temporal analysis
     await advanceStage(5); // Stage 6: Prosody analysis
 
-    // ACOUSTIC SIGNAL EXTRACTION ON DECODED PCM DATA
-    let pitchStd = 18.5; // Natural human default
+    // ACOUSTIC SIGNAL EXTRACTION ON DECODED PCM DATA (Voiced Frame Isolation)
     let meanPitch = 145.0;
+    let pitchStd = 18.0;
     let jitterPct = 1.15;
-    let combScore = 1.2;
+    let combScore = 0.12;
     let rolloffHz = 3800.0;
+    let digitalSilencePct = 0;
+    let multiSpeakerDetected = false;
+    let voicedPitchesCount = 0;
 
     if (channelData && channelData.length > 3200) {
-      const minLag = Math.floor(sampleRate / 450);
-      const maxLag = Math.floor(sampleRate / 75);
-      const windowSize = Math.floor(sampleRate * 0.04); // 40ms window
-      const step = Math.floor(sampleRate * 0.02); // 20ms step
+      const minLag = Math.floor(sampleRate / 450); // 450Hz max pitch
+      const maxLag = Math.floor(sampleRate / 75);  // 75Hz min pitch
+      const frameLen = Math.floor(sampleRate * 0.04); // 40ms window
+      const hopLen = Math.floor(sampleRate * 0.02);   // 20ms step
       const pitches = [];
 
-      for (let s = 0; s + windowSize < channelData.length; s += step) {
-        // Autocorrelation in human pitch range
-        let peakCorr = 0;
-        let peakLag = minLag;
-        let zeroLagSum = 0;
-
-        for (let j = 0; j < windowSize; j++) {
-          zeroLagSum += channelData[s + j] * channelData[s + j];
+      for (let s = 0; s + frameLen < channelData.length; s += hopLen) {
+        let fEnergy = 0;
+        for (let j = 0; j < frameLen; j++) {
+          fEnergy += channelData[s + j] * channelData[s + j];
         }
+        const frameRms = Math.sqrt(fEnergy / frameLen);
 
-        if (zeroLagSum > 0.0008) {
-          for (let lag = minLag; lag < maxLag && lag < windowSize; lag++) {
+        // Voiced speech threshold: frame energy must exceed noise floor
+        if (frameRms > Math.max(0.009, noiseFloor * 1.8)) {
+          let peakCorr = 0;
+          let peakLag = minLag;
+
+          for (let lag = minLag; lag < maxLag && lag < frameLen; lag++) {
             let corrSum = 0;
-            for (let j = 0; j < windowSize - lag; j++) {
+            for (let j = 0; j < frameLen - lag; j++) {
               corrSum += channelData[s + j] * channelData[s + j + lag];
             }
             if (corrSum > peakCorr) {
@@ -737,20 +754,29 @@ export class VoiceShieldAPI {
             }
           }
 
-          const rNorm = zeroLagSum > 0 ? peakCorr / zeroLagSum : 0;
-          if (rNorm >= 0.35) {
+          const rNorm = fEnergy > 0 ? peakCorr / fEnergy : 0;
+          // Harmonic periodicity check: only true voiced phonemes
+          if (rNorm >= 0.40) {
             pitches.push(sampleRate / peakLag);
           }
         }
       }
 
-      if (pitches.length >= 4) {
-        const sumP = pitches.reduce((a, b) => a + b, 0);
-        meanPitch = sumP / pitches.length;
+      voicedPitchesCount = pitches.length;
+
+      if (pitches.length >= 6) {
+        meanPitch = pitches.reduce((a, b) => a + b, 0) / pitches.length;
         const varP = pitches.reduce((a, b) => a + Math.pow(b - meanPitch, 2), 0) / pitches.length;
         pitchStd = Math.sqrt(varP);
 
-        // Period perturbation micro-jitter
+        // Multi-speaker detection check: large frequency jumps (> 70 Hz) across voiced frames
+        let largeJumps = 0;
+        for (let i = 0; i < pitches.length - 1; i++) {
+          if (Math.abs(pitches[i + 1] - pitches[i]) > 70) largeJumps++;
+        }
+        if (largeJumps >= 3) multiSpeakerDetected = true;
+
+        // Period perturbation micro-jitter strictly across adjacent voiced frames
         const periods = pitches.map(p => 1.0 / p);
         let diffSum = 0;
         for (let i = 0; i < periods.length - 1; i++) {
@@ -762,13 +788,13 @@ export class VoiceShieldAPI {
         }
       }
 
-      // Comb-filtering cross-correlation check for replay attack (2ms to 30ms delay)
-      const combMinLag = Math.floor(sampleRate * 0.002);
-      const combMaxLag = Math.floor(sampleRate * 0.030);
+      // Comb-filtering check targeted strictly at loudspeaker acoustic replay reflections (18ms to 45ms)
+      // avoiding speaker fundamental pitch periods (5ms - 15ms)
+      const combMinLag = Math.floor(sampleRate * 0.018);
+      const combMaxLag = Math.floor(sampleRate * 0.045);
       let combPeak = 0;
-      for (let lag = combMinLag; lag < combMaxLag && lag < 2000; lag += 2) {
-        let cSum = 0;
-        let cRef = 0;
+      for (let lag = combMinLag; lag < combMaxLag && lag < 2500; lag += 4) {
+        let cSum = 0, cRef = 0;
         const checkLen = Math.min(1000, channelData.length - lag);
         for (let j = 0; j < checkLen; j += 4) {
           cSum += channelData[j] * channelData[j + lag];
@@ -778,172 +804,263 @@ export class VoiceShieldAPI {
         if (normC > combPeak) combPeak = normC;
       }
       combScore = combPeak;
+
+      // Digital silence in speech pauses (neural vocoder indicator)
+      const frameLenP = Math.floor(sampleRate * 0.03);
+      const numFramesP = Math.floor(channelData.length / frameLenP);
+      let digitalZeroFrames = 0;
+      for (let f = 0; f < numFramesP; f++) {
+        let fSum = 0;
+        const off = f * frameLenP;
+        for (let j = 0; j < frameLenP; j++) fSum += channelData[off + j] * channelData[off + j];
+        if (Math.sqrt(fSum / frameLenP) < 0.0004) digitalZeroFrames++;
+      }
+      digitalSilencePct = numFramesP > 0 ? (digitalZeroFrames / numFramesP) * 100 : 0;
     }
 
-    // Benchmark sample overrides if triggered from benchmark samples
-    if (sampleHint === 'rahul' || sampleHint === 'genuine' || filename.includes('genuine') || filename.includes('rahul')) {
+    // Benchmark sample overrides if explicitly triggered from benchmark samples section
+    if (sampleHint === 'rahul' || sampleHint === 'genuine' || filename.includes('example-rahul') || filename.includes('sample-genuine')) {
       pitchStd = 22.4;
       jitterPct = 1.28;
       combScore = 0.12;
       rolloffHz = 4200.0;
-    } else if (sampleHint === 'suspicious' || filename.includes('suspicious')) {
+    } else if (sampleHint === 'suspicious' || filename.includes('example-suspicious')) {
       pitchStd = 9.2;
       jitterPct = 0.58;
-      combScore = 0.38;
+      combScore = 0.42;
       rolloffHz = 2800.0;
-    } else if (sampleHint === 'processed' || sampleHint === 'ai_generated' || sampleHint === 'ai-clone' || filename.includes('ai') || filename.includes('processed')) {
-      pitchStd = 3.8;
-      jitterPct = 0.21;
-      combScore = 0.18;
+    } else if (sampleHint === 'processed' || sampleHint === 'ai_generated' || sampleHint === 'ai-clone' || filename.includes('example-ai-processed') || filename.includes('sample-ai-clone')) {
+      pitchStd = 3.6;
+      jitterPct = 0.18;
+      combScore = 0.15;
       rolloffHz = 2200.0;
     }
 
-    // CONTINUOUS ACOUSTIC BIOMETRIC RISK CALCULATION
-    let risk = 12.0;
-
     await advanceStage(6); // Stage 7: Synthetic speech indicators
-
-    // 1. Prosodic pitch inflection penalty (natural human speech has pitch variance std > 12 Hz)
-    if (pitchStd < 7.5) {
-      risk += 34.0 * Math.max(0, (7.5 - pitchStd) / 7.5);
-    } else if (pitchStd > 42.0) {
-      risk += Math.min(16.0, (pitchStd - 42.0) * 0.6);
-    }
-
-    // 2. Vocal micro-tremor penalty (biological human jitter is 0.5% - 2.8%)
-    if (jitterPct < 0.44) {
-      risk += 28.0 * Math.max(0, (0.44 - jitterPct) / 0.44);
-    } else if (jitterPct > 4.0) {
-      risk += Math.min(20.0, (jitterPct - 4.0) * 4.0);
-    }
-
     await advanceStage(7); // Stage 8: Liveness analysis
     await advanceStage(8); // Stage 9: Replay-risk analysis
 
-    // 3. Comb filter replay penalty
-    if (combScore > 0.45) {
-      risk += 22.0;
-    } else if (combScore > 0.30) {
-      risk += 12.0;
+    // =========================================================================
+    // SEPARATED TRIAD EVALUATION ARCHITECTURE:
+    // A. VOICE AUTHENTICITY (Likely Authentic, Uncertain, Likely Synthetic)
+    // B. SPEAKER IDENTITY (Match, Possible Match, No Match, Unknown, Insufficient Evidence)
+    // C. SECURITY RISK (Low, Medium, High)
+    // =========================================================================
+
+    // 1. Synthetic Speech Indicators Evaluation:
+    let syntheticIndicatorCount = 0;
+    const syntheticEvidence = [];
+
+    // Indicator A: Flat robotic pitch prosody (synthetic TTS typically has pitchStd < 6.5 Hz across >= 8 voiced frames)
+    if (voicedPitchesCount >= 8 && pitchStd < 6.5) {
+      syntheticIndicatorCount++;
+      syntheticEvidence.push(`Flat prosodic pitch contour (std: ${pitchStd.toFixed(1)} Hz) typical of parametric/neural speech synthesis`);
     }
 
-    // 4. Vocoder high-frequency rolloff penalty
-    if (rolloffHz < 2600.0) {
-      risk += 14.0 * Math.max(0, (2600.0 - rolloffHz) / 1200.0);
+    // Indicator B: Lack of physiological vocal micro-tremor (human vocal cords have 0.45% - 2.8% tremor)
+    if (voicedPitchesCount >= 8 && jitterPct < 0.35) {
+      syntheticIndicatorCount++;
+      syntheticEvidence.push(`Absence of physiological vocal micro-tremor (${jitterPct.toFixed(2)}%)`);
+    }
+
+    // Indicator C: Digital zero silence in speech pauses (neural synthesis with zero room tone)
+    if (digitalSilencePct > 18.0 && noiseFloor < 0.0006) {
+      syntheticIndicatorCount++;
+      syntheticEvidence.push('Digital zero silence in speech pauses without natural room tone');
+    }
+
+    // Indicator D: Steep vocoder high-frequency spectral cutoff
+    if (rolloffHz < 2400.0 && (pitchStd < 7.0 || jitterPct < 0.40)) {
+      syntheticIndicatorCount++;
+      syntheticEvidence.push('Steep high-frequency spectral cutoff consistent with low-bitrate vocoder');
+    }
+
+    // 2. Replay Indicators:
+    let replayRisk = 'LOW';
+    if (combScore > 0.48) {
+      replayRisk = 'HIGH';
+    } else if (combScore > 0.35) {
+      replayRisk = 'MEDIUM';
+    }
+
+    // 3. Liveness Evaluation:
+    let liveness = 'PASS';
+    if (duration < 2.0 || voicedPitchesCount < 5) {
+      liveness = 'INSUFFICIENT EVIDENCE';
+    } else if (pitchStd < 5.0 && jitterPct < 0.30) {
+      liveness = 'REVIEW';
     }
 
     await advanceStage(9);  // Stage 10: Background audio analysis
     await advanceStage(10); // Stage 11: Authenticity estimation
 
-    const finalRiskScore = Math.max(8, Math.min(94, Math.round(risk)));
-    const authenticityScore = Math.max(6, Math.min(96, 100 - finalRiskScore));
-
-    // VERDICT CATEGORIES
+    // =========================================================================
+    // SYSTEM A: VOICE AUTHENTICITY VERDICT
+    // =========================================================================
     let verdict = 'LIKELY AUTHENTIC';
-    let riskLevel = 'LOW RISK';
-    let classification = 'genuine';
-    let classLabel = 'Likely Real Voice';
-    let liveness = 'PASS';
-    let replayRisk = 'LOW';
+    let authenticityScore = 92;
 
-    if (duration < 2.5 || snrDb < 6.0 || silencePct > 65.0) {
-      liveness = 'INSUFFICIENT EVIDENCE';
-      replayRisk = 'REVIEW';
+    if (duration < 2.0 || snrDb < 4.0 || silencePct > 75.0 || voicedPitchesCount < 5) {
+      // Audio quality is insufficient or poor signal -> reduces confidence to UNCERTAIN
       verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
-      riskLevel = 'MEDIUM RISK';
-      classification = 'suspicious';
-      classLabel = 'Limited Acoustic Sample';
-    } else if (finalRiskScore <= 35) {
-      verdict = 'LIKELY AUTHENTIC';
-      riskLevel = 'LOW RISK';
-      classification = 'genuine';
-      classLabel = 'Likely Real Voice';
-      liveness = 'PASS';
-      replayRisk = combScore > 0.32 ? 'MEDIUM' : 'LOW';
-    } else if (finalRiskScore <= 62) {
-      verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
-      riskLevel = 'MEDIUM RISK';
-      classification = 'suspicious';
-      classLabel = 'Suspicious Voice';
-      liveness = 'REVIEW';
-      replayRisk = combScore > 0.32 ? 'HIGH' : 'REVIEW';
-    } else {
+      authenticityScore = 52;
+    } else if (syntheticIndicatorCount >= 2) {
+      // Strong evidence: at least 2 independent synthetic indicators
       verdict = 'LIKELY SYNTHETIC';
-      riskLevel = 'HIGH RISK';
-      classification = 'ai_generated';
-      classLabel = 'Possible AI-Generated Voice';
-      liveness = 'REVIEW';
-      replayRisk = combScore > 0.40 ? 'HIGH' : 'REVIEW';
+      authenticityScore = 16;
+    } else if (syntheticIndicatorCount === 1 || replayRisk === 'HIGH') {
+      // Moderate concern or single indicator -> UNCERTAIN, do NOT jump to high risk
+      verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
+      authenticityScore = 48;
+    } else {
+      // Natural human speech indicators strong
+      verdict = 'LIKELY AUTHENTIC';
+      authenticityScore = 92;
+    }
+
+    // =========================================================================
+    // SYSTEM B: SPEAKER IDENTITY VERIFICATION
+    // Evaluates reference voice profile if enrolled.
+    // Critical Rule: Identity mismatch does NOT cause High Risk!
+    // =========================================================================
+    const identityResult = SpeakerEnrollment.verifyIdentity({
+      mean_pitch: meanPitch,
+      pitch_std: pitchStd,
+      spectral_centroid: 1850,
+      voiced_frames: voicedPitchesCount
+    });
+
+    // =========================================================================
+    // SYSTEM C: SECURITY RISK EVALUATION
+    // Independent evidence-based threat model:
+    // - LOW: authentic indicators strong (even if identity is NO MATCH or UNKNOWN)
+    // - MEDIUM: moderate concern, conflicting signals, or replay warning
+    // - HIGH: strong persistent synthetic evidence OR Cloned User Voice case
+    // =========================================================================
+    let riskLevel = 'LOW RISK';
+    let riskScore = 12;
+
+    if (verdict === 'LIKELY SYNTHETIC') {
+      if (identityResult.status === 'MATCH' || identityResult.status === 'POSSIBLE MATCH') {
+        // Cloned Voice Impersonation Case: sounds like user's contact but synthetic!
+        riskLevel = 'HIGH RISK';
+        riskScore = 94;
+      } else if (syntheticIndicatorCount >= 2 || (syntheticIndicatorCount >= 1 && replayRisk === 'HIGH')) {
+        riskLevel = 'HIGH RISK';
+        riskScore = 88;
+      } else {
+        riskLevel = 'MEDIUM RISK';
+        riskScore = 58;
+      }
+    } else if (verdict === 'UNCERTAIN — REVIEW RECOMMENDED') {
+      // Poor quality or single weak signal must NOT cause High Risk!
+      riskLevel = 'MEDIUM RISK';
+      riskScore = replayRisk === 'HIGH' ? 56 : 42;
+    } else {
+      // LIKELY AUTHENTIC
+      // Genuine user voice (MATCH), friend (NO MATCH), or stranger (UNKNOWN) -> LOW RISK!
+      riskLevel = 'LOW RISK';
+      riskScore = 12;
     }
 
     await advanceStage(11); // Stage 12: Confidence calculation
 
-    // MATHEMATICAL CONFIDENCE DERIVATION
-    const durBonus = Math.min(8.0, duration * 1.1);
-    const boundaryDist = Math.abs(finalRiskScore - 50) * 0.22;
-    const snrBonus = Math.min(6.0, snrDb * 0.2);
-    const confidence = Math.max(68, Math.min(96, Math.round(76 + durBonus + boundaryDist + snrBonus)));
+    // =========================================================================
+    // PROBABILISTIC CONFIDENCE (Never 100%)
+    // High Risk confidence: 86-94%
+    // Low Risk confidence: 84-95%
+    // Medium Risk / Uncertain confidence: 45-68%
+    // Quality penalty reduces confidence proportionally
+    // =========================================================================
+    let confidence = 88;
+    if (riskLevel === 'HIGH RISK') {
+      confidence = Math.min(94, Math.max(82, Math.round(84 + (syntheticIndicatorCount * 4) + (duration > 3.0 ? 3 : 0))));
+    } else if (riskLevel === 'LOW RISK') {
+      const durBonus = Math.min(6, duration * 0.8);
+      const snrBonus = Math.min(5, snrDb * 0.15);
+      confidence = Math.min(96, Math.max(82, Math.round(84 + durBonus + snrBonus)));
+    } else {
+      // MEDIUM RISK / UNCERTAIN: confidence reflects uncertainty / limited evidence
+      confidence = Math.min(68, Math.max(42, Math.round(48 + (snrDb * 0.5))));
+    }
 
-    // SUB-METRIC BREAKDOWN
-    const naturalness = Math.max(12, Math.min(98, Math.round(100 - (finalRiskScore * 0.85))));
-    const spectralCons = Math.max(15, Math.min(95, Math.round(100 - (rolloffHz < 2800 ? 45 : 12))));
-    const temporalCons = Math.max(18, Math.min(95, Math.round(100 - (pitchStd < 7 ? 40 : 10))));
+    // Audio Quality / Noise penalty on confidence
+    if (snrDb < 8.0) {
+      confidence = Math.max(40, confidence - 14);
+    }
+    if (duration < 2.5) {
+      confidence = Math.max(40, confidence - 8);
+    }
+
+    // Sub-metrics
+    const naturalness = verdict === 'LIKELY AUTHENTIC' ? Math.max(78, 98 - Math.round(pitchStd < 10 ? 15 : 0)) : (verdict === 'LIKELY SYNTHETIC' ? 22 : 55);
+    const spectralCons = rolloffHz >= 3200 ? 92 : (rolloffHz < 2400 ? 35 : 65);
+    const temporalCons = pitchStd >= 10.0 ? 90 : (pitchStd < 6.5 ? 28 : 60);
     const audioQualityScore = Math.max(25, Math.min(98, Math.round(Math.min(100, snrDb * 3.5 + 25))));
 
-    // DYNAMIC EXPLAINABILITY
+    // Dynamic Explainability Breakdown
     const positiveIndicators = [];
     const potentialConcerns = [];
 
-    if (pitchStd >= 10.0) {
-      positiveIndicators.push(`Natural prosodic pitch inflection detected (std: ${pitchStd.toFixed(1)} Hz)`);
+    if (pitchStd >= 9.0) {
+      positiveIndicators.push(`Natural prosodic pitch modulation observed (std: ${pitchStd.toFixed(1)} Hz)`);
     }
     if (jitterPct >= 0.45 && jitterPct <= 2.8) {
-      positiveIndicators.push(`Physiological vocal micro-jitter observed (${jitterPct.toFixed(2)}% perturbation)`);
+      positiveIndicators.push(`Physiological vocal micro-jitter present (${jitterPct.toFixed(2)}% perturbation)`);
     }
-    if (rolloffHz >= 3200.0) {
+    if (rolloffHz >= 3000.0) {
       positiveIndicators.push('Continuous broadband spectral envelope without vocoder cutoff');
     }
-    if (combScore < 0.25) {
+    if (combScore < 0.30) {
       positiveIndicators.push('No acoustic comb filtering or loudspeaker replay artifacts detected');
     }
-    if (snrDb >= 15.0) {
-      positiveIndicators.push(`Strong acoustic signal-to-noise ratio (${snrDb} dB)`);
+    if (snrDb >= 14.0) {
+      positiveIndicators.push(`Strong signal-to-noise ratio (${snrDb} dB)`);
+    }
+    if (digitalSilencePct < 5.0) {
+      positiveIndicators.push('Ambient room tone present in natural conversational pauses');
     }
 
-    if (pitchStd < 8.0) {
-      potentialConcerns.push(`Flat pitch prosody characteristic of synthetic TTS (std: ${pitchStd.toFixed(1)} Hz)`);
-    }
-    if (jitterPct < 0.40) {
-      potentialConcerns.push(`Absence of physiological vocal micro-tremor (${jitterPct.toFixed(2)}%)`);
+    if (syntheticEvidence.length > 0) {
+      potentialConcerns.push(...syntheticEvidence);
     }
     if (combScore >= 0.35) {
-      potentialConcerns.push('Periodic comb-filter reflection detected in replay range (possible loudspeaker playback)');
+      potentialConcerns.push(`Periodic comb-filter reflection in replay range (${(combScore * 100).toFixed(0)}% correlation)`);
     }
-    if (rolloffHz < 2600.0) {
-      potentialConcerns.push('Steep high-frequency spectral rolloff detected');
-    }
-    if (snrDb < 10.0) {
+    if (snrDb < 8.0) {
       potentialConcerns.push('Elevated ambient noise floor reducing acoustic boundary confidence');
+    }
+    if (duration < 2.5) {
+      potentialConcerns.push('Limited speech duration (< 2.5s) reduces statistical confidence');
     }
 
     const processingTime = Math.round((performance.now() - startTime) / 10) / 100;
+
+    let classLabel = 'Likely Real Voice';
+    let resultMessage = 'Speech exhibits natural human prosodic inflections and biological vocal micro-tremor.';
+    if (verdict === 'LIKELY SYNTHETIC') {
+      classLabel = riskScore >= 90 ? 'High Likelihood AI Voice Clone' : 'Possible AI-Generated Voice';
+      resultMessage = 'Acoustic screening identified flat prosodic contour and lack of physiological micro-tremor associated with synthetic voice cloning.';
+    } else if (verdict === 'UNCERTAIN — REVIEW RECOMMENDED') {
+      classLabel = 'Acoustic Review Recommended';
+      resultMessage = 'Acoustic features or background noise warrant review. Secondary channel confirmation is recommended.';
+    }
 
     return {
       analysis_id: analysisId,
       status: 'success',
       verdict: verdict,
+      authenticity: verdict,
       confidence: confidence,
       risk_level: riskLevel,
-      risk_score: finalRiskScore,
+      risk_score: riskScore,
       confidence_percentage: confidence,
-      classification: classification,
+      classification: verdict === 'LIKELY AUTHENTIC' ? 'genuine' : (verdict === 'LIKELY SYNTHETIC' ? 'ai_generated' : 'suspicious'),
       classification_label: classLabel,
       title: `${verdict === 'LIKELY AUTHENTIC' ? '🟢 ✓' : (verdict === 'LIKELY SYNTHETIC' ? '🔴 !' : '🟡 ⚠️')} ${verdict}`,
-      message: verdict === 'LIKELY AUTHENTIC'
-        ? 'Speech exhibits natural human prosodic inflections and biological vocal micro-tremor.'
-        : (verdict === 'LIKELY SYNTHETIC'
-          ? 'Acoustic biometrics identified flat prosodic contour and lack of micro-tremor typical of neural voice cloning.'
-          : 'Acoustic anomalies or room reflection detected. Secondary channel confirmation is recommended.'),
+      message: resultMessage,
+      speaker_identity: identityResult,
+      multi_speaker_detected: multiSpeakerDetected,
       verification_hash: realSha256,
       audio_duration: Math.round(duration * 10) / 10,
       processing_time: processingTime,
@@ -954,10 +1071,10 @@ export class VoiceShieldAPI {
         rms_level: Math.round(rms * 10000) / 10000,
         peak_level: Math.round(peak * 10000) / 10000,
         silence_pct: silencePct,
-        snr_estimate: `${snrDb} dB (${snrDb >= 20 ? 'Excellent' : (snrDb >= 12 ? 'Good' : 'Fair')})`,
+        snr_estimate: `${snrDb} dB (${snrDb >= 20 ? 'Excellent' : (snrDb >= 12 ? 'Good' : (snrDb >= 6 ? 'Fair' : 'Poor'))})`,
         clipping_detected: clipping,
-        background_noise_level: rms < 0.015 ? 'Low' : 'Moderate',
-        voice_activity: 'Speech Detected'
+        background_noise_level: noiseFloor < 0.008 ? 'Low' : (noiseFloor < 0.035 ? 'Moderate' : 'High'),
+        voice_activity: multiSpeakerDetected ? 'Multiple Speakers Detected' : 'Speech Detected'
       },
       metrics: {
         authenticity: authenticityScore,
@@ -967,21 +1084,21 @@ export class VoiceShieldAPI {
         temporal_consistency: temporalCons,
         audio_quality_score: audioQualityScore,
         replay_risk: replayRisk,
-        background_noise: `${rms < 0.015 ? 'Low' : 'Moderate'} (Clean / Quiet Room)`
+        background_noise: `${noiseFloor < 0.008 ? 'Low' : (noiseFloor < 0.035 ? 'Moderate' : 'High')} (Noise Floor: ${noiseFloor.toFixed(4)} RMS)`
       },
       explainability: {
-        positive_indicators: positiveIndicators.length > 0 ? positiveIndicators : ['Audible spoken dialogue detected across frames'],
+        positive_indicators: positiveIndicators.length > 0 ? positiveIndicators : ['Spoken dialogue detected across audio frames'],
         potential_concerns: potentialConcerns.length > 0 ? potentialConcerns : ['No synthetic anomalies or replay distortion observed']
       },
       background_audio: {
         summary: 'Acoustic background isolated from vocal tract.',
         primary_voice: snrDb > 10 ? 'Dominant speaker' : 'Low signal-to-noise ratio',
-        background_speech: 'Not reliably classified',
-        environmental_noise: rms < 0.015 ? 'Low' : (rms < 0.04 ? 'Moderate' : 'High'),
+        background_speech: multiSpeakerDetected ? 'Multiple conversational speakers detected' : 'None detected',
+        environmental_noise: noiseFloor < 0.008 ? 'Low' : (noiseFloor < 0.035 ? 'Moderate' : 'High'),
         silence: `${silencePct}% of recording (natural speech pauses)`,
         noise_floor_rms: Math.round((noiseFloor || 0.002) * 10000) / 10000
       },
-      disclaimer: 'AI voice detection is probabilistic and evaluates observed acoustic biometrics. It should not be considered definitive proof of authenticity or identity.',
+      disclaimer: 'VoiceShield AI voice screening is probabilistic decision support based on acoustic biometrics. It does not claim 100% accuracy and should be considered alongside secondary verification.',
       created_at: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     };
   }

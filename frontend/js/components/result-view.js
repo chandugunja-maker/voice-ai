@@ -141,23 +141,79 @@ export class ResultView {
       summaryEl.textContent = result.message || 'Voice sample analyzed using multi-signal acoustic biometrics.';
     }
 
-    // 3. Confidence & Risk Level
+    // 3. Triad Architecture
+    // Pillar 1: Voice Authenticity
+    const authBadgeEl = document.getElementById('resultAuthBadge');
+    const authDescEl = document.getElementById('resultAuthDesc');
+    if (authBadgeEl) {
+      authBadgeEl.className = 'triad-badge';
+      if (verdict.includes('AUTHENTIC')) {
+        authBadgeEl.classList.add('status-authentic');
+        authBadgeEl.textContent = '🟢 LIKELY AUTHENTIC';
+        if (authDescEl) authDescEl.textContent = 'Acoustic speech production biometrics match natural human vocal tract dynamics.';
+      } else if (verdict.includes('SYNTHETIC')) {
+        authBadgeEl.classList.add('status-synthetic');
+        authBadgeEl.textContent = '🔴 LIKELY SYNTHETIC';
+        if (authDescEl) authDescEl.textContent = 'Detected unnatural prosodic flatness, absent micro-tremor, or vocoder cutoff artifacts.';
+      } else {
+        authBadgeEl.classList.add('status-uncertain');
+        authBadgeEl.textContent = '🟡 UNCERTAIN — REVIEW RECOMMENDED';
+        if (authDescEl) authDescEl.textContent = 'Acoustic evidence is inconclusive due to background noise, short duration, or borderline parameters.';
+      }
+    }
+
+    // Pillar 2: Speaker Identity
+    const idBadgeEl = document.getElementById('resultIdentityBadge');
+    const idDescEl = document.getElementById('resultIdentityDesc');
+    const speakerId = result.speaker_identity || { status: 'UNKNOWN', description: 'No reference voice enrolled for comparison.' };
+    if (idBadgeEl) {
+      idBadgeEl.className = 'triad-badge';
+      const status = (speakerId.status || 'UNKNOWN').toUpperCase();
+      if (status === 'MATCH') {
+        idBadgeEl.classList.add('status-match');
+        idBadgeEl.textContent = `🟢 MATCH (${speakerId.speaker_name || 'Enrolled'})`;
+        if (idDescEl) idDescEl.textContent = speakerId.description || 'Acoustic biometric fingerprint matches the enrolled contact voice profile.';
+      } else if (status === 'POSSIBLE MATCH') {
+        idBadgeEl.classList.add('status-possible');
+        idBadgeEl.textContent = `🟡 POSSIBLE MATCH (${speakerId.speaker_name || 'Enrolled'})`;
+        if (idDescEl) idDescEl.textContent = speakerId.description || 'Moderate biometric overlap with enrolled profile.';
+      } else if (status === 'NO MATCH') {
+        idBadgeEl.classList.add('status-nomatch');
+        idBadgeEl.textContent = '⚪ NO MATCH';
+        if (idDescEl) idDescEl.textContent = speakerId.description || 'Different voice than enrolled contact. NOTE: A different speaker is NOT inherently synthetic.';
+      } else {
+        idBadgeEl.classList.add('status-unknown');
+        idBadgeEl.textContent = status === 'INSUFFICIENT EVIDENCE' ? '⚪ INSUFFICIENT EVIDENCE' : '⚪ UNKNOWN';
+        if (idDescEl) idDescEl.textContent = speakerId.description || 'No reference voice enrolled. Screened without speaker identity verification.';
+      }
+    }
+
+    // Pillar 3: Security Threat Risk
+    const riskBadgeEl = document.getElementById('resultRiskBadge');
+    const riskDescEl = document.getElementById('resultRiskDesc');
+    if (riskBadgeEl) {
+      riskBadgeEl.className = 'triad-badge';
+      const riskUpper = riskLevel.toUpperCase();
+      if (riskUpper.includes('HIGH')) {
+        riskBadgeEl.classList.add('status-high');
+        riskBadgeEl.textContent = '🔴 HIGH RISK';
+        if (riskDescEl) riskDescEl.textContent = 'Critical threat alert: Strong synthetic evidence detected. Impersonation attack likely.';
+      } else if (riskUpper.includes('MEDIUM')) {
+        riskBadgeEl.classList.add('status-medium');
+        riskBadgeEl.textContent = '🟡 MEDIUM RISK';
+        if (riskDescEl) riskDescEl.textContent = 'Elevated caution advised: Inconclusive acoustic boundaries, moderate anomaly, or noise interference.';
+      } else {
+        riskBadgeEl.classList.add('status-low');
+        riskBadgeEl.textContent = '🟢 LOW RISK';
+        if (riskDescEl) riskDescEl.textContent = 'No evidence of synthetic speech, voice cloning, or loudspeaker acoustic replay attack.';
+      }
+    }
+
+    // 4. Decision Boundary Confidence
     const confValEl = document.getElementById('resultConfidenceValue');
     const confBarEl = document.getElementById('resultConfidenceBar');
-    const riskValEl = document.getElementById('resultRiskValue');
-    const riskBadgeEl = document.getElementById('resultRiskBadge');
-
     if (confValEl) confValEl.textContent = (confidence !== undefined && confidence !== null) ? `${confidence}%` : 'Calculated';
     if (confBarEl) confBarEl.style.width = `${confidence || 0}%`;
-
-    if (riskValEl) riskValEl.textContent = riskLevel;
-    if (riskBadgeEl) {
-      riskBadgeEl.className = 'risk-pill';
-      if (riskLevel.includes('LOW')) riskBadgeEl.classList.add('risk-low');
-      else if (riskLevel.includes('HIGH')) riskBadgeEl.classList.add('risk-high');
-      else riskBadgeEl.classList.add('risk-medium');
-      riskBadgeEl.textContent = riskLevel;
-    }
 
     // 4. Authenticity Score Breakdown Cards
     const metrics = result.metrics || {};

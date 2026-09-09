@@ -7,12 +7,16 @@
 import { ResultView } from './components/result-view.js';
 import { VerificationWorkspace } from './components/verification.js';
 import { DashboardManager } from './components/dashboard.js';
+import { SpeakerEnrollment } from './components/speaker-enrollment.js';
+import { LiveCallGuard } from './components/live-call-guard.js';
 
 class VoiceShieldApp {
   constructor() {
     this.resultView = null;
     this.verificationWorkspace = null;
     this.dashboardManager = null;
+    this.speakerEnrollment = null;
+    this.liveCallGuard = null;
 
     this.init();
   }
@@ -50,11 +54,15 @@ class VoiceShieldApp {
       }
     });
 
-    // 4. Navigation & Modals
+    // 4. Speaker Enrollment & Live Call Guard
+    this.speakerEnrollment = new SpeakerEnrollment();
+    this.liveCallGuard = new LiveCallGuard();
+
+    // 5. Navigation, Quick Samples & Modals
     this._bindNavigation();
     this._bindModals();
 
-    console.log('[VoiceShield AI] Enterprise security platform initialized.');
+    console.log('[VoiceShield AI] Enterprise security platform initialized with Live Call Guard & Triad Architecture.');
   }
 
   _bindNavigation() {
@@ -103,7 +111,22 @@ class VoiceShieldApp {
       });
     }
 
-    // Hero buttons: "Start Recording" & "Upload Audio"
+    // Nav Link: "Live Call Guard"
+    const navLiveGuard = document.getElementById('navLinkLiveGuard');
+    if (navLiveGuard) {
+      navLiveGuard.addEventListener('click', (e) => {
+        e.preventDefault();
+        const verifySection = document.getElementById('analyze');
+        if (verifySection) {
+          verifySection.scrollIntoView({ behavior: 'smooth' });
+          if (this.verificationWorkspace) {
+            this.verificationWorkspace.switchTab('liveguard');
+          }
+        }
+      });
+    }
+
+    // Hero buttons: "Start Recording", "Upload Audio" & "Live Call Guard"
     const heroRecordBtn = document.getElementById('btnHeroStartRecord');
     if (heroRecordBtn) {
       heroRecordBtn.addEventListener('click', () => {
@@ -130,12 +153,54 @@ class VoiceShieldApp {
         }
       });
     }
+
+    const heroLiveGuardBtn = document.getElementById('heroBtnLiveGuard');
+    if (heroLiveGuardBtn) {
+      heroLiveGuardBtn.addEventListener('click', () => {
+        const verifySection = document.getElementById('analyze');
+        if (verifySection) {
+          verifySection.scrollIntoView({ behavior: 'smooth' });
+          if (this.verificationWorkspace) {
+            this.verificationWorkspace.switchTab('liveguard');
+          }
+        }
+      });
+    }
+
+    // Benchmark Demo Samples Quick Buttons
+    document.querySelectorAll('.btn-analyze-example').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sample = btn.getAttribute('data-sample');
+        if (this.verificationWorkspace && sample) {
+          this.verificationWorkspace._analyzeExample(sample);
+        }
+      });
+    });
   }
 
   _bindModals() {
-    document.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
+    // History Detail Modal Close Buttons
+    const btnCloseHist = document.getElementById('btnCloseHistoryDetailModal');
+    const btnCloseHist2 = document.getElementById('btnModalClose');
+    const hideHistModal = () => {
+      const m = document.getElementById('historyDetailModal');
+      if (m) m.classList.remove('is-active');
+    };
+    if (btnCloseHist) btnCloseHist.addEventListener('click', hideHistModal);
+    if (btnCloseHist2) btnCloseHist2.addEventListener('click', hideHistModal);
+
+    // Live Guard Consent Modal Close
+    const btnCloseConsent = document.getElementById('btnCloseLiveConsentModal');
+    if (btnCloseConsent) {
+      btnCloseConsent.addEventListener('click', () => {
+        const m = document.getElementById('liveGuardConsentModal');
+        if (m) m.classList.remove('is-active');
+      });
+    }
+
+    document.querySelectorAll('.modal-close, .modal-close-btn, .modal-overlay').forEach(el => {
       el.addEventListener('click', (e) => {
-        if (e.target === el || el.classList.contains('modal-close')) {
+        if (e.target === el || el.classList.contains('modal-close') || el.classList.contains('modal-close-btn')) {
           document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('is-active'));
         }
       });

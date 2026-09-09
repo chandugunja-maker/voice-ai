@@ -203,21 +203,37 @@ export class ReportGenerator {
     </div>
   </div>
 
-  <div class="verdict-box">
-    <div>
-      <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 4px;">Primary Classification</div>
-      <div class="verdict-text ${verdict.includes('AUTHENTIC') ? 'verdict-authentic' : (verdict.includes('SYNTHETIC') ? 'verdict-synthetic' : 'verdict-uncertain')}">
-        ${verdict}
+  <div class="verdict-box" style="display: block;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 2px;">Primary Voice Authenticity</div>
+        <div class="verdict-text ${verdict.includes('AUTHENTIC') ? 'verdict-authentic' : (verdict.includes('SYNTHETIC') ? 'verdict-synthetic' : 'verdict-uncertain')}">
+          ${verdict}
+        </div>
+      </div>
+      <div class="verdict-metrics">
+        <div>
+          <div class="metric-col-title">Confidence</div>
+          <div class="metric-col-val">${confidence}</div>
+        </div>
+        <div>
+          <div class="metric-col-title">Security Risk</div>
+          <div class="metric-col-val">${riskLevel}</div>
+        </div>
       </div>
     </div>
-    <div class="verdict-metrics">
-      <div>
-        <div class="metric-col-title">Confidence</div>
-        <div class="metric-col-val">${confidence}</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 11px;">
+      <div style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+        <div style="color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 9px;">1. Voice Authenticity</div>
+        <div style="font-weight: 800; font-size: 12px; margin-top: 2px; color: ${verdict.includes('AUTHENTIC') ? '#047857' : (verdict.includes('SYNTHETIC') ? '#b91c1c' : '#b45309')};">${verdict}</div>
       </div>
-      <div>
-        <div class="metric-col-title">Risk Assessment</div>
-        <div class="metric-col-val">${riskLevel}</div>
+      <div style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+        <div style="color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 9px;">2. Speaker Identity</div>
+        <div style="font-weight: 800; font-size: 12px; margin-top: 2px; color: #0f172a;">${(result.speaker_identity && result.speaker_identity.status) ? `${result.speaker_identity.status} (${result.speaker_identity.speaker_name || 'General'})` : 'UNKNOWN (Not enrolled)'}</div>
+      </div>
+      <div style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+        <div style="color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 9px;">3. Security Threat Risk</div>
+        <div style="font-weight: 800; font-size: 12px; margin-top: 2px; color: ${riskLevel.includes('HIGH') ? '#b91c1c' : (riskLevel.includes('LOW') ? '#047857' : '#b45309')};">${riskLevel}</div>
       </div>
     </div>
   </div>

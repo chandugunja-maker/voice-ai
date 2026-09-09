@@ -33,6 +33,7 @@
       <nav id="navMenu" class="nav-menu" role="navigation" aria-label="Primary Navigation">
         <a href="#home" class="nav-link active">Home</a>
         <a href="#analyze" class="nav-link">Analyze Voice</a>
+        <a href="#analyze" id="navLinkLiveGuard" class="nav-link">🛡️ Live Call Guard</a>
         <a href="#dashboard" class="nav-link">Dashboard</a>
         <a href="#history" class="nav-link">History</a>
         <a href="#about" class="nav-link">About</a>
@@ -74,6 +75,9 @@
             <button id="btnHeroUploadAudio" class="btn btn-secondary btn-lg" type="button">
               📁 Upload Audio
             </button>
+            <button id="heroBtnLiveGuard" class="btn btn-secondary btn-lg" type="button">
+              🛡️ Live Call Guard
+            </button>
           </div>
 
           <div class="trust-indicators">
@@ -95,18 +99,22 @@
         <div class="verification-box">
           <!-- Workspace Tab Navigation -->
           <div class="tab-header" role="tablist">
-            <button class="tab-btn active" data-tab="live" role="tab" aria-selected="true" aria-controls="tabPaneLive">
+            <button id="tabBtnLive" class="tab-btn active" data-tab="live" role="tab" aria-selected="true" aria-controls="tabPaneLive">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
               </svg>
               <span>Record Voice</span>
             </button>
-            <button class="tab-btn" data-tab="upload" role="tab" aria-selected="false" aria-controls="tabPaneUpload">
+            <button id="tabBtnUpload" class="tab-btn" data-tab="upload" role="tab" aria-selected="false" aria-controls="tabPaneUpload">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
               <span>Upload Audio</span>
+            </button>
+            <button id="tabBtnLiveGuard" class="tab-btn" data-tab="liveguard" role="tab" aria-selected="false" aria-controls="tabPaneLiveGuard">
+              <span style="font-size: 1.1rem; line-height: 1;">🛡️</span>
+              <span>Live Call Guard</span>
             </button>
           </div>
 
@@ -236,42 +244,75 @@
                       <div class="metadata-card">
                         <div class="metadata-label">Background Noise</div>
                         <div id="recordedMetaNoise" class="metadata-val">--</div>
+                    <button id="btnStopRecording" class="btn btn-danger btn-sm" type="button">
+                      ⏹ Stop Recording
+                    </button>
+                  </div>
+                </div>
+
+                <!-- State 3: Recording Complete & Ready for Analysis -->
+                <div id="recordingCompletePanel" style="display: none; width: 100%;">
+                  <div class="audio-preview-bar">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                      <div>
+                        <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.2rem;">Recorded Voice Audio</div>
+                        <div id="recordedAudioDurationText" style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">00:05 • Ready for Scan</div>
+                      </div>
+                      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button id="btnPlayVoicePreview" class="btn btn-secondary btn-sm" type="button">
+                          ▶ Play Voice
+                        </button>
+                        <button id="btnRecordAgain" class="btn btn-tertiary btn-sm" type="button">
+                          Record Again
+                        </button>
+                        <button id="btnCheckThisVoice" class="btn btn-primary btn-sm" type="button">
+                          🔍 Analyze Voice
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Pre-Analysis Quality Card -->
+                    <div id="recPreQualityCard" class="pre-quality-card" style="margin: 0;">
+                      <div class="pre-quality-header">
+                        <span class="pre-quality-title">Pre-Analysis Audio Quality</span>
+                        <span id="recQualityBadge" class="quality-badge">Validated Audio</span>
+                      </div>
+                      <div class="metadata-grid">
+                        <div class="metadata-card">
+                          <div class="metadata-label">Duration</div>
+                          <div id="recMetaDuration" class="metadata-val">--</div>
+                        </div>
+                        <div class="metadata-card">
+                          <div class="metadata-label">Input Quality</div>
+                          <div id="recMetaQuality" class="metadata-val" style="color: #10b981;">Good Signal</div>
+                        </div>
+                        <div class="metadata-card">
+                          <div class="metadata-label">Noise Floor</div>
+                          <div id="recMetaNoise" class="metadata-val">Low</div>
+                        </div>
+                        <div class="metadata-card">
+                          <div class="metadata-label">Speech Status</div>
+                          <div id="recMetaSpeech" class="metadata-val" style="color: var(--accent-primary);">Detected</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  <!-- Controls: Play / Record Again / Analyze Voice -->
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
-                    <button id="btnPlayVoicePreview" class="btn btn-secondary" type="button">
-                      ▶ Play Voice
-                    </button>
-                    <button id="btnRecordAgain" class="btn btn-tertiary" type="button">
-                      🔄 Record Again
-                    </button>
-                    <button id="btnCheckThisVoice" class="btn btn-primary btn-lg" type="button">
-                      🔍 Analyze Voice
-                    </button>
-                  </div>
                 </div>
 
-                <!-- Test Microphone Diagnostic Button -->
-                <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; align-items: center;">
-                  <button id="btnTestMicrophone" class="btn btn-sm btn-tertiary" type="button">
-                    🎙️ Test Microphone Connection
+                <!-- Secondary Actions: Test Mic Diagnostics -->
+                <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 1rem;">
+                  <button id="btnTestMicrophone" class="btn btn-tertiary btn-sm" type="button">
+                    ⚙️ Test Microphone Diagnostic
                   </button>
-                  <div id="micTestResultBox" class="status-box" style="display: none; width: 100%; max-width: 440px; margin-top: 0.75rem;"></div>
                 </div>
-
               </div>
             </div>
 
-            <!-- TAB 2: AUDIO UPLOAD -->
+            <!-- TAB 2: UPLOAD AUDIO -->
             <div id="tabPaneUpload" class="tab-pane" role="tabpanel">
-              <div id="uploadDropzone" class="dropzone" tabindex="0" role="button" aria-label="Audio upload dropzone">
-                <div class="dropzone-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                  </svg>
+              <div id="uploadDropzone" class="upload-dropzone">
+                <div style="font-size: 2.5rem; margin-bottom: 0.75rem; color: var(--accent-primary);">
+                  📁
                 </div>
                 <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Drop audio file here or browse</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
@@ -283,12 +324,12 @@
                 <input type="file" id="fileUploadInput" accept=".wav,.mp3,.m4a,.flac,.ogg,.webm,audio/*" style="display: none;" />
               </div>
 
-              <!-- Upload File Ready Preview -->
-              <div id="uploadFilePreview" class="audio-preview-bar">
+              <!-- Upload File Ready Preview (Initially Hidden until user selects a file) -->
+              <div id="uploadFilePreview" class="audio-preview-bar" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
                   <div>
-                    <h4 id="uploadedFileName" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.2rem;">sample.wav</h4>
-                    <p id="uploadedFileSize" style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">WAV • 1.2 MB</p>
+                    <h4 id="uploadedFileName" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.2rem;">No audio selected</h4>
+                    <p id="uploadedFileSize" style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">--</p>
                   </div>
                   <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <button id="btnUploadPlayPause" class="btn btn-secondary btn-sm" type="button">▶ Play</button>
@@ -296,31 +337,146 @@
                     <button id="btnCheckUploadedVoice" class="btn btn-primary btn-sm" type="button">🔍 Analyze Voice</button>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <!-- Upload Pre-Analysis Audio Quality Diagnostic -->
-                <div id="uploadPreQualityCard" class="pre-quality-card" style="margin: 0;">
-                  <div class="pre-quality-header">
-                    <span class="pre-quality-title">Pre-Analysis Audio Quality</span>
-                    <span id="uploadQualityBadge" class="quality-badge">Validated Audio</span>
+            <!-- TAB 3: LIVE CALL GUARD -->
+            <div id="tabPaneLiveGuard" class="tab-pane" role="tabpanel">
+              <div class="liveguard-container">
+                <!-- Mode & Control Bar -->
+                <div class="liveguard-control-bar">
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                      <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">🛡️ Live Call Guard</span>
+                      <span id="guardMonitoringStatusPill" class="triad-badge status-nomatch" style="margin: 0; padding: 0.2rem 0.6rem; font-size: 0.72rem;">READY</span>
+                    </div>
+                    <p id="guardCurrentModeLabel" style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">
+                      Monitor an active conversation for suspicious synthetic or replayed voice activity.
+                    </p>
                   </div>
-                  <div class="metadata-grid">
-                    <div class="metadata-card">
-                      <div class="metadata-label">Duration</div>
-                      <div id="uploadMetaDuration" class="metadata-val">--</div>
+
+                  <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                    <div class="mode-pill-selector">
+                      <button type="button" class="mode-pill-btn btn-guard-mode active" data-mode="general" title="General monitoring without reference voice">General</button>
+                      <button type="button" class="mode-pill-btn btn-guard-mode" data-mode="stranger" title="Screen stranger conversation for anomalies">Stranger</button>
+                      <button type="button" class="mode-pill-btn btn-guard-mode" data-mode="known" title="Verify against enrolled contact voice">Known Contact</button>
                     </div>
-                    <div class="metadata-card">
-                      <div class="metadata-label">Format</div>
-                      <div id="uploadMetaFormat" class="metadata-val">WAV</div>
+                    <button id="btnOpenEnrollmentModal" class="btn btn-tertiary btn-sm" type="button">
+                      👤 Enroll Voice
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Initial Ready State Box -->
+                <div id="liveGuardInitialPrompt" class="card" style="text-align: center; border: 1px dashed var(--border-accent); padding: 2.5rem 1.5rem; margin-bottom: 1.5rem;">
+                  <div style="font-size: 2.4rem; margin-bottom: 0.75rem;">🛡️</div>
+                  <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    Active Conversation Security Screening
+                  </h3>
+                  <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 540px; margin: 0 auto 1.5rem auto; line-height: 1.5;">
+                    Live Call Guard evaluates rolling 2.5-second conversational audio windows for robotic pitch flatness, absent micro-tremor, and loudspeaker acoustic replay reflection artifacts.
+                  </p>
+                  <button id="btnStartLiveCallGuard" class="btn btn-primary btn-lg" type="button">
+                    🛡️ Start Live Call Guard
+                  </button>
+                </div>
+
+                <!-- Active Monitoring Studio (Hidden until monitoring starts) -->
+                <div id="liveGuardActiveStudio" style="display: none;">
+                  <!-- Live Control Header -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                      <span id="guardPulseDot" class="live-pulse-dot"></span>
+                      <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">MONITORING ACTIVE</span>
                     </div>
-                    <div class="metadata-card">
-                      <div class="metadata-label">File Size</div>
-                      <div id="uploadMetaSize" class="metadata-val">--</div>
+                    <button id="btnStopLiveCallGuard" class="btn btn-danger btn-sm" type="button">
+                      ⏹ Stop Monitoring
+                    </button>
+                  </div>
+
+                  <!-- Real-Time Telemetry Dashboard -->
+                  <div class="liveguard-dashboard">
+                    <div class="liveguard-stat-card">
+                      <div class="liveguard-stat-label">Call Duration</div>
+                      <div id="guardCallDuration" class="liveguard-stat-val" style="font-family: monospace;">00:00:00</div>
                     </div>
-                    <div class="metadata-card">
-                      <div class="metadata-label">Audio Quality</div>
-                      <div id="uploadMetaQuality" class="metadata-val" style="color: #10b981;">Ready for Scan</div>
+                    <div class="liveguard-stat-card">
+                      <div class="liveguard-stat-label">Current Risk</div>
+                      <div><span id="guardRiskBadge" class="triad-badge status-authentic" style="margin: 0; padding: 0.2rem 0.6rem; font-size: 0.8rem;">🟢 NORMAL</span></div>
+                    </div>
+                    <div class="liveguard-stat-card">
+                      <div class="liveguard-stat-label">Confidence</div>
+                      <div id="guardConfidenceValue" class="liveguard-stat-val">--</div>
+                    </div>
+                    <div class="liveguard-stat-card">
+                      <div class="liveguard-stat-label">Speech</div>
+                      <div id="guardSpeechStatus" class="liveguard-stat-val" style="font-size: 0.95rem; color: #10b981;">ACTIVE</div>
+                    </div>
+                    <div class="liveguard-stat-card">
+                      <div class="liveguard-stat-label">Synthetic Signal</div>
+                      <div id="guardSyntheticSignal" class="liveguard-stat-val status-low">LOW</div>
+                    </div>
+                    <div class="liveguard-stat-card">
+                      <div class="liveguard-stat-label">Replay Signal</div>
+                      <div id="guardReplaySignal" class="liveguard-stat-val status-low">LOW</div>
+                    </div>
+                    <div class="liveguard-stat-card">
+                      <div class="liveguard-stat-label">Liveness</div>
+                      <div id="guardLivenessStatus" class="liveguard-stat-val" style="color: #10b981;">PASS</div>
+                    </div>
+                    <div class="liveguard-stat-card">
+                      <div class="liveguard-stat-label">Background Noise</div>
+                      <div id="guardNoiseLevel" class="liveguard-stat-val" style="font-size: 0.95rem;">LOW</div>
                     </div>
                   </div>
+
+                  <!-- High Risk Alert Banner (Dynamically shown on persistent threat) -->
+                  <div id="liveGuardAlertBanner" class="live-alert-banner" style="display: none;">
+                    <div class="live-alert-title">
+                      <span>🚨</span>
+                      <span>SUSPICIOUS VOICE DETECTED</span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 0.75rem; line-height: 1.5;">
+                      VoiceShield detected persistent acoustic indicators associated with a potentially synthetic or replayed voice.
+                    </p>
+                    <div class="live-alert-meta">
+                      <div><strong style="color: #991b1b;">Risk:</strong> HIGH</div>
+                      <div><strong style="color: #991b1b;">Confidence:</strong> <span id="liveAlertConfidence">91%</span></div>
+                      <div><strong style="color: #991b1b;">Detection:</strong> Potential Synthetic / Replay</div>
+                      <div><strong style="color: #991b1b;">Timestamp:</strong> <span id="liveAlertTime">--:--</span></div>
+                    </div>
+                    <div>
+                      <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #991b1b; margin-bottom: 0.35rem;">Acoustic Evidence:</div>
+                      <ul id="liveAlertEvidenceList" style="list-style: none; font-size: 0.85rem; color: #7f1d1d; display: flex; flex-direction: column; gap: 0.25rem;">
+                        <li>• Flat prosodic intonation observed across consecutive windows</li>
+                        <li>• Absence of biological vocal micro-tremor</li>
+                      </ul>
+                    </div>
+                    <div class="live-alert-actions">
+                      <button id="btnAlertViewEvidence" class="btn btn-secondary btn-sm" type="button">View Evidence</button>
+                      <button id="btnAlertContinueMonitoring" class="btn btn-secondary btn-sm" type="button">Continue Monitoring</button>
+                      <button id="btnAlertStopMonitoring" class="btn btn-danger btn-sm" type="button">Stop Monitoring</button>
+                    </div>
+                  </div>
+
+                  <!-- Live Detection Timeline Feed -->
+                  <div id="liveGuardTimelineCard" class="timeline-card">
+                    <div class="timeline-header">
+                      <div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">Live Detection Timeline</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">Real-time acoustic event stream across rolling analysis windows</div>
+                      </div>
+                      <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">2.5s Rolling Windows</span>
+                    </div>
+                    <div id="guardTimelineList" class="timeline-list">
+                      <!-- Dynamically populated -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Technical Limitation Notice -->
+                <div style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem 1.25rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-top: 1rem;">
+                  <strong>Technical Reality Disclosure:</strong> A standard web browser cannot automatically intercept or tap third-party applications (like WhatsApp, Instagram, or native cellular phone calls) without OS-level telephony hooks. Live Call Guard monitors audio explicitly granted by you (ambient room/loudspeaker audio captured via microphone) in temporary in-browser volatile memory.
                 </div>
               </div>
             </div>
@@ -401,30 +557,65 @@
               </p>
             </div>
 
-            <!-- Dual Metrics: Confidence & Risk Level -->
-            <div class="metrics-row">
-              <!-- Confidence Panel -->
-              <div class="metric-panel">
-                <div class="metric-panel-header">Overall Confidence</div>
-                <div id="resultConfidenceValue" class="metric-panel-val">--</div>
-                <div class="confidence-bar-track">
-                  <div id="resultConfidenceBar" class="confidence-bar-fill" style="width: 0%;"></div>
+            <!-- Triad Security Architecture: Authenticity, Identity, Risk -->
+            <div class="triad-grid">
+              <!-- Pillar 1: Voice Authenticity -->
+              <div class="triad-card">
+                <div class="triad-header">
+                  <span class="triad-label">1. Voice Authenticity</span>
+                  <span style="font-size: 1.1rem;">🧬</span>
                 </div>
-                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">
-                  Confidence directly computed from acoustic signal distance to decision boundary.
-                </p>
+                <div>
+                  <span id="resultAuthBadge" class="triad-badge status-authentic">🟢 LIKELY AUTHENTIC</span>
+                  <p id="resultAuthDesc" class="triad-desc">
+                    Acoustic speech production biometrics match natural human vocal tract dynamics.
+                  </p>
+                </div>
               </div>
 
-              <!-- Risk Level Panel -->
-              <div class="metric-panel">
-                <div class="metric-panel-header">Risk Assessment</div>
-                <div style="margin-bottom: 0.75rem;">
-                  <span id="resultRiskBadge" class="risk-pill">--</span>
+              <!-- Pillar 2: Speaker Identity -->
+              <div class="triad-card">
+                <div class="triad-header">
+                  <span class="triad-label">2. Speaker Identity</span>
+                  <span style="font-size: 1.1rem;">👤</span>
                 </div>
-                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
-                  Risk assessment is based on the available audio-analysis signals and should not be treated as definitive proof.
-                </p>
+                <div>
+                  <span id="resultIdentityBadge" class="triad-badge status-unknown">UNKNOWN</span>
+                  <p id="resultIdentityDesc" class="triad-desc">
+                    Evaluated against enrolled reference voice. A different voice is NOT inherently synthetic.
+                  </p>
+                </div>
               </div>
+
+              <!-- Pillar 3: Security Threat Risk -->
+              <div class="triad-card">
+                <div class="triad-header">
+                  <span class="triad-label">3. Security Threat Risk</span>
+                  <span style="font-size: 1.1rem;">🛡️</span>
+                </div>
+                <div>
+                  <span id="resultRiskBadge" class="triad-badge status-low">LOW RISK</span>
+                  <p id="resultRiskDesc" class="triad-desc">
+                    Evidence-based risk calculation derived independently from multi-signal anomaly screening.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confidence Bar Card -->
+            <div class="card" style="padding: 1.25rem 1.5rem; margin-bottom: 1.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">
+                  Decision Boundary Confidence
+                </div>
+                <div id="resultConfidenceValue" style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">--</div>
+              </div>
+              <div class="confidence-bar-track" style="margin-bottom: 0.4rem;">
+                <div id="resultConfidenceBar" class="confidence-bar-fill" style="width: 0%;"></div>
+              </div>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">
+                Confidence is calculated mathematically from acoustic feature distances to statistical decision boundaries. Poor audio quality reduces confidence.
+              </p>
             </div>
 
             <!-- Authenticity Score Breakdown Cards -->
@@ -855,6 +1046,144 @@
       <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
         <button id="btnModalDownloadReport" class="btn btn-primary btn-sm" type="button">📥 Download Report</button>
         <button id="btnModalClose" class="btn btn-secondary btn-sm" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       Live Call Guard Consent & Transparency Modal
+       ========================================================================= -->
+  <div id="liveGuardConsentModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Live Call Guard Authorization">
+    <div class="modal-card" style="max-width: 580px;">
+      <button class="modal-close-btn" id="btnCloseLiveConsentModal" type="button" aria-label="Close modal">✕</button>
+      <div style="font-size: 2.5rem; margin-bottom: 0.75rem; text-align: center;">🛡️</div>
+      <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); text-align: center; margin-bottom: 0.5rem;">
+        Authorize Live Call Guard
+      </h3>
+      <p style="font-size: 0.88rem; color: var(--text-secondary); text-align: center; line-height: 1.5; margin-bottom: 1.25rem;">
+        Before starting real-time conversation screening, please review how audio is processed:
+      </p>
+      
+      <div style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.25rem; font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5;">
+        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+          <span>ℹ️</span> Technical Reality & Sandboxing
+        </div>
+        A web browser cannot secretly tap or intercept third-party apps (WhatsApp, cellular phone calls, Zoom) without specialized operating system access. Live Call Guard monitors audio explicitly granted via your microphone input (e.g. ambient conversation on speakerphone).
+      </div>
+
+      <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 0.9rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.84rem; color: #065f46; line-height: 1.5;">
+        <div style="font-weight: 700; margin-bottom: 0.25rem;">🔒 Zero Audio Storage Guarantee</div>
+        All audio windows (2.5s) are analyzed exclusively in volatile RAM and immediately discarded. No conversations are recorded, transmitted, or saved to any server.
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button id="btnCancelLiveConsent" class="btn btn-secondary" type="button">Cancel</button>
+        <button id="btnConfirmLiveConsent" class="btn btn-primary" type="button">I Authorize & Start Guard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       Trusted Speaker Enrollment Modal
+       ========================================================================= -->
+  <div id="enrollmentModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Speaker Enrollment">
+    <div class="modal-card" style="max-width: 600px;">
+      <button class="modal-close-btn" id="btnCloseEnrollmentModal" type="button" aria-label="Close modal">✕</button>
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;">
+        <span style="font-size: 1.5rem;">👤</span>
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+          Trusted Speaker Enrollment
+        </h3>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem;">
+        Enroll a verified contact or family member's voice. VoiceShield extracts an acoustic biometric fingerprint stored locally in your browser to verify speaker identity independently from synthetic detection.
+      </p>
+
+      <!-- Current Enrolled Voice Status Card -->
+      <div id="enrolledSpeakerCard" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Enrolled Speaker</div>
+            <div id="enrolledSpeakerNameDisplay" style="font-size: 1.1rem; font-weight: 800; color: var(--accent-primary);">--</div>
+            <div id="enrolledSpeakerMetaDisplay" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">--</div>
+          </div>
+          <button id="btnDeleteEnrollment" class="btn btn-sm btn-tertiary" type="button" style="color: #ef4444;">Delete Voice</button>
+        </div>
+      </div>
+
+      <!-- New Enrollment Form -->
+      <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <label for="enrollSpeakerNameInput" style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Speaker Name / Contact</label>
+          <input id="enrollSpeakerNameInput" type="text" placeholder="e.g., Mom, CFO John, Family Member" style="width: 100%; padding: 0.6rem 0.85rem; border: 1px solid var(--border-accent); border-radius: var(--radius-md); font-size: 0.9rem;" />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Enrollment Audio (5-10 seconds of clear speech)</label>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button id="btnEnrollRecord" class="btn btn-secondary btn-sm" type="button">🎙️ Record 5s Sample</button>
+            <button id="btnEnrollStop" class="btn btn-danger btn-sm" type="button" style="display: none;">⏹ Stop Recording</button>
+            <label class="btn btn-tertiary btn-sm" style="margin: 0; cursor: pointer;">
+              📁 Upload Audio File
+              <input id="enrollFileInput" type="file" accept="audio/*" style="display: none;" />
+            </label>
+          </div>
+          <div id="enrollStatus" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Ready to record or select audio file.</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button id="btnCancelEnrollment" class="btn btn-secondary" type="button">Cancel</button>
+        <button id="btnSaveEnrollment" class="btn btn-primary" type="button" disabled>Save Trusted Voice</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       Live Call Guard Session Summary Modal
+       ========================================================================= -->
+  <div id="liveSummaryModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Live Call Guard Session Summary">
+    <div class="modal-card" style="max-width: 620px;">
+      <button class="modal-close-btn" id="btnCloseLiveSummaryModal" type="button" aria-label="Close modal">✕</button>
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;">
+        <span style="font-size: 1.5rem;">📋</span>
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+          Live Call Guard Session Report
+        </h3>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+        Audit log summary for the monitored conversation session.
+      </p>
+
+      <!-- Session Key Metrics Grid -->
+      <div class="metadata-grid" style="margin-bottom: 1.25rem;">
+        <div class="metadata-card">
+          <div class="metadata-label">Session Duration</div>
+          <div id="liveSummaryDuration" class="metadata-val" style="font-family: monospace;">00:00:00</div>
+        </div>
+        <div class="metadata-card">
+          <div class="metadata-label">Peak Risk Level</div>
+          <div id="liveSummaryPeakRisk" class="metadata-val">--</div>
+        </div>
+        <div class="metadata-card">
+          <div class="metadata-label">Windows Evaluated</div>
+          <div id="liveSummaryEventsCount" class="metadata-val">0</div>
+        </div>
+      </div>
+
+      <!-- Detected Anomalies List -->
+      <div class="card" style="padding: 1rem; margin-bottom: 1.25rem; background: var(--bg-tertiary);">
+        <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">
+          Detected Anomalies / Signals
+        </div>
+        <ul id="liveSummaryAnomaliesList" style="list-style: none; font-size: 0.84rem; display: flex; flex-direction: column; gap: 0.35rem; color: var(--text-secondary);">
+          <li>No suspicious anomalies detected during this session.</li>
+        </ul>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button id="btnDownloadLiveSummaryReport" class="btn btn-primary" type="button">📥 Download Incident Audit Report</button>
+        <button id="btnCloseLiveSummaryBtn" class="btn btn-secondary" type="button">Close</button>
       </div>
     </div>
   </div>
