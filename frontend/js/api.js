@@ -23,6 +23,34 @@ const isStaticHost = typeof window !== 'undefined' && (
   !API_BASE
 );
 
+export function isBenchmarkRecord(record) {
+  if (!record) return false;
+  if (record.is_benchmark === true || record.is_demo === true || record.is_test === true) return true;
+  if (record.source_type === 'benchmark' || record.source_type === 'demo') return true;
+  const fn = (record.filename || '').toLowerCase();
+  if (
+    fn.startsWith('test_benchmark_') ||
+    fn.startsWith('example-') ||
+    fn.startsWith('sample-') ||
+    fn.includes('example-rahul') ||
+    fn.includes('example-suspicious') ||
+    fn.includes('example-ai-processed') ||
+    fn.includes('sample-genuine') ||
+    fn.includes('sample-ai-clone') ||
+    fn.includes('sample-suspicious') ||
+    fn === 'rahul.wav' ||
+    fn === 'suspicious.wav' ||
+    fn === 'processed.wav'
+  ) {
+    return true;
+  }
+  const id = (record.id || record.analysis_id || '').toLowerCase();
+  if (id.includes('demo') || id.includes('benchmark')) {
+    return true;
+  }
+  return false;
+}
+
 export class VoiceShieldAPI {
   /**
    * Uploads an audio blob/file for comprehensive authenticity analysis.
@@ -356,7 +384,7 @@ export class VoiceShieldAPI {
     } catch (e) {}
 
     // Exclude benchmark samples from personal dashboard telemetry
-    const userRecords = storedRecords.filter(r => !r.is_benchmark);
+    const userRecords = storedRecords.filter(r => !isBenchmarkRecord(r));
     const total = userRecords.length;
     let authCount = 0;
     let synCount = 0;
@@ -443,17 +471,22 @@ export class VoiceShieldAPI {
         const response = await fetch(`${API_BASE}/api/history?${query.toString()}`);
         if (response.ok) {
           const data = await response.json();
-          return data.records || [];
+          return (data.records || []).filter(r => !isBenchmarkRecord(r));
         }
       } catch (e) {
         console.warn('Remote history fetch unavailable:', e);
       }
     }
 
-    // Return records from localStorage
+    // Return genuine user records from localStorage
     try {
       const local = localStorage.getItem('voiceshield_verification_history');
-      if (local) return JSON.parse(local);
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(r => !isBenchmarkRecord(r));
+        }
+      }
     } catch (e) {}
 
     return [];

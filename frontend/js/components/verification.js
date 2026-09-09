@@ -20,6 +20,7 @@ export class VerificationWorkspace {
     this.currentDuration = 0;
     this.currentFileSize = 0;
     this.currentSampleRate = 16000;
+    this.currentSourceType = null;
     this.sampleHint = null;
     this.audioPlayer = new Audio();
     this.exampleAudioPlayer = new Audio();
@@ -360,6 +361,7 @@ export class VerificationWorkspace {
         this.liveVisualizer.stop();
       }
 
+      this.currentSourceType = 'microphone';
       this.currentBlob = data.blob;
       this.currentFilename = 'microphone_recording.wav';
       this.currentDuration = data.duration;
@@ -427,6 +429,9 @@ export class VerificationWorkspace {
     this.currentBlob = null;
     this.currentFilename = null;
     this.currentDuration = 0;
+    if (this.currentSourceType === 'microphone') {
+      this.currentSourceType = null;
+    }
 
     this._checkMicPermission();
 
@@ -487,6 +492,7 @@ export class VerificationWorkspace {
       return;
     }
 
+    this.currentSourceType = 'upload';
     this.currentBlob = file;
     this.currentFilename = file.name;
     this.sampleHint = null;
@@ -582,6 +588,9 @@ export class VerificationWorkspace {
     this.currentBlob = null;
     this.currentFilename = null;
     this.currentDuration = 0;
+    if (this.currentSourceType === 'upload') {
+      this.currentSourceType = null;
+    }
 
     const dropzone = document.getElementById('uploadDropzone');
     const previewBar = document.getElementById('uploadFilePreview');
@@ -685,6 +694,7 @@ export class VerificationWorkspace {
         this._updateAnalysisStage(stageIdx);
       });
       result.is_benchmark = true;
+      result.source_type = 'benchmark';
       result.filename = `test_benchmark_${sampleId}.wav`;
       this._completeAllAnalysisStages();
       await new Promise(r => setTimeout(r, 120));
@@ -715,10 +725,12 @@ export class VerificationWorkspace {
           this._updateAnalysisStage(stageIdx);
         }
       );
+      result.is_benchmark = false;
+      result.source_type = this.currentSourceType || (this.currentFilename ? 'upload' : 'microphone');
       this._completeAllAnalysisStages();
       await new Promise(r => setTimeout(r, 120));
       this._hideAnalysisOverlay();
-      this.onAnalysisComplete(result, effectiveFilename);
+      this.onAnalysisComplete(result, effectiveFilename, false);
     } catch (err) {
       this._hideAnalysisOverlay();
       toast.show(`Analysis error: ${err.message || 'Verification failed'}`, 'error');

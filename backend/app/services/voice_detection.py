@@ -360,7 +360,9 @@ class VoiceDetectionService:
             "explainability_json": json.dumps(explainability.model_dump()),
             "created_at": datetime.now().strftime("%b %d, %H:%M")
         }
-        history_store.save_verification(history_record)
+        # Save to SQLite Persistent History only for genuine user analyses, not benchmark/example tests
+        if not filename.startswith("test_benchmark_") and not filename.startswith("example-") and not filename.startswith("sample-"):
+            history_store.save_verification(history_record)
 
         # Backward compatibility simple features
         simple_features = {

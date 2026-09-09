@@ -12,6 +12,21 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Generator
 
 
+def is_benchmark_record(record: Dict[str, Any]) -> bool:
+    if not record:
+        return False
+    if record.get("is_benchmark") is True or record.get("is_demo") is True:
+        return True
+    if record.get("source_type") == "benchmark":
+        return True
+    fn = str(record.get("filename") or "").lower()
+    if any(fn.startswith(p) for p in ("test_benchmark_", "example-", "sample-")):
+        return True
+    if any(preset in fn for preset in ("rahul", "suspicious", "processed")):
+        return True
+    return False
+
+
 class HistoryStore:
     def __init__(self, db_path: Optional[str] = None):
         if db_path is None:
@@ -67,6 +82,16 @@ class HistoryStore:
                         created_at TEXT NOT NULL
                     )
                 """)
+                # Purge any legacy benchmark records
+                conn.execute("""
+                    DELETE FROM verifications 
+                    WHERE filename LIKE 'test_benchmark_%'
+                       OR filename LIKE 'example-%'
+                       OR filename LIKE 'sample-%'
+                       OR filename LIKE '%rahul%'
+                       OR filename LIKE '%suspicious%'
+                       OR filename LIKE '%processed%'
+                """)
                 conn.commit()
             # Real analyses will populate the store dynamically
         except Exception as e:
@@ -80,6 +105,8 @@ class HistoryStore:
         except Exception:
             return 0
     def save_verification(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        if is_benchmark_record(record):
+            return record
         try:
             with self._conn() as conn:
                 conn.execute("""
@@ -121,7 +148,15 @@ class HistoryStore:
         risk_filter: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         try:
-            query = "SELECT * FROM verifications WHERE 1=1"
+            query = """
+                SELECT * FROM verifications 
+                WHERE filename NOT LIKE 'test_benchmark_%'
+                  AND filename NOT LIKE 'example-%'
+                  AND filename NOT LIKE 'sample-%'
+                  AND filename NOT LIKE '%rahul%'
+                  AND filename NOT LIKE '%suspicious%'
+                  AND filename NOT LIKE '%processed%'
+            """
             params: List[Any] = []
 
             if search:
@@ -215,7 +250,16 @@ class HistoryStore:
     def get_dashboard_stats(self) -> Dict[str, Any]:
         try:
             with self._conn() as conn:
-                cursor = conn.execute("SELECT * FROM verifications ORDER BY timestamp DESC")
+                cursor = conn.execute("""
+                    SELECT * FROM verifications 
+                    WHERE filename NOT LIKE 'test_benchmark_%'
+                      AND filename NOT LIKE 'example-%'
+                      AND filename NOT LIKE 'sample-%'
+                      AND filename NOT LIKE '%rahul%'
+                      AND filename NOT LIKE '%suspicious%'
+                      AND filename NOT LIKE '%processed%'
+                    ORDER BY timestamp DESC
+                """)
                 rows = cursor.fetchall()
 
                 total = len(rows)

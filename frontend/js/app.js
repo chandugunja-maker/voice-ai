@@ -4,7 +4,7 @@
  * Smart India Hackathon 2026 | Theme: Blockchain & Cybersecurity | Team: Agents (TEAM-312)
  */
 
-import { VoiceShieldAPI } from './api.js';
+import { VoiceShieldAPI, isBenchmarkRecord } from './api.js';
 import { ResultView } from './components/result-view.js';
 import { VerificationWorkspace } from './components/verification.js';
 import { DashboardManager } from './components/dashboard.js';
@@ -51,7 +51,11 @@ class VoiceShieldApp {
       onAnalysisComplete: (result, filename, isBenchmark = false) => {
         this.resultView.render(result, filename);
         // Do NOT contaminate dashboard statistics or user audit history with test benchmark controls
-        if (this.dashboardManager && result.status === 'success' && !isBenchmark && !result.is_benchmark) {
+        const isBench = isBenchmark === true || 
+          result.is_benchmark === true || 
+          result.source_type === 'benchmark' || 
+          isBenchmarkRecord(result);
+        if (this.dashboardManager && result.status === 'success' && !isBench) {
           result.filename = result.filename || filename;
           result.id = result.id || result.analysis_id;
           result.analysis_id = result.analysis_id || result.id;

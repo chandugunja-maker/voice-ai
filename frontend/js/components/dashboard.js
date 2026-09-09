@@ -4,7 +4,7 @@
  * verification history filtering, and privacy data deletion.
  */
 
-import { VoiceShieldAPI } from '../api.js';
+import { VoiceShieldAPI, isBenchmarkRecord } from '../api.js';
 import { ReportGenerator } from './report-generator.js';
 import { toast } from './toast.js';
 
@@ -13,6 +13,20 @@ export class DashboardManager {
     this.onViewDetails = options.onViewDetails || (() => {});
     this.historyRecords = [];
     this.dashboardStats = null;
+
+    // Immediately purge any legacy benchmark/test records from localStorage on load
+    try {
+      const local = localStorage.getItem('voiceshield_verification_history');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          const clean = parsed.filter(r => !isBenchmarkRecord(r));
+          if (clean.length !== parsed.length) {
+            localStorage.setItem('voiceshield_verification_history', JSON.stringify(clean));
+          }
+        }
+      }
+    } catch (e) {}
 
     this._bindEvents();
     this.refresh();
@@ -68,12 +82,13 @@ export class DashboardManager {
     try {
       const records = await VoiceShieldAPI.getHistory();
       if (records && records.length > 0) {
-        this.historyRecords = records;
+        this.historyRecords = records.filter(r => !isBenchmarkRecord(r));
       } else {
         // Fallback to local storage
         const local = localStorage.getItem('voiceshield_verification_history');
         if (local) {
-          this.historyRecords = JSON.parse(local);
+          const parsed = JSON.parse(local);
+          this.historyRecords = Array.isArray(parsed) ? parsed.filter(r => !isBenchmarkRecord(r)) : [];
         }
       }
       this._filterAndRenderHistory();
@@ -381,7 +396,7 @@ export class DashboardManager {
   }
 
   addRecord(record) {
-    if (!record) return;
+    if (!record || isBenchmarkRecord(record) || record.source_type === 'benchmark') return;
     const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const hexSuffix = Math.floor(Date.now() % 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
     const recId = record.id || record.analysis_id || `VS-${ymd}-${hexSuffix}`;
@@ -394,6 +409,8 @@ export class DashboardManager {
       created_at: record.created_at || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     };
 
+    // Ensure no benchmark records exist in history
+    this.historyRecords = this.historyRecords.filter(r => !isBenchmarkRecord(r));
     this.historyRecords.unshift(normalized);
     try {
       localStorage.setItem('voiceshield_verification_history', JSON.stringify(this.historyRecords.slice(0, 50)));
