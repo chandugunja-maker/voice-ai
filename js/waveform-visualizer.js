@@ -47,23 +47,23 @@ export class WaveformVisualizer {
       const height = this.canvas.height;
       const midY = height / 2;
 
-      // Dark cybersecurity background
-      ctx.fillStyle = '#090d16';
+      // Clean light canvas background
+      ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, width, height);
 
       // Subtle center grid baseline
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+      ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, midY);
       ctx.lineTo(width, midY);
       ctx.stroke();
 
-      // Real acoustic oscillogram wave
+      // Real acoustic oscillogram wave (Enterprise Cobalt Blue)
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#38bdf8';
-      ctx.shadowColor = 'rgba(56, 189, 248, 0.4)';
-      ctx.shadowBlur = 4;
+      ctx.strokeStyle = '#2563eb';
+      ctx.shadowColor = 'rgba(37, 99, 235, 0.25)';
+      ctx.shadowBlur = 3;
       ctx.beginPath();
 
       const sliceWidth = width / bufferLength;
@@ -107,14 +107,14 @@ export class WaveformVisualizer {
       const height = this.canvas.height;
       const midY = height / 2;
 
-      ctx.fillStyle = '#090d16';
+      ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, width, height);
 
       // Modulated spectral wave
-      ctx.strokeStyle = '#38bdf8';
+      ctx.strokeStyle = '#2563eb';
       ctx.lineWidth = 2;
-      ctx.shadowColor = 'rgba(56, 189, 248, 0.35)';
-      ctx.shadowBlur = 4;
+      ctx.shadowColor = 'rgba(37, 99, 235, 0.25)';
+      ctx.shadowBlur = 3;
       ctx.beginPath();
 
       for (let x = 0; x < width; x += 4) {
@@ -129,9 +129,9 @@ export class WaveformVisualizer {
       // Forensic scanning laser beam
       this.scanX = (this.scanX + 4) % width;
       const grad = ctx.createLinearGradient(this.scanX - 30, 0, this.scanX + 30, 0);
-      grad.addColorStop(0, 'rgba(56, 189, 248, 0)');
-      grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.45)');
-      grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      grad.addColorStop(0, 'rgba(37, 99, 235, 0)');
+      grad.addColorStop(0.5, 'rgba(37, 99, 235, 0.2)');
+      grad.addColorStop(1, 'rgba(37, 99, 235, 0)');
 
       ctx.fillStyle = grad;
       ctx.fillRect(this.scanX - 30, 0, 60, height);
@@ -149,7 +149,7 @@ export class WaveformVisualizer {
     }
     window.removeEventListener('resize', this._handleResize);
     if (this.ctx && this.canvas) {
-      this.ctx.fillStyle = '#090d16';
+      this.ctx.fillStyle = '#f8fafc';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
   }
@@ -176,17 +176,17 @@ export class WaveformVisualizer {
     window.addEventListener('resize', resize);
 
     const draw = () => {
-      ctx.fillStyle = '#090d16';
+      ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const midY = canvas.height / 2;
       const numPoints = 80;
       const step = canvas.width / numPoints;
 
-      // Draw primary voice oscillation line (cyan)
+      // Draw primary voice oscillation line (Cobalt Blue)
       ctx.beginPath();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#38bdf8';
+      ctx.strokeStyle = '#2563eb';
 
       for (let i = 0; i <= numPoints; i++) {
         const x = i * step;
@@ -206,7 +206,7 @@ export class WaveformVisualizer {
       // Draw secondary biometric harmonic line
       ctx.beginPath();
       ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.strokeStyle = 'rgba(37, 99, 235, 0.25)';
 
       for (let i = 0; i <= numPoints; i++) {
         const x = i * step;
@@ -226,7 +226,7 @@ export class WaveformVisualizer {
         const barHeight = Math.abs(Math.sin(b * 0.4 + phase * 2)) * 32 + 4;
         const bx = b * (barWidth + 2);
         const by = canvas.height - barHeight;
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+        ctx.fillStyle = 'rgba(37, 99, 235, 0.08)';
         ctx.fillRect(bx, by, barWidth, barHeight);
       }
 

@@ -126,12 +126,12 @@ export class DashboardManager {
       const synPct = Math.round(((data['Likely Synthetic'] || 0) / total) * 100);
 
       verdictContainer.innerHTML = `
-        <div style="margin-bottom: 12px; display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: #1f2937;">
+        <div style="margin-bottom: 12px; display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: #e2e8f0;">
           <div style="width: ${authPct}%; background: #10b981;" title="Likely Authentic: ${authPct}%"></div>
           <div style="width: ${uncPct}%; background: #f59e0b;" title="Uncertain: ${uncPct}%"></div>
           <div style="width: ${synPct}%; background: #ef4444;" title="Likely Synthetic: ${synPct}%"></div>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap; gap: 8px;">
           <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:4px;"></span>Authentic (${authPct}%)</span>
           <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b; margin-right:4px;"></span>Uncertain (${uncPct}%)</span>
           <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444; margin-right:4px;"></span>Synthetic (${synPct}%)</span>
@@ -152,11 +152,11 @@ export class DashboardManager {
 
         return `
           <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-            <span style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;">${val}</span>
-            <div style="width: 100%; max-width: 44px; height: 100px; display: flex; align-items: flex-end; background: #1e293b; border-radius: 4px;">
-              <div style="width: 100%; height: ${heightPct}%; background: ${color}; border-radius: 4px; transition: height 0.5s ease;"></div>
+            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">${val}</span>
+            <div style="width: 100%; max-width: 44px; height: 100px; display: flex; align-items: flex-end; background: #f1f5f9; border-radius: 4px; border: 1px solid var(--border-subtle);">
+              <div style="width: 100%; height: ${heightPct}%; background: ${color}; border-radius: 3px; transition: height 0.5s ease;"></div>
             </div>
-            <span style="font-size: 0.75rem; color: #94a3b8; text-align: center;">${label.replace(' Risk', '')}</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">${label.replace(' Risk', '')}</span>
           </div>
         `;
       }).join('');
@@ -171,12 +171,12 @@ export class DashboardManager {
         const widthPct = Math.max(4, Math.round((val / maxVal) * 100));
         return `
           <div style="margin-bottom: 8px;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; margin-bottom: 3px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px;">
               <span>${label}</span>
-              <span style="font-weight: 700; color: #f8fafc;">${val}</span>
+              <span style="font-weight: 700; color: var(--text-primary);">${val}</span>
             </div>
-            <div style="height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden;">
-              <div style="width: ${widthPct}%; height: 100%; background: #38bdf8; border-radius: 4px;"></div>
+            <div style="height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-subtle);">
+              <div style="width: ${widthPct}%; height: 100%; background: var(--accent-primary); border-radius: 3px;"></div>
             </div>
           </div>
         `;
@@ -226,15 +226,15 @@ export class DashboardManager {
       const risk = item.risk_level || 'REVIEW';
 
       return `
-        <tr style="border-bottom: 1px solid #1e293b;">
-          <td style="padding: 12px 14px; font-family: monospace; font-size: 0.8rem; color: #38bdf8;">${item.id}</td>
-          <td style="padding: 12px 14px; font-weight: 600; color: #f8fafc;">${item.filename || 'voice_sample.wav'}</td>
-          <td style="padding: 12px 14px; color: #94a3b8;">${item.duration_str || item.duration + 's' || '5.0s'}</td>
+        <tr style="border-bottom: 1px solid var(--border-subtle);">
+          <td style="padding: 12px 14px; font-family: monospace; font-size: 0.8rem; color: var(--accent-primary);">${item.id}</td>
+          <td style="padding: 12px 14px; font-weight: 600; color: var(--text-primary);">${item.filename || 'voice_sample.wav'}</td>
+          <td style="padding: 12px 14px; color: var(--text-muted);">${item.duration_str || item.duration + 's' || '5.0s'}</td>
           <td style="padding: 12px 14px;">
             <span class="history-pill ${pillClass}">${verdict}</span>
           </td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #f8fafc;">${conf}</td>
-          <td style="padding: 12px 14px; color: #cbd5e1;">${risk}</td>
+          <td style="padding: 12px 14px; font-weight: 700; color: var(--text-primary);">${conf}</td>
+          <td style="padding: 12px 14px; color: var(--text-secondary);">${risk}</td>
           <td style="padding: 12px 14px; text-align: right;">
             <div style="display: flex; gap: 6px; justify-content: flex-end;">
               <button class="btn btn-sm btn-secondary btn-history-details" data-id="${item.id}" type="button" title="View Details">

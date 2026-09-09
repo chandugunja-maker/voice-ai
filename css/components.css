@@ -1,5 +1,5 @@
 /* ==========================================================================
-   VoiceShield AI - Component Styling
+   VoiceShield AI - Component Styling (Clean White & Cybersecurity Blue)
    Cybersecurity SaaS Interface: Recording Studio, Analysis, Results, Dashboard
    ========================================================================== */
 
@@ -17,7 +17,7 @@
 /* Tabs */
 .tab-header {
   display: flex;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -38,11 +38,11 @@
 
 .tab-btn:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.02);
 }
 
 .tab-btn.active {
-  color: #ffffff;
+  color: var(--accent-primary);
   border-bottom-color: var(--accent-primary);
   background: var(--bg-card);
 }
@@ -74,17 +74,20 @@
   padding: 1.25rem 2.5rem;
   font-size: 1.2rem;
   font-weight: 700;
-  background: #f8fafc;
-  color: #090d16;
+  background: var(--accent-primary);
+  color: #ffffff;
   border-radius: var(--radius-full);
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
-  transition: transform var(--transition-fast), background var(--transition-fast);
+  border: 1px solid var(--accent-primary);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+  transition: transform var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
   margin: 1rem 0;
 }
 
 .btn-large-mic:hover {
   transform: translateY(-2px);
-  background: #ffffff;
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.35);
 }
 
 /* Audio Level Meter */
@@ -108,7 +111,7 @@
 .audio-meter-track {
   width: 100%;
   height: 8px;
-  background: var(--bg-tertiary);
+  background: var(--border-subtle);
   border-radius: var(--radius-full);
   overflow: hidden;
   position: relative;
@@ -126,7 +129,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ef4444;
+  background: #dc2626;
   display: inline-block;
   opacity: 0.3;
   transition: opacity 0.1s ease;
@@ -141,7 +144,7 @@
 }
 
 .metadata-card {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 0.85rem 1rem;
@@ -150,6 +153,7 @@
 
 .metadata-label {
   font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
@@ -168,14 +172,14 @@
   border-radius: var(--radius-lg);
   padding: 3rem 1.5rem;
   text-align: center;
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--bg-secondary);
   cursor: pointer;
   transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
 .dropzone.is-dragover, .dropzone:hover {
   border-color: var(--accent-primary);
-  background: rgba(56, 189, 248, 0.04);
+  background: var(--accent-light);
 }
 
 .dropzone-icon {
@@ -183,11 +187,12 @@
   height: 54px;
   margin: 0 auto 1rem auto;
   border-radius: 50%;
-  background: var(--bg-tertiary);
+  background: var(--accent-light);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent-primary);
+  border: 1px solid #bfdbfe;
 }
 
 .dropzone-icon svg {
@@ -197,7 +202,7 @@
 
 .audio-preview-bar {
   display: none;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
@@ -207,7 +212,7 @@
 
 /* Prompt Box */
 .sentence-prompt-card {
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
@@ -222,6 +227,11 @@
   color: var(--text-primary);
   margin: 0.75rem 0;
   line-height: 1.5;
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-primary);
 }
 
 /* ==========================================================================
@@ -234,7 +244,7 @@
   width: 100vw;
   height: 100vh;
   z-index: 1000;
-  background: rgba(9, 13, 22, 0.88);
+  background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -250,20 +260,21 @@
 }
 
 .analysis-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-accent);
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   padding: 2.5rem;
   width: 90%;
   max-width: 520px;
   box-shadow: var(--shadow-lg);
   text-align: center;
+  color: var(--text-primary);
 }
 
 .analysis-waveform-canvas {
   width: 100%;
   height: 70px;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   margin: 1.25rem 0;
@@ -288,6 +299,7 @@
 
 .stage-item.completed {
   color: var(--text-primary);
+  font-weight: 500;
 }
 
 .stage-item.completed .stage-icon {
@@ -310,7 +322,7 @@
 .stage-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(56, 189, 248, 0.2);
+  border: 2px solid #bfdbfe;
   border-top-color: var(--accent-primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -325,9 +337,9 @@
 }
 
 .verdict-display-card {
-  padding: 2rem;
+  padding: 2.25rem 2rem;
   border-radius: var(--radius-xl);
-  background: var(--bg-card);
+  background: #ffffff;
   border: 2px solid var(--border-subtle);
   text-align: center;
   margin-bottom: 2rem;
@@ -336,7 +348,7 @@
 
 .verdict-display-card.verdict-authentic {
   border-color: var(--color-genuine-border);
-  background: linear-gradient(180deg, var(--color-genuine-bg) 0%, var(--bg-card) 100%);
+  background: linear-gradient(180deg, var(--color-genuine-bg) 0%, #ffffff 100%);
 }
 
 .verdict-display-card.verdict-authentic .verdict-title {
@@ -345,7 +357,7 @@
 
 .verdict-display-card.verdict-synthetic {
   border-color: var(--color-ai-border);
-  background: linear-gradient(180deg, var(--color-ai-bg) 0%, var(--bg-card) 100%);
+  background: linear-gradient(180deg, var(--color-ai-bg) 0%, #ffffff 100%);
 }
 
 .verdict-display-card.verdict-synthetic .verdict-title {
@@ -354,7 +366,7 @@
 
 .verdict-display-card.verdict-uncertain {
   border-color: var(--color-suspicious-border);
-  background: linear-gradient(180deg, var(--color-suspicious-bg) 0%, var(--bg-card) 100%);
+  background: linear-gradient(180deg, var(--color-suspicious-bg) 0%, #ffffff 100%);
 }
 
 .verdict-display-card.verdict-uncertain .verdict-title {
@@ -375,6 +387,7 @@
   font-weight: 900;
   letter-spacing: -0.02em;
   margin-bottom: 0.75rem;
+  color: var(--text-primary);
 }
 
 .verdict-desc {
@@ -394,11 +407,12 @@
 }
 
 .metric-panel {
-  background: var(--bg-card);
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   text-align: left;
+  box-shadow: var(--shadow-sm);
 }
 
 .metric-panel-header {
@@ -420,7 +434,7 @@
 .confidence-bar-track {
   width: 100%;
   height: 8px;
-  background: var(--bg-tertiary);
+  background: var(--border-subtle);
   border-radius: var(--radius-full);
   overflow: hidden;
   margin-bottom: 0.5rem;
@@ -470,11 +484,18 @@
 }
 
 .breakdown-card {
-  background: var(--bg-card);
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 1.15rem 1.25rem;
   text-align: left;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.breakdown-card:hover {
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-md);
 }
 
 .breakdown-card-name {
@@ -500,12 +521,13 @@
 
 /* Explainability & Evidence Lists */
 .explain-card {
-  background: var(--bg-card);
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.75rem;
   margin-bottom: 2rem;
   text-align: left;
+  box-shadow: var(--shadow-sm);
 }
 
 .explain-title {
@@ -575,7 +597,7 @@
   width: 100vw;
   height: 100vh;
   z-index: 200;
-  background: rgba(9, 13, 22, 0.85);
+  background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -591,8 +613,8 @@
 }
 
 .modal-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-accent);
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   padding: 2.25rem;
   width: 90%;
@@ -601,13 +623,14 @@
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  color: var(--text-primary);
 }
 
 .modal-close-btn {
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
   width: 32px;
@@ -622,9 +645,9 @@
 }
 
 .modal-close-btn:hover {
-  color: #fff;
+  color: var(--text-primary);
   border-color: var(--border-accent);
-  background: #334155;
+  background: var(--border-subtle);
 }
 
 /* Microphone Permission Pill */
@@ -634,8 +657,8 @@
   justify-content: space-between;
   margin-bottom: 1.25rem;
   font-size: 0.82rem;
-  color: var(--text-muted);
-  background: var(--bg-primary);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 0.5rem 0.95rem;
@@ -660,15 +683,15 @@
 }
 
 .mic-status-pill.status-prompt {
-  background: rgba(56, 189, 248, 0.1);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: var(--accent-light);
+  color: var(--accent-primary);
+  border: 1px solid #bfdbfe;
 }
 
 .mic-status-pill.status-recording {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: var(--color-ai-bg);
+  color: var(--color-ai);
+  border: 1px solid var(--color-ai-border);
 }
 
 .mic-status-pill.status-denied {
@@ -679,7 +702,7 @@
 
 /* Pre-Analysis Audio Quality Diagnostic Card */
 .pre-quality-card {
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
@@ -761,4 +784,3 @@
     box-shadow: none !important;
   }
 }
-
