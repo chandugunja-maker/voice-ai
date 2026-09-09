@@ -1,10 +1,165 @@
 /**
  * VoiceShield AI - Canvas Waveform & Audio Visualizer
+ * Real-time oscillogram from Web Audio AnalyserNode (ByteTimeDomainData),
+ * scanning forensic visualizer, and ambient biometric visualizers.
+ * Theme: Obsidian Cybersecurity (#090d16 / #38bdf8 / #10b981)
  */
 
 export class WaveformVisualizer {
+  constructor(canvas) {
+    this.canvas = typeof canvas === 'string' ? document.getElementById(canvas) : canvas;
+    this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+    this.animId = null;
+    this.analyser = null;
+    this.phase = 0;
+    this.scanX = 0;
+    this._handleResize = this._resize.bind(this);
+  }
+
+  _resize() {
+    if (!this.canvas) return;
+    const parent = this.canvas.parentElement;
+    this.canvas.width = parent ? parent.clientWidth : 500;
+    this.canvas.height = parent && parent.clientHeight > 40 ? parent.clientHeight : 80;
+  }
+
   /**
-   * Initializes ambient hero visualizer
+   * Starts live audio time-domain rendering from an AnalyserNode
+   * When user speaks, wave oscillates dynamically with microphone amplitude.
+   * When silent, wave settles to a clean flat baseline.
+   */
+  start(analyser) {
+    if (!this.canvas || !analyser) return;
+    this.stop();
+    this.analyser = analyser;
+    this._resize();
+    window.addEventListener('resize', this._handleResize);
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+      this.animId = requestAnimationFrame(draw);
+      analyser.getByteTimeDomainData(dataArray);
+
+      const ctx = this.ctx;
+      const width = this.canvas.width;
+      const height = this.canvas.height;
+      const midY = height / 2;
+
+      // Dark cybersecurity background
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, width, height);
+
+      // Subtle center grid baseline
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, midY);
+      ctx.lineTo(width, midY);
+      ctx.stroke();
+
+      // Real acoustic oscillogram wave
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#38bdf8';
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.4)';
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+
+      const sliceWidth = width / bufferLength;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        // 128 is zero amplitude baseline in Uint8 byte time domain
+        const v = dataArray[i] / 128.0;
+        const y = (v * height) / 2;
+
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+
+        x += sliceWidth;
+      }
+
+      ctx.lineTo(width, midY);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    };
+
+    draw();
+  }
+
+  /**
+   * Synthetic forensic scan beam during audio pipeline processing
+   */
+  startSyntheticScan() {
+    if (!this.canvas) return;
+    this.stop();
+    this._resize();
+    window.addEventListener('resize', this._handleResize);
+
+    const ctx = this.ctx;
+    const draw = () => {
+      this.animId = requestAnimationFrame(draw);
+      const width = this.canvas.width;
+      const height = this.canvas.height;
+      const midY = height / 2;
+
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, width, height);
+
+      // Modulated spectral wave
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.35)';
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+
+      for (let x = 0; x < width; x += 4) {
+        const norm = x / width;
+        const y = midY + Math.sin(norm * 18 + this.phase) * 16 * Math.sin(norm * Math.PI);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Forensic scanning laser beam
+      this.scanX = (this.scanX + 4) % width;
+      const grad = ctx.createLinearGradient(this.scanX - 30, 0, this.scanX + 30, 0);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0)');
+      grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.45)');
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(this.scanX - 30, 0, 60, height);
+
+      this.phase += 0.05;
+    };
+
+    draw();
+  }
+
+  stop() {
+    if (this.animId) {
+      cancelAnimationFrame(this.animId);
+      this.animId = null;
+    }
+    window.removeEventListener('resize', this._handleResize);
+    if (this.ctx && this.canvas) {
+      this.ctx.fillStyle = '#090d16';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+  }
+
+  clear() {
+    this.stop();
+  }
+
+  /**
+   * Static helper: Ambient hero visualizer
    */
   static initHeroVisualizer(canvasId) {
     const canvas = document.getElementById(canvasId);
@@ -14,29 +169,29 @@ export class WaveformVisualizer {
     let phase = 0;
 
     const resize = () => {
-      canvas.width = canvas.parentElement.clientWidth || 400;
+      canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : 400;
       canvas.height = 160;
     };
     resize();
     window.addEventListener('resize', resize);
 
     const draw = () => {
-      ctx.fillStyle = 'rgba(240, 246, 255, 0.35)';
+      ctx.fillStyle = '#090d16';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const midY = canvas.height / 2;
       const numPoints = 80;
       const step = canvas.width / numPoints;
 
-      // Draw primary voice oscillation line (crisp white)
+      // Draw primary voice oscillation line (cyan)
       ctx.beginPath();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#0070f3';
+      ctx.strokeStyle = '#38bdf8';
 
       for (let i = 0; i <= numPoints; i++) {
         const x = i * step;
         const normX = i / numPoints;
-        const envelope = Math.sin(normX * Math.PI); // Window envelope
+        const envelope = Math.sin(normX * Math.PI);
         const y = midY + envelope * (
           Math.sin(normX * 12 + phase) * 25 +
           Math.sin(normX * 28 - phase * 1.5) * 14 +
@@ -48,10 +203,10 @@ export class WaveformVisualizer {
       }
       ctx.stroke();
 
-      // Draw secondary biometric harmonic line (subtle white)
+      // Draw secondary biometric harmonic line
       ctx.beginPath();
       ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(0, 112, 243, 0.35)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
 
       for (let i = 0; i <= numPoints; i++) {
         const x = i * step;
@@ -64,14 +219,14 @@ export class WaveformVisualizer {
       }
       ctx.stroke();
 
-      // Draw frequency spectrum grid bars at the bottom
+      // Frequency spectrum grid bars at the bottom
       const numBars = 32;
       const barWidth = canvas.width / numBars - 2;
       for (let b = 0; b < numBars; b++) {
         const barHeight = Math.abs(Math.sin(b * 0.4 + phase * 2)) * 32 + 4;
         const bx = b * (barWidth + 2);
         const by = canvas.height - barHeight;
-        ctx.fillStyle = 'rgba(0, 112, 243, 0.12)';
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
         ctx.fillRect(bx, by, barWidth, barHeight);
       }
 
@@ -87,110 +242,20 @@ export class WaveformVisualizer {
   }
 
   /**
-   * Renders live audio input from an AnalyserNode
+   * Static helper: Renders live audio input from an AnalyserNode
    */
   static renderLiveAudio(canvas, analyser) {
-    if (!canvas || !analyser) return null;
-    const ctx = canvas.getContext('2d');
-    let animId;
-
-    canvas.width = canvas.parentElement.clientWidth || 500;
-    canvas.height = canvas.parentElement.clientHeight || 100;
-
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const draw = () => {
-      animId = requestAnimationFrame(draw);
-      analyser.getByteTimeDomainData(dataArray);
-
-      ctx.fillStyle = '#f0f6ff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#0066ff'; // Clean blue voice capture wave
-      ctx.beginPath();
-
-      const sliceWidth = canvas.width / bufferLength;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = (v * canvas.height) / 2;
-
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-
-        x += sliceWidth;
-      }
-
-      ctx.lineTo(canvas.width, canvas.height / 2);
-      ctx.stroke();
-    };
-
-    draw();
-
-    return {
-      stop: () => {
-        cancelAnimationFrame(animId);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      },
-    };
+    const visualizer = new WaveformVisualizer(canvas);
+    visualizer.start(analyser);
+    return visualizer;
   }
 
   /**
-   * Analysis progress animation
+   * Static helper: Analysis scanning waveform
    */
   static renderScanningWaveform(canvas) {
-    if (!canvas) return null;
-    const ctx = canvas.getContext('2d');
-    let animId;
-    let scanX = 0;
-    let phase = 0;
-
-    canvas.width = canvas.parentElement.clientWidth || 400;
-    canvas.height = 90;
-
-    const draw = () => {
-      animId = requestAnimationFrame(draw);
-      ctx.fillStyle = '#f0f6ff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw static/modulated spectral wave
-      ctx.strokeStyle = '#0066ff';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-
-      const midY = canvas.height / 2;
-      for (let x = 0; x < canvas.width; x += 4) {
-        const norm = x / canvas.width;
-        const y = midY + Math.sin(norm * 20 + phase) * 20 * Math.sin(norm * Math.PI);
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      // Draw vertical scanning beam
-      scanX = (scanX + 4) % canvas.width;
-      const grad = ctx.createLinearGradient(scanX - 25, 0, scanX + 25, 0);
-      grad.addColorStop(0, 'rgba(0, 112, 243, 0)');
-      grad.addColorStop(0.5, 'rgba(0, 112, 243, 0.5)');
-      grad.addColorStop(1, 'rgba(0, 112, 243, 0)');
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(scanX - 25, 0, 50, canvas.height);
-
-      phase += 0.05;
-    };
-
-    draw();
-
-    return {
-      stop: () => cancelAnimationFrame(animId),
-    };
+    const visualizer = new WaveformVisualizer(canvas);
+    visualizer.startSyntheticScan();
+    return visualizer;
   }
 }
-
