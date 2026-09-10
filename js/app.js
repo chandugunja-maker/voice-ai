@@ -177,15 +177,6 @@ class VoiceShieldApp {
       });
     }
 
-    // Benchmark Demo Samples Quick Buttons
-    document.querySelectorAll('.btn-analyze-example').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const sample = btn.getAttribute('data-sample');
-        if (this.verificationWorkspace && sample) {
-          this.verificationWorkspace._analyzeExample(sample);
-        }
-      });
-    });
   }
 
   _bindModals() {

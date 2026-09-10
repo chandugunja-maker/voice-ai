@@ -22,6 +22,7 @@ export class VerificationWorkspace {
     this.currentSampleRate = 16000;
     this.currentSourceType = null;
     this.sampleHint = null;
+    this.isAnalyzing = false;  // Guard against concurrent/double-click analysis
     this.audioPlayer = new Audio();
     this.exampleAudioPlayer = new Audio();
 
@@ -698,6 +699,8 @@ export class VerificationWorkspace {
   }
 
   async _analyzeExample(sampleId) {
+    if (this.isAnalyzing) return;  // Prevent concurrent/double-click calls
+    this.isAnalyzing = true;
     this._showAnalysisOverlay();
     this._updateAnalysisStage(0);
 
@@ -715,6 +718,8 @@ export class VerificationWorkspace {
     } catch (err) {
       this._hideAnalysisOverlay();
       toast.show(`Analysis failed: ${err.message}`, 'error');
+    } finally {
+      this.isAnalyzing = false;
     }
   }
 
@@ -723,6 +728,9 @@ export class VerificationWorkspace {
       toast.show('Please record or select an audio file first.', 'warning');
       return;
     }
+
+    if (this.isAnalyzing) return;  // Prevent concurrent/double-click calls
+    this.isAnalyzing = true;
 
     this._showAnalysisOverlay();
     this._updateAnalysisStage(0);
@@ -754,8 +762,11 @@ export class VerificationWorkspace {
     } catch (err) {
       this._hideAnalysisOverlay();
       toast.show(`Analysis error: ${err.message || 'Verification failed'}`, 'error');
+    } finally {
+      this.isAnalyzing = false;
     }
   }
+
 
   _showAnalysisOverlay() {
     const overlay = document.getElementById('analysisOverlay');

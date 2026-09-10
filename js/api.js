@@ -102,12 +102,24 @@ export class VoiceShieldAPI {
    * NEVER forces the actual result to equal the expected result.
    */
   static async analyzeDemo(sampleId, onStageUpdate = null) {
+    // Compute base URL of the site (works on GitHub Pages /voice-ai/ and localhost /)
+    const basePath = (() => {
+      try {
+        const loc = window.location;
+        // Strip any trailing filename from pathname (e.g. /voice-ai/ stays as-is, /voice-ai/index.html becomes /voice-ai/)
+        const pathBase = loc.pathname.endsWith('/') ? loc.pathname : loc.pathname.substring(0, loc.pathname.lastIndexOf('/') + 1);
+        return `${loc.origin}${pathBase}`;
+      } catch (e) {
+        return './';
+      }
+    })();
+
     const sampleFiles = {
-      rahul: './assets/samples/example-rahul.wav',
-      genuine: './assets/samples/example-rahul.wav',
-      suspicious: './assets/samples/example-suspicious.wav',
-      processed: './assets/samples/example-ai-processed.wav',
-      'ai-clone': './assets/samples/example-ai-processed.wav'
+      rahul: `${basePath}assets/samples/example-rahul.wav`,
+      genuine: `${basePath}assets/samples/example-rahul.wav`,
+      suspicious: `${basePath}assets/samples/example-suspicious.wav`,
+      processed: `${basePath}assets/samples/example-ai-processed.wav`,
+      'ai-clone': `${basePath}assets/samples/example-ai-processed.wav`
     };
 
     const expectedMap = {
@@ -123,13 +135,18 @@ export class VoiceShieldAPI {
     let blob = null;
 
     try {
+      if (typeof onStageUpdate === 'function') onStageUpdate(0);
       const res = await fetch(url);
       if (res.ok) {
         blob = await res.blob();
+        console.log(`[VoiceShield] Loaded benchmark sample: ${url} (${Math.round(blob.size / 1024)} KB)`);
+      } else {
+        console.warn(`[VoiceShield] Benchmark sample fetch failed (${res.status}): ${url}`);
       }
     } catch (e) {
       console.warn('Could not fetch sample file from assets:', e);
     }
+
 
     // Run the actual DSP acoustic analysis on the fetched audio
     const result = await this._runClientAcousticAnalysis(
