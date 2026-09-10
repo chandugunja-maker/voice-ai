@@ -264,6 +264,7 @@ export class VerificationWorkspace {
     document.querySelectorAll('.btn-analyze-example').forEach(btn => {
       btn.addEventListener('click', () => {
         const sample = btn.getAttribute('data-sample');
+        console.log('[Benchmark] Button clicked, sampleId:', sample);
         this._analyzeExample(sample);
       });
     });

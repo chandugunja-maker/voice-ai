@@ -64,7 +64,7 @@ export class ResultView {
     if (waitingPanel) waitingPanel.style.display = 'none';
 
     // Case A: Insufficient Speech / Audio Quality Issues / Decode Error
-    if (result.status !== 'success' || (!result.metrics && !result.features)) {
+    if (result.status !== 'success' || (!result.features)) {
       if (validVoicePanel) validVoicePanel.style.display = 'none';
       if (noVoicePanel) {
         noVoicePanel.style.display = 'block';
