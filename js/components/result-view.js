@@ -64,7 +64,9 @@ export class ResultView {
     if (waitingPanel) waitingPanel.style.display = 'none';
 
     // Case A: Insufficient Speech / Audio Quality Issues / Decode Error
-    if (result.status !== 'success' || (!result.features)) {
+    // NOTE: result.features is intentionally NOT checked — the API stores features under
+    // acoustic_features, audio_quality, debug, etc. Only status drives the branch.
+    if (result.status !== 'success') {
       if (validVoicePanel) validVoicePanel.style.display = 'none';
       if (noVoicePanel) {
         noVoicePanel.style.display = 'block';

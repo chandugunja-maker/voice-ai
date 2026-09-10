@@ -260,22 +260,6 @@ export class VerificationWorkspace {
       });
     }
 
-    // 4. Test Voice Benchmark Library & Examples
-    document.querySelectorAll('.btn-analyze-example').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const sample = btn.getAttribute('data-sample');
-        console.log('[Benchmark] Button clicked, sampleId:', sample);
-        this._analyzeExample(sample);
-      });
-    });
-
-    document.querySelectorAll('.btn-play-example').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const sample = btn.getAttribute('data-sample');
-        this._toggleExamplePlayback(sample, btn);
-      });
-    });
-
     // 5. Sentence Prompts
     const copySentenceBtn = document.getElementById('btnCopySentence');
     if (copySentenceBtn) {
@@ -647,28 +631,7 @@ export class VerificationWorkspace {
     };
   }
 
-  _toggleExamplePlayback(sampleId, btn) {
-    if (this.exampleAudioPlayer.src && !this.exampleAudioPlayer.paused) {
-      this.exampleAudioPlayer.pause();
-      btn.innerHTML = '▶ Play Example';
-      return;
-    }
 
-    const sampleFiles = {
-      rahul: './assets/samples/example-rahul.wav',
-      suspicious: './assets/samples/example-suspicious.wav',
-      processed: './assets/samples/example-ai-processed.wav'
-    };
-
-    const url = sampleFiles[sampleId] || sampleFiles.rahul;
-    this.exampleAudioPlayer.src = url;
-    this.exampleAudioPlayer.play().catch(e => console.warn('Audio playback error:', e));
-
-    btn.innerHTML = '❚❚ Pause';
-    this.exampleAudioPlayer.onended = () => {
-      btn.innerHTML = '▶ Play Example';
-    };
-  }
 
   _updateAnalysisStage(stageIdx) {
     const stageItems = document.querySelectorAll('#analysisStagesList li');
