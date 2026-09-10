@@ -394,27 +394,32 @@ export class VerificationWorkspace {
       if (metaDuration) metaDuration.textContent = `${this.currentDuration.toFixed(1)}s`;
       if (metaSize) metaSize.textContent = `${(this.currentFileSize / 1024).toFixed(1)} KB`;
       if (metaRate) metaRate.textContent = `${this.currentSampleRate} Hz`;
-      if (this.currentDuration < 3.0) {
-        toast.show('Recording is under 3 seconds. For reliable biometric analysis, 3 to 10 seconds of speech is recommended.', 'warning', 5000);
-      }
 
-      // Fetch pre-analysis diagnostics
-      const diag = await VoiceShieldAPI.checkAudioQuality(this.currentBlob, this.currentFilename);
-      if (diag && diag.quality) {
-        const q = diag.quality;
-        if (metaRms) metaRms.textContent = q.rms_level;
-        if (metaSilence) metaSilence.textContent = `${q.silence_pct}%`;
-        if (metaSnr) metaSnr.textContent = q.snr_estimate;
-        if (metaNoise) metaNoise.textContent = q.background_noise_level;
-        if (metaSpeech) metaSpeech.textContent = q.voice_activity;
-        if (qualityBadge) {
-          qualityBadge.textContent = q.voice_activity;
-          qualityBadge.className = 'quality-badge';
-          if (!diag.passed) {
-            qualityBadge.classList.add(diag.status === 'poor_quality' ? 'quality-warning' : 'quality-error');
+      // Fetch pre-analysis diagnostics (non-blocking)
+      VoiceShieldAPI.checkAudioQuality(this.currentBlob, this.currentFilename).then(diag => {
+        if (diag && diag.quality) {
+          const q = diag.quality;
+          if (metaRms) metaRms.textContent = q.rms_level;
+          if (metaSilence) metaSilence.textContent = `${q.silence_pct}%`;
+          if (metaSnr) metaSnr.textContent = q.snr_estimate;
+          if (metaNoise) metaNoise.textContent = q.background_noise_level;
+          if (metaSpeech) metaSpeech.textContent = q.voice_activity;
+          if (qualityBadge) {
+            qualityBadge.textContent = q.voice_activity;
+            qualityBadge.className = 'quality-badge';
+            if (!diag.passed) {
+              qualityBadge.classList.add(diag.status === 'poor_quality' ? 'quality-warning' : 'quality-error');
+            }
           }
         }
-      }
+      });
+
+      // AUTO-TRIGGER ANALYSIS immediately after recording stops
+      // Give the UI 600ms to update and show the complete panel first
+      toast.show('Recording complete! Starting voice analysis…', 'info', 2500);
+      setTimeout(() => {
+        this.startAnalysis();
+      }, 600);
     }
   }
 
@@ -731,6 +736,14 @@ export class VerificationWorkspace {
       await new Promise(r => setTimeout(r, 120));
       this._hideAnalysisOverlay();
       this.onAnalysisComplete(result, effectiveFilename, false);
+      // Auto-scroll to results panel so the user sees the analysis output
+      const resultContainer = document.getElementById('resultContainer');
+      if (resultContainer) {
+        setTimeout(() => resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+      }
+      // Notify user result is ready
+      const verdictShort = result.status === 'success' ? (result.verdict || 'Analysis Complete') : 'Analysis complete — scroll down to view';
+      toast.show(`✅ ${verdictShort} — scroll down to view results`, 'success', 4000);
     } catch (err) {
       this._hideAnalysisOverlay();
       toast.show(`Analysis error: ${err.message || 'Verification failed'}`, 'error');
