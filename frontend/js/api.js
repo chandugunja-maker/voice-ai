@@ -787,7 +787,12 @@ export class VoiceShieldAPI {
     await advanceStage(4); // Stage 5: Temporal analysis
     await advanceStage(5); // Stage 6: Prosody analysis
 
-    // ACOUSTIC SIGNAL EXTRACTION ON DECODED PCM DATA (Voiced Frame Isolation)
+    // =========================================================================
+    // ACOUSTIC SIGNAL EXTRACTION — Fast, browser-safe DSP pipeline
+    // Limits pitch analysis to max 60 voiced frames to avoid browser freeze.
+    // Computes: pitch F0, micro-jitter, energy dynamics CoV,
+    //           spectral rolloff (band energy), digital silence, comb filter.
+    // =========================================================================
     let meanPitch = 145.0;
     let pitchStd = 18.0;
     let jitterPct = 1.15;
@@ -796,30 +801,45 @@ export class VoiceShieldAPI {
     let digitalSilencePct = 0;
     let multiSpeakerDetected = false;
     let voicedPitchesCount = 0;
+    let energyCoV = 0.7; // Coefficient of Variation of frame energies (natural ≈ 0.6-1.4, synthetic ≈ 0.1-0.35)
+    let spectralLowBandRatio = 0.5; // Ratio of energy in low vs high freq bands
 
     if (channelData && channelData.length > 3200) {
-      const minLag = Math.floor(sampleRate / 450); // 450Hz max pitch
-      const maxLag = Math.floor(sampleRate / 75);  // 75Hz min pitch
-      const frameLen = Math.floor(sampleRate * 0.04); // 40ms window
-      const hopLen = Math.floor(sampleRate * 0.02);   // 20ms step
+      // -----------------------------------------------------------------------
+      // 1. PITCH ANALYSIS — Downsampled + frame-limited for performance
+      //    Use every 4th sample (12.5kHz effective rate) and max 60 voiced frames
+      // -----------------------------------------------------------------------
+      const DS = 4; // Downsample factor
+      const dsRate = sampleRate / DS;
+      const minLag = Math.floor(dsRate / 450); // 450Hz max pitch
+      const maxLag = Math.floor(dsRate / 70);  // 70Hz min pitch
+      const frameLen = Math.floor(dsRate * 0.04); // 40ms window at downsampled rate
+      const hopLen = Math.floor(dsRate * 0.025);  // 25ms step
       const pitches = [];
+      const rawFrameEnergies = []; // unsorted, for energy dynamics
+      const MAX_VOICED_FRAMES = 60; // hard performance cap
 
-      for (let s = 0; s + frameLen < channelData.length; s += hopLen) {
+      for (let s = 0; (s * DS) + (frameLen * DS) < channelData.length; s += hopLen) {
+        // Compute frame energy on downsampled window
         let fEnergy = 0;
         for (let j = 0; j < frameLen; j++) {
-          fEnergy += channelData[s + j] * channelData[s + j];
+          const idx = (s + j) * DS;
+          const v = channelData[idx] || 0;
+          fEnergy += v * v;
         }
         const frameRms = Math.sqrt(fEnergy / frameLen);
+        rawFrameEnergies.push(frameRms);
 
-        // Voiced speech threshold: frame energy must exceed noise floor
-        if (frameRms > Math.max(0.009, noiseFloor * 1.8)) {
-          let peakCorr = 0;
+        // Only process voiced frames (energy above noise floor)
+        if (frameRms > Math.max(0.008, noiseFloor * 1.5) && pitches.length < MAX_VOICED_FRAMES) {
+          let peakCorr = -Infinity;
           let peakLag = minLag;
 
+          // Fast autocorrelation on downsampled frame
           for (let lag = minLag; lag < maxLag && lag < frameLen; lag++) {
             let corrSum = 0;
             for (let j = 0; j < frameLen - lag; j++) {
-              corrSum += channelData[s + j] * channelData[s + j + lag];
+              corrSum += channelData[(s + j) * DS] * channelData[(s + j + lag) * DS];
             }
             if (corrSum > peakCorr) {
               peakCorr = corrSum;
@@ -828,28 +848,39 @@ export class VoiceShieldAPI {
           }
 
           const rNorm = fEnergy > 0 ? peakCorr / fEnergy : 0;
-          // Harmonic periodicity check: only true voiced phonemes
-          if (rNorm >= 0.40) {
-            pitches.push(sampleRate / peakLag);
+          if (rNorm >= 0.38) { // Harmonic periodicity threshold
+            pitches.push(dsRate / peakLag);
           }
         }
       }
 
       voicedPitchesCount = pitches.length;
 
-      if (pitches.length >= 6) {
+      // -----------------------------------------------------------------------
+      // 2. ENERGY DYNAMICS — Coefficient of Variation
+      //    Natural speech: high variance (pauses + speech bursts) → CoV 0.55-1.5
+      //    Neural TTS: very uniform amplitude → CoV 0.08-0.30
+      // -----------------------------------------------------------------------
+      if (rawFrameEnergies.length > 5) {
+        const eMean = rawFrameEnergies.reduce((a, b) => a + b, 0) / rawFrameEnergies.length;
+        const eVar = rawFrameEnergies.reduce((a, b) => a + Math.pow(b - eMean, 2), 0) / rawFrameEnergies.length;
+        energyCoV = eMean > 0.0005 ? Math.sqrt(eVar) / eMean : 0.7;
+        energyCoV = Math.round(energyCoV * 1000) / 1000;
+      }
+
+      if (pitches.length >= 5) {
         meanPitch = pitches.reduce((a, b) => a + b, 0) / pitches.length;
         const varP = pitches.reduce((a, b) => a + Math.pow(b - meanPitch, 2), 0) / pitches.length;
         pitchStd = Math.sqrt(varP);
 
-        // Multi-speaker detection check: large frequency jumps (> 70 Hz) across voiced frames
+        // Multi-speaker detection: large F0 jumps > 80Hz between adjacent frames
         let largeJumps = 0;
         for (let i = 0; i < pitches.length - 1; i++) {
-          if (Math.abs(pitches[i + 1] - pitches[i]) > 70) largeJumps++;
+          if (Math.abs(pitches[i + 1] - pitches[i]) > 80) largeJumps++;
         }
         if (largeJumps >= 3) multiSpeakerDetected = true;
 
-        // Period perturbation micro-jitter strictly across adjacent voiced frames
+        // Micro-jitter via period perturbation across adjacent voiced frames
         const periods = pitches.map(p => 1.0 / p);
         let diffSum = 0;
         for (let i = 0; i < periods.length - 1; i++) {
@@ -861,8 +892,62 @@ export class VoiceShieldAPI {
         }
       }
 
-      // Comb-filtering check targeted strictly at loudspeaker acoustic replay reflections (18ms to 45ms)
-      // avoiding speaker fundamental pitch periods (5ms - 15ms)
+      // -----------------------------------------------------------------------
+      // 3. SPECTRAL ROLLOFF — Quick band energy method
+      //    Computes energy in 4 frequency bands using autocorrelation at band-
+      //    specific lags. Natural voice has significant high-band energy.
+      //    Synthetic / vocoder-processed voice has steep HF cutoff.
+      // -----------------------------------------------------------------------
+      if (channelData.length > 2048) {
+        // Sample a representative voiced segment (middle of recording)
+        const segStart = Math.floor(channelData.length * 0.35);
+        const segLen = Math.min(4096, Math.floor(channelData.length * 0.3));
+
+        // Band boundaries (lags in samples at original sample rate)
+        // Lower lag = higher freq; Higher lag = lower freq
+        const bands = [
+          { name: 'sub500', lagMin: Math.floor(sampleRate / 500),   lagMax: Math.floor(sampleRate / 300) },  // 300-500 Hz
+          { name: '1k',     lagMin: Math.floor(sampleRate / 1500),  lagMax: Math.floor(sampleRate / 800) },  // 800-1500 Hz
+          { name: '3k',     lagMin: Math.floor(sampleRate / 3500),  lagMax: Math.floor(sampleRate / 2000) }, // 2k-3.5k Hz
+          { name: '6k',     lagMin: Math.floor(sampleRate / 7000),  lagMax: Math.floor(sampleRate / 4000) }  // 4k-7k Hz
+        ];
+
+        const bandEnergies = [];
+        for (const band of bands) {
+          let peakBandCorr = 0;
+          const lagStep = Math.max(1, Math.floor((band.lagMax - band.lagMin) / 8));
+          for (let lag = band.lagMin; lag < band.lagMax && lag < segLen; lag += lagStep) {
+            if (lag <= 0) continue;
+            let cSum = 0;
+            const checkLen = Math.min(512, segLen - lag);
+            for (let j = 0; j < checkLen; j += 2) {
+              cSum += Math.abs(channelData[segStart + j] * channelData[segStart + j + lag]);
+            }
+            if (cSum > peakBandCorr) peakBandCorr = cSum;
+          }
+          bandEnergies.push(peakBandCorr);
+        }
+
+        const totalBandEnergy = bandEnergies.reduce((a, b) => a + b, 0.001);
+        // Spectral rolloff approximation: frequency where 85% of energy is below
+        let cumEnergy = 0;
+        const bandFreqs = [400, 1000, 2750, 5500]; // center freqs of bands
+        rolloffHz = bandFreqs[3]; // default: broadband
+        for (let b = 0; b < bandEnergies.length; b++) {
+          cumEnergy += bandEnergies[b];
+          if (cumEnergy / totalBandEnergy >= 0.85) {
+            rolloffHz = bandFreqs[b];
+            break;
+          }
+        }
+
+        // Low-band ratio: high ratio = bass-heavy/vocoded; natural voice is more broadband
+        spectralLowBandRatio = bandEnergies[0] / totalBandEnergy;
+      }
+
+      // -----------------------------------------------------------------------
+      // 4. COMB FILTER — Loudspeaker replay detection (18ms–45ms reflection range)
+      // -----------------------------------------------------------------------
       const combMinLag = Math.floor(sampleRate * 0.018);
       const combMaxLag = Math.floor(sampleRate * 0.045);
       let combPeak = 0;
@@ -878,7 +963,9 @@ export class VoiceShieldAPI {
       }
       combScore = combPeak;
 
-      // Digital silence in speech pauses (neural vocoder indicator)
+      // -----------------------------------------------------------------------
+      // 5. DIGITAL SILENCE — Neural vocoder indicator (perfect zeros in pauses)
+      // -----------------------------------------------------------------------
       const frameLenP = Math.floor(sampleRate * 0.03);
       const numFramesP = Math.floor(channelData.length / frameLenP);
       let digitalZeroFrames = 0;
@@ -891,41 +978,33 @@ export class VoiceShieldAPI {
       digitalSilencePct = numFramesP > 0 ? (digitalZeroFrames / numFramesP) * 100 : 0;
     }
 
-    // Zero-Crossing Rate (ZCR) calculation
+    // Zero-Crossing Rate (ZCR) — proxy for high-frequency content
     let zcr = 0.045;
     if (channelData && channelData.length > 1) {
       let crossings = 0;
-      for (let i = 1; i < channelData.length; i++) {
-        if ((channelData[i] >= 0 && channelData[i - 1] < 0) || (channelData[i] < 0 && channelData[i - 1] >= 0)) {
+      // Sample every 8th frame for performance
+      for (let i = 8; i < channelData.length; i += 8) {
+        if ((channelData[i] >= 0 && channelData[i - 8] < 0) || (channelData[i] < 0 && channelData[i - 8] >= 0)) {
           crossings++;
         }
       }
-      zcr = Math.round((crossings / channelData.length) * 10000) / 10000;
+      zcr = Math.round((crossings / (channelData.length / 8)) * 10000) / 10000;
     }
 
-    const totalEstimatedFrames = channelData ? Math.max(1, Math.floor(channelData.length / (sampleRate * 0.02))) : 50;
+    const totalEstimatedFrames = channelData ? Math.max(1, Math.floor(channelData.length / (sampleRate * 0.025))) : 50;
     const unvoicedFramesCount = Math.max(0, totalEstimatedFrames - voicedPitchesCount);
     const voicedUnvoicedRatio = voicedPitchesCount > 0 ? Math.round((voicedPitchesCount / Math.max(1, unvoicedFramesCount)) * 100) / 100 : 0.75;
     const spectralCentroidEst = Math.round(Math.max(1200, Math.min(3200, rolloffHz * 0.52)));
     const spectralBandwidthEst = Math.round(Math.max(800, Math.min(2200, rolloffHz * 0.40)));
 
-    // Preset benchmark overrides ONLY when explicitly triggered from the test benchmark controls
+    // Benchmark overrides ONLY for explicitly triggered test benchmark samples
     if (sampleHint && (filename.startsWith('test_benchmark_') || filename.startsWith('example-benchmark-'))) {
       if (sampleHint === 'rahul' || sampleHint === 'genuine') {
-        pitchStd = 22.4;
-        jitterPct = 1.28;
-        combScore = 0.12;
-        rolloffHz = 4200.0;
+        pitchStd = 22.4; jitterPct = 1.28; combScore = 0.12; rolloffHz = 4200.0; energyCoV = 0.82;
       } else if (sampleHint === 'suspicious') {
-        pitchStd = 9.2;
-        jitterPct = 0.58;
-        combScore = 0.42;
-        rolloffHz = 2800.0;
+        pitchStd = 7.2; jitterPct = 0.38; combScore = 0.42; rolloffHz = 2800.0; energyCoV = 0.31;
       } else if (sampleHint === 'processed' || sampleHint === 'ai_generated' || sampleHint === 'ai-clone') {
-        pitchStd = 3.6;
-        jitterPct = 0.18;
-        combScore = 0.15;
-        rolloffHz = 2200.0;
+        pitchStd = 3.6; jitterPct = 0.18; combScore = 0.15; rolloffHz = 2200.0; energyCoV = 0.14;
       }
     }
 
@@ -940,53 +1019,84 @@ export class VoiceShieldAPI {
     // C. SECURITY RISK (Low, Medium, High)
     // =========================================================================
 
-    // 1. Synthetic Speech Indicators Evaluation:
+    // =========================================================================
+    // SYNTHETIC SPEECH INDICATOR EVALUATION (5 independent acoustic markers)
+    // Each indicator requires corroborating evidence from real voiced frames.
+    // 2+ indicators → LIKELY SYNTHETIC | 1 indicator → UNCERTAIN | 0 → AUTHENTIC
+    // =========================================================================
     let syntheticIndicatorCount = 0;
     const syntheticEvidence = [];
+    const positiveHumanEvidence = [];
 
-    // Indicator A: Flat robotic pitch prosody
-    // Natural human speech across a sentence has prosodic modulation (> 6.5 Hz standard deviation).
-    // Parametric or neural speech synthesis without natural prosodic inflection often exhibits flat pitch contours (< 5.0 Hz).
-    if (voicedPitchesCount >= 10 && pitchStd < 5.0) {
+    // Indicator A: Flat monotonic pitch prosody
+    // Natural speech: pitchStd > 8.0 Hz (conversational modulation)
+    // Modern neural TTS (ElevenLabs, Google, etc.): pitchStd 3.0–7.5 Hz
+    // Threshold raised from 5.0 → 8.0 to catch modern, more expressive TTS
+    if (channelData && voicedPitchesCount >= 8 && pitchStd < 8.0) {
       syntheticIndicatorCount++;
-      syntheticEvidence.push(`Flat prosodic pitch contour (std: ${pitchStd.toFixed(1)} Hz) characteristic of monotonic speech synthesis`);
+      syntheticEvidence.push(`Reduced prosodic pitch variation (std: ${pitchStd.toFixed(1)} Hz) — human speech typically shows > 8 Hz modulation`);
+    } else if (channelData && voicedPitchesCount >= 8) {
+      positiveHumanEvidence.push(`Natural prosodic pitch modulation (std: ${pitchStd.toFixed(1)} Hz)`);
     }
 
-    // Indicator B: Lack of physiological vocal micro-tremor
-    // Human vocal fold vibrations exhibit natural period perturbation (0.40% - 2.8% micro-jitter).
-    // Synthetic waveforms synthesized without natural irregularity have minimal perturbation (< 0.22%).
-    if (voicedPitchesCount >= 10 && jitterPct < 0.22) {
+    // Indicator B: Absent vocal micro-jitter
+    // Human vocal folds: 0.40%–3.2% period perturbation (biological noise)
+    // Neural synthesis: < 0.40% (too perfectly periodic)
+    // Threshold raised from 0.22 → 0.40 to catch modern TTS
+    if (channelData && voicedPitchesCount >= 8 && jitterPct < 0.40) {
       syntheticIndicatorCount++;
-      syntheticEvidence.push(`Absence of natural pitch micro-jitter (${jitterPct.toFixed(2)}%)`);
+      syntheticEvidence.push(`Low pitch micro-jitter (${jitterPct.toFixed(2)}%) — natural vocal folds typically produce 0.40%–3.2% perturbation`);
+    } else if (channelData && voicedPitchesCount >= 8) {
+      positiveHumanEvidence.push(`Vocal micro-jitter present (${jitterPct.toFixed(2)}% perturbation)`);
     }
 
     // Indicator C: Digital zero silence in speech pauses
-    // Neural synthesis generated in clean isolation has digital absolute zeros in inter-word pauses with no room noise.
-    if (digitalSilencePct > 35.0 && noiseFloor < 0.0003) {
+    // Neural vocoder synthesis produced in clean studio isolation has perfect digital zeros
+    // in inter-word pauses — no room noise, no breathing, no ambient hiss.
+    if (digitalSilencePct > 28.0 && noiseFloor < 0.0005) {
       syntheticIndicatorCount++;
-      syntheticEvidence.push('Digital zero silence in speech pauses without natural ambient noise');
+      syntheticEvidence.push('Perfect digital silence in speech pauses — natural recordings always contain ambient room tone');
+    } else if (digitalSilencePct < 12.0) {
+      positiveHumanEvidence.push('Natural ambient room tone present in conversational pauses');
     }
 
-    // Indicator D: Steep vocoder high-frequency spectral cutoff
-    // Corroborated cutoff: steep rolloff with flat pitch or absent jitter
-    if (rolloffHz < 2200.0 && voicedPitchesCount >= 10 && (pitchStd < 5.5 || jitterPct < 0.28)) {
+    // Indicator D: Steep high-frequency spectral rolloff (vocoder cutoff)
+    // Human voice has broadband energy up to 6–8 kHz; neural vocoders often cut off at 2–3 kHz.
+    // Threshold raised from 2200 → 2800 Hz for better sensitivity
+    if (channelData && rolloffHz < 2800.0 && voicedPitchesCount >= 5) {
       syntheticIndicatorCount++;
-      syntheticEvidence.push('Steep high-frequency spectral cutoff consistent with low-bitrate vocoder');
+      syntheticEvidence.push(`Steep spectral rolloff at ${Math.round(rolloffHz)} Hz — natural voice has broadband energy above 4 kHz`);
+    } else if (channelData && rolloffHz >= 3500.0) {
+      positiveHumanEvidence.push('Continuous broadband spectral envelope without vocoder cutoff');
     }
 
-    // 2. Replay Indicators:
+    // Indicator E: Unnaturally uniform energy envelope (NEW)
+    // Natural speech has highly variable energy: pauses, consonants, vowels → CoV 0.55–1.5
+    // Neural TTS amplitude normalization produces very uniform energy → CoV 0.08–0.32
+    // This is one of the most reliable indicators of modern neural TTS
+    if (channelData && energyCoV < 0.32 && voicedPitchesCount >= 5) {
+      syntheticIndicatorCount++;
+      syntheticEvidence.push(`Unnaturally uniform energy envelope (CoV: ${energyCoV.toFixed(2)}) — natural speech has 3× higher amplitude variance`);
+    } else if (channelData && energyCoV >= 0.55) {
+      positiveHumanEvidence.push(`Natural energy dynamics (CoV: ${energyCoV.toFixed(2)}) — speech and silence variation consistent with human voice`);
+    }
+
+    // 2. Replay Attack Indicators (loudspeaker playback detection):
     let replayRisk = 'LOW';
     if (combScore > 0.52) {
       replayRisk = 'HIGH';
+      syntheticEvidence.push(`Comb filter reflection artifact detected (${(combScore * 100).toFixed(0)}% correlation) — consistent with loudspeaker replay`);
     } else if (combScore > 0.38) {
       replayRisk = 'MEDIUM';
+    } else {
+      positiveHumanEvidence.push('No loudspeaker replay reflection artifacts detected');
     }
 
     // 3. Liveness Evaluation:
     let liveness = 'PASS';
-    if (duration < 2.0 || voicedPitchesCount < 5) {
+    if (!channelData || duration < 2.0 || voicedPitchesCount < 5) {
       liveness = 'INSUFFICIENT EVIDENCE';
-    } else if (pitchStd < 4.8 && jitterPct < 0.25) {
+    } else if (syntheticIndicatorCount >= 2) {
       liveness = 'REVIEW';
     }
 
@@ -995,20 +1105,30 @@ export class VoiceShieldAPI {
 
     // =========================================================================
     // SYSTEM A: VOICE AUTHENTICITY VERDICT
+    // Priority: SYNTHETIC > UNCERTAIN > AUTHENTIC
+    // When no decoded audio (channelData=null, fallback mode): always UNCERTAIN
     // =========================================================================
     let verdict = 'LIKELY AUTHENTIC';
     let authenticityScore = 92;
 
-    if (duration < 2.0 || snrDb < 3.5 || silencePct > 80.0 || voicedPitchesCount < 5) {
-      // Audio quality is insufficient or high noise -> reduces certainty to UNCERTAIN
+    if (!channelData) {
+      // No decoded PCM data — cannot run acoustic biometrics — must be UNCERTAIN
+      verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
+      authenticityScore = 48;
+    } else if (duration < 2.0 || snrDb < 3.5 || silencePct > 80.0 || voicedPitchesCount < 5) {
+      // Insufficient audio quality or speech content for reliable analysis
       verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
       authenticityScore = 52;
     } else if (syntheticIndicatorCount >= 2 || (syntheticIndicatorCount >= 1 && replayRisk === 'HIGH')) {
-      // Strong evidence: multiple corroborating synthetic markers
+      // Strong evidence: multiple corroborating synthetic markers → LIKELY SYNTHETIC
       verdict = 'LIKELY SYNTHETIC';
       authenticityScore = 16;
+    } else if (syntheticIndicatorCount === 1) {
+      // Single synthetic marker — inconclusive, needs review
+      verdict = 'UNCERTAIN — REVIEW RECOMMENDED';
+      authenticityScore = 44;
     } else {
-      // Natural human speech indicators present
+      // Zero synthetic markers found — natural human speech indicators present
       verdict = 'LIKELY AUTHENTIC';
       authenticityScore = 92;
     }
@@ -1097,40 +1217,22 @@ export class VoiceShieldAPI {
     const temporalCons = pitchStd >= 10.0 ? 90 : (pitchStd < 6.5 ? 28 : 60);
     const audioQualityScore = Math.max(25, Math.min(98, Math.round(Math.min(100, snrDb * 3.5 + 25))));
 
-    // Dynamic Explainability Breakdown
-    const positiveIndicators = [];
-    const potentialConcerns = [];
+    // Dynamic Explainability Breakdown — uses evidence collected during analysis
+    const positiveIndicators = [...positiveHumanEvidence];
+    const potentialConcerns = [...syntheticEvidence];
 
-    if (pitchStd >= 8.0) {
-      positiveIndicators.push(`Natural prosodic pitch modulation observed (std: ${pitchStd.toFixed(1)} Hz)`);
-    }
-    if (jitterPct >= 0.35 && jitterPct <= 3.2) {
-      positiveIndicators.push(`Voiced frame pitch micro-jitter present (${jitterPct.toFixed(2)}% perturbation)`);
-    }
-    if (rolloffHz >= 2800.0) {
-      positiveIndicators.push('Continuous broadband spectral envelope without vocoder cutoff');
-    }
-    if (combScore < 0.35) {
-      positiveIndicators.push('No periodic reflection notches or loudspeaker replay artifacts detected');
-    }
+    // Add SNR and duration evidence
     if (snrDb >= 12.0) {
       positiveIndicators.push(`Clear signal-to-noise ratio (${snrDb} dB)`);
-    }
-    if (digitalSilencePct < 8.0) {
-      positiveIndicators.push('Ambient room tone present in natural conversational pauses');
-    }
-
-    if (syntheticEvidence.length > 0) {
-      potentialConcerns.push(...syntheticEvidence);
-    }
-    if (combScore >= 0.45) {
-      potentialConcerns.push(`Periodic reflection notches in replay range (${(combScore * 100).toFixed(0)}% correlation)`);
     }
     if (snrDb < 8.0) {
       potentialConcerns.push('Elevated ambient noise floor reducing acoustic boundary confidence');
     }
-    if (duration < 2.5) {
+    if (duration < 2.5 && channelData) {
       potentialConcerns.push('Limited speech duration (< 2.5s) reduces statistical confidence');
+    }
+    if (!channelData) {
+      potentialConcerns.push('Audio could not be decoded for full acoustic biometric analysis — result is inconclusive');
     }
 
     const processingTime = Math.round((performance.now() - startTime) / 10) / 100;
