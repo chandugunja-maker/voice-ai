@@ -534,23 +534,85 @@
 
           </div>
 
-          <!-- Quick Benchmark Demo Samples Bar (Test / Benchmark Controls) -->
-          <div style="padding: 0.85rem 1.5rem; background: var(--bg-primary); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-            <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
-              <span style="color: var(--accent-primary); font-weight: 700;">⚡</span>
-              <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">Test / Benchmark Controls:</span>
-              <span style="font-size: 0.75rem; color: var(--text-muted);">(Preset tests — excluded from user audit history)</span>
+          <!-- TEST VOICE LIBRARY (3 BENCHMARK TESTS) -->
+          <div id="testVoiceLibraryCard" style="padding: 1.25rem 1.5rem; background: var(--bg-tertiary); border-top: 1px solid var(--border-subtle);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                  <span>🧪</span> Test Voice Library (Benchmark Suite)
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">
+                  Pre-calibrated test voices. Expected category is benchmark metadata; detector result is computed directly from actual DSP audio analysis.
+                </div>
+              </div>
+              <span style="font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; background: rgba(37, 99, 235, 0.1); color: var(--accent-primary); font-weight: 700;">
+                Isolated From Audit History
+              </span>
             </div>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <button class="btn btn-sm btn-tertiary btn-analyze-example" data-sample="rahul" type="button" title="Test Benchmark: Authentic speech preset">
-                🟢 Test: Authentic
-              </button>
-              <button class="btn btn-sm btn-tertiary btn-analyze-example" data-sample="suspicious" type="button" title="Test Benchmark: Borderline acoustic preset">
-                🟡 Test: Borderline
-              </button>
-              <button class="btn btn-sm btn-tertiary btn-analyze-example" data-sample="processed" type="button" title="Test Benchmark: Synthetic speech preset">
-                🔴 Test: Synthetic
-              </button>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.85rem;">
+              <!-- TEST 1 -->
+              <div class="card" style="padding: 1rem 1.15rem; background: var(--bg-primary); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between; gap: 0.75rem;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="font-size: 0.88rem; color: var(--text-primary);">TEST 1: Human / Non-Synthetic</strong>
+                    <span style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700;">Expected: Authentic</span>
+                  </div>
+                  <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0; line-height: 1.45;">
+                    Natural human voice recording with expressive prosody intonation, natural vocal micro-tremor, and ambient room tone.
+                  </p>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                  <button class="btn btn-sm btn-secondary btn-play-example" data-sample="rahul" type="button" style="font-size: 0.78rem;">
+                    ▶ Preview
+                  </button>
+                  <button class="btn btn-sm btn-primary btn-analyze-example" data-sample="rahul" type="button" style="font-size: 0.78rem;">
+                    Run Test 1
+                  </button>
+                </div>
+              </div>
+
+              <!-- TEST 2 -->
+              <div class="card" style="padding: 1rem 1.15rem; background: var(--bg-primary); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between; gap: 0.75rem;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="font-size: 0.88rem; color: var(--text-primary);">TEST 2: AI / Synthetic</strong>
+                    <span style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 700;">Expected: Synthetic</span>
+                  </div>
+                  <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0; line-height: 1.45;">
+                    Neural text-to-speech voice clone with monotonic pitch contour, absent biological jitter, and vocoder spectral cutoff.
+                  </p>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                  <button class="btn btn-sm btn-secondary btn-play-example" data-sample="processed" type="button" style="font-size: 0.78rem;">
+                    ▶ Preview
+                  </button>
+                  <button class="btn btn-sm btn-primary btn-analyze-example" data-sample="processed" type="button" style="font-size: 0.78rem;">
+                    Run Test 2
+                  </button>
+                </div>
+              </div>
+
+              <!-- TEST 3 -->
+              <div class="card" style="padding: 1rem 1.15rem; background: var(--bg-primary); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between; gap: 0.75rem;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="font-size: 0.88rem; color: var(--text-primary);">TEST 3: Replay / Suspicious</strong>
+                    <span style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 700;">Expected: Replay / Suspicious</span>
+                  </div>
+                  <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0; line-height: 1.45;">
+                    Human recording played through an external loudspeaker and re-recorded with 25ms room reflections and speaker attenuation.
+                  </p>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                  <button class="btn btn-sm btn-secondary btn-play-example" data-sample="suspicious" type="button" style="font-size: 0.78rem;">
+                    ▶ Preview
+                  </button>
+                  <button class="btn btn-sm btn-primary btn-analyze-example" data-sample="suspicious" type="button" style="font-size: 0.78rem;">
+                    Run Test 3
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -599,11 +661,67 @@
 
           <!-- State B: Full Enterprise Result Dashboard -->
           <div id="resultValidVoicePanel" style="display: none;">
+
+            <!-- BENCHMARK MODE — EXPECTED RESULT CARD -->
+            <div id="benchmarkResultCard" class="card" style="display: none; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; border: 2px solid var(--border-accent); background: var(--bg-tertiary);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-primary);">
+                    Benchmark Mode — Expected Result
+                  </div>
+                  <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0.2rem 0 0 0;">
+                    Benchmark Ground-Truth Validation
+                  </h3>
+                </div>
+                <div id="benchmarkStatusBadge" style="padding: 0.35rem 0.95rem; border-radius: 6px; font-weight: 800; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981;">
+                  PASS
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem;">
+                <div class="metadata-card">
+                  <div class="metadata-label">Expected Category</div>
+                  <div id="benchmarkExpectedCategory" class="metadata-val" style="font-size: 0.95rem; color: var(--accent-primary); font-weight: 800;">--</div>
+                </div>
+                <div class="metadata-card">
+                  <div class="metadata-label">Actual Detector Result</div>
+                  <div id="benchmarkActualResult" class="metadata-val" style="font-size: 0.95rem; font-weight: 800;">--</div>
+                </div>
+                <div class="metadata-card">
+                  <div class="metadata-label">Confidence</div>
+                  <div id="benchmarkConfidence" class="metadata-val" style="font-size: 0.95rem; font-weight: 800;">--</div>
+                </div>
+                <div class="metadata-card">
+                  <div class="metadata-label">Feature Scores</div>
+                  <div id="benchmarkFeatureScores" class="metadata-val" style="font-size: 0.82rem; line-height: 1.4;">--</div>
+                </div>
+              </div>
+              <p style="font-size: 0.76rem; color: var(--text-muted); margin: 0;">
+                ⚡ <em>Expected category is strictly benchmark evaluation metadata. Detector output is calculated purely by DSP signal analysis and is never hard-coded.</em>
+              </p>
+            </div>
             
             <!-- Large Verdict Card -->
             <div id="resultVerdictBox" class="verdict-display-card">
               <div class="verdict-tag">Voice Authenticity Result</div>
               <h2 id="resultVerdictText" class="verdict-title">--</h2>
+              <div style="margin: 0.65rem 0; font-size: 0.95rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 0.85rem; flex-wrap: wrap;">
+                <span>Confidence: <span id="resultProbConfidence" style="color: var(--accent-primary); font-weight: 800;">--</span> <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">(Probabilistic result)</span></span>
+                <span style="opacity: 0.4;">•</span>
+                <span>Risk: <span id="resultRiskLevelText" style="font-weight: 800;">--</span></span>
+              </div>
+              <!-- Feature Score Chips -->
+              <div style="display: flex; justify-content: center; gap: 0.6rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+                <span style="font-size: 0.78rem; padding: 3px 10px; border-radius: 999px; background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3);">
+                  Natural: <span id="scoreNaturalBadge">--</span>/100
+                </span>
+                <span style="font-size: 0.78rem; padding: 3px 10px; border-radius: 999px; background: rgba(239, 68, 68, 0.12); color: #ef4444; font-weight: 700; border: 1px solid rgba(239, 68, 68, 0.3);">
+                  Synthetic: <span id="scoreSyntheticBadge">--</span>/100
+                </span>
+                <span style="font-size: 0.78rem; padding: 3px 10px; border-radius: 999px; background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.3);">
+                  Replay: <span id="scoreReplayBadge">--</span>/100
+                </span>
+              </div>
               <p id="resultSummaryText" class="verdict-desc">
                 Waiting for audio analysis.
               </p>
@@ -711,9 +829,30 @@
               </div>
             </div>
 
+            <!-- Structured WHY Section -->
+            <div class="card" style="padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-accent); background: var(--bg-tertiary);">
+              <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-primary); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>💡</span> WHY — Acoustic Feature Breakdown
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.88rem;">
+                <div style="padding: 0.6rem 0.85rem; background: var(--bg-primary); border-radius: var(--radius-sm); border-left: 3px solid var(--accent-primary);">
+                  <strong style="color: var(--text-primary);">• Natural pitch variation:</strong> <span id="whyPitchVariation" style="color: var(--text-secondary);">Waiting for audio analysis...</span>
+                </div>
+                <div style="padding: 0.6rem 0.85rem; background: var(--bg-primary); border-radius: var(--radius-sm); border-left: 3px solid #10b981;">
+                  <strong style="color: var(--text-primary);">• Spectral characteristics:</strong> <span id="whySpectralChars" style="color: var(--text-secondary);">Waiting for audio analysis...</span>
+                </div>
+                <div style="padding: 0.6rem 0.85rem; background: var(--bg-primary); border-radius: var(--radius-sm); border-left: 3px solid #f59e0b;">
+                  <strong style="color: var(--text-primary);">• Replay indicators:</strong> <span id="whyReplayIndicators" style="color: var(--text-secondary);">Waiting for audio analysis...</span>
+                </div>
+                <div style="padding: 0.6rem 0.85rem; background: var(--bg-primary); border-radius: var(--radius-sm); border-left: 3px solid #8b5cf6;">
+                  <strong style="color: var(--text-primary);">• Audio quality:</strong> <span id="whyAudioQuality" style="color: var(--text-secondary);">Waiting for audio analysis...</span>
+                </div>
+              </div>
+            </div>
+
             <!-- Explainability: Why This Result? -->
-            <div class="explain-card">
-              <div class="explain-title">Why This Result?</div>
+            <div class="explain-card" style="margin-bottom: 1.5rem;">
+              <div class="explain-title">Observed Acoustic Indicators</div>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                 <div>
                   <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #10b981; margin-bottom: 0.75rem;">
@@ -731,6 +870,36 @@
                     <li><span class="bullet-pos">✓</span> Waiting for audio analysis...</li>
                   </ul>
                 </div>
+              </div>
+            </div>
+
+            <!-- DEVELOPER / DSP DEBUG DIAGNOSTICS SECTION -->
+            <div id="developerDebugCard" class="card" style="padding: 1.25rem 1.5rem; margin-bottom: 1.75rem; border: 1px solid var(--border-accent); background: var(--bg-primary);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="font-size: 1.1rem;">🔬</span>
+                  <span style="font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary);">
+                    Developer / DSP Debug Diagnostics
+                  </span>
+                </div>
+                <span style="font-size: 0.75rem; font-family: monospace; color: var(--text-muted);">Real-Time Mathematical DSP</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; font-size: 0.82rem;">
+                <div class="metadata-card"><div class="metadata-label">Audio Decoded</div><div id="debugAudioDecoded" class="metadata-val" style="color: #10b981; font-weight: 700;">YES</div></div>
+                <div class="metadata-card"><div class="metadata-label">Duration</div><div id="debugDuration" class="metadata-val">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">Sample Rate</div><div id="debugSampleRate" class="metadata-val">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">Channels</div><div id="debugChannels" class="metadata-val">1 (Mono)</div></div>
+                <div class="metadata-card"><div class="metadata-label">Samples</div><div id="debugSamples" class="metadata-val">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">RMS</div><div id="debugRms" class="metadata-val">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">Noise Level</div><div id="debugNoiseLevel" class="metadata-val">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">Pitch</div><div id="debugPitch" class="metadata-val">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">Spectral Centroid</div><div id="debugCentroid" class="metadata-val">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">MFCC Available</div><div id="debugMfcc" class="metadata-val" style="color: #10b981; font-weight: 700;">YES (13 coeffs)</div></div>
+                <div class="metadata-card"><div class="metadata-label">Replay Score</div><div id="debugReplayScore" class="metadata-val" style="color: #f59e0b; font-weight: 700;">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">Synthetic Score</div><div id="debugSyntheticScore" class="metadata-val" style="color: #ef4444; font-weight: 700;">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">Natural Score</div><div id="debugNaturalScore" class="metadata-val" style="color: #10b981; font-weight: 700;">--</div></div>
+                <div class="metadata-card"><div class="metadata-label">Final Result</div><div id="debugFinalResult" class="metadata-val" style="font-weight: 800;">--</div></div>
               </div>
             </div>
 

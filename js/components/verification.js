@@ -259,11 +259,18 @@ export class VerificationWorkspace {
       });
     }
 
-    // 4. Example Benchmark Samples
+    // 4. Test Voice Benchmark Library & Examples
     document.querySelectorAll('.btn-analyze-example').forEach(btn => {
       btn.addEventListener('click', () => {
         const sample = btn.getAttribute('data-sample');
         this._analyzeExample(sample);
+      });
+    });
+
+    document.querySelectorAll('.btn-play-example').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sample = btn.getAttribute('data-sample');
+        this._toggleExamplePlayback(sample, btn);
       });
     });
 
